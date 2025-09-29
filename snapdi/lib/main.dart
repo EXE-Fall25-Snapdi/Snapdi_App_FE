@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'core/dependency_injection/injection_container.dart' as di;
 import 'core/constants/app_theme.dart';
+import 'features/auth/presentation/screens/welcome_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -20,6 +21,7 @@ class SnapdiApp extends StatelessWidget {
       title: 'Snapdi - Book Your Photographer',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        fontFamily: AppTextStyles.fontFamily,
         primarySwatch: Colors.blue,
         primaryColor: AppColors.primary,
         scaffoldBackgroundColor: AppColors.background,
@@ -72,68 +74,6 @@ class SnapdiApp extends StatelessWidget {
       ),
       // TODO: Add proper routing with go_router
       home: const WelcomeScreen(),
-    );
-  }
-}
-
-// Temporary welcome screen - will be replaced with proper routing
-class WelcomeScreen extends StatelessWidget {
-  const WelcomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                Icons.camera_alt,
-                size: 120,
-                color: AppColors.primary,
-              ),
-              const SizedBox(height: AppDimensions.marginLarge),
-              Text(
-                'Welcome to Snapdi',
-                style: AppTextStyles.headline1,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppDimensions.marginMedium),
-              Text(
-                'Find and book the perfect photographer for your special moments',
-                style: AppTextStyles.bodyLarge.copyWith(
-                  color: AppColors.textSecondary,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppDimensions.marginXLarge * 2),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () {
-                    // TODO: Navigate to login screen
-                  },
-                  child: const Text('Get Started'),
-                ),
-              ),
-              const SizedBox(height: AppDimensions.marginMedium),
-              TextButton(
-                onPressed: () {
-                  // TODO: Navigate to photographer registration
-                },
-                child: Text(
-                  'Are you a photographer? Join us',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

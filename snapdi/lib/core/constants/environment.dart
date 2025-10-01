@@ -15,7 +15,12 @@ class Environment {
   /// API Configuration
   static const String apiBaseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'https://api.snapdi.com',
+    defaultValue: 'https://10.0.2.2:7000',
+  );
+
+  static const String applicationUrl = String.fromEnvironment(
+    'APPLICATION_URL',
+    defaultValue: 'https://10.0.2.2:7000',
   );
 
   static const String apiVersion = String.fromEnvironment(

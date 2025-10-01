@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // Primary Colors
-  static const Color primary = Color.fromRGBO(1, 222, 129, 1);
-  static const Color primaryLight = Color.fromRGBO(52, 211, 153, 1);
-  static const Color primaryDark = Color.fromRGBO(0, 222, 129, 1);
+  static const Color primary = Color(0xFF00D4AA);
+  static const Color primaryLight = Color(0xFF4FE8C4);
+  static const Color primaryDark = Color(0xFF00A085);
+
+  static const Color gradientStart = Color(0xFF00D4AA);
+  static const Color gradientEnd = Color(0xFF00A085);
 
   // Secondary Colors
   static const Color secondary = Color(0xFFFF9800);

@@ -2,17 +2,18 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/widgets/custom_input_field.dart';
 import 'account_type_selection_screen.dart';
+import '../../domain/services/auth_service.dart';
+import '../../data/models/photographer_sign_up_request.dart';
+import '../../../../core/error/failures.dart';
 
 class PhotographerSignUpScreen extends StatefulWidget {
   final AccountType accountType;
 
-  const PhotographerSignUpScreen({
-    super.key,
-    required this.accountType,
-  });
+  const PhotographerSignUpScreen({super.key, required this.accountType});
 
   @override
-  State<PhotographerSignUpScreen> createState() => _PhotographerSignUpScreenState();
+  State<PhotographerSignUpScreen> createState() =>
+      _PhotographerSignUpScreenState();
 }
 
 class _PhotographerSignUpScreenState extends State<PhotographerSignUpScreen> {
@@ -24,6 +25,18 @@ class _PhotographerSignUpScreenState extends State<PhotographerSignUpScreen> {
   final _phoneController = TextEditingController();
   final _cityController = TextEditingController();
   final _equipmentController = TextEditingController();
+  final _locationAddressController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _authService = AuthServiceImpl();
+
+  // Years of experience options
+  final List<String> _yearsOfExperienceOptions = [
+    'Under 1 year',
+    '1-3 years',
+    'Above 3 years',
+  ];
+  String? _selectedYearsOfExperience;
+
   bool _isLoading = false;
   bool _agreeToTerms = false;
 
@@ -36,6 +49,8 @@ class _PhotographerSignUpScreenState extends State<PhotographerSignUpScreen> {
     _phoneController.dispose();
     _cityController.dispose();
     _equipmentController.dispose();
+    _locationAddressController.dispose();
+    _descriptionController.dispose();
     super.dispose();
   }
 
@@ -79,17 +94,6 @@ class _PhotographerSignUpScreenState extends State<PhotographerSignUpScreen> {
     return null;
   }
 
-  String? _validatePhone(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter your phone number';
-    }
-    // Basic phone validation - adjust regex as needed for your region
-    if (!RegExp(r'^\+?[1-9]\d{1,14}$').hasMatch(value.replaceAll(RegExp(r'[\s\-\(\)]'), ''))) {
-      return 'Please enter a valid phone number';
-    }
-    return null;
-  }
-
   String? _validateCity(String? value) {
     if (value == null || value.isEmpty) {
       return 'Please enter your city';
@@ -106,6 +110,13 @@ class _PhotographerSignUpScreenState extends State<PhotographerSignUpScreen> {
     }
     if (value.length < 10) {
       return 'Please provide more details about your equipment';
+    }
+    return null;
+  }
+
+  String? _validateYearsOfExperience(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please select your years of experience';
     }
     return null;
   }
@@ -129,41 +140,88 @@ class _PhotographerSignUpScreenState extends State<PhotographerSignUpScreen> {
         _isLoading = true;
       });
 
-      // Simulate sign up process
-      await Future.delayed(const Duration(seconds: 2));
+      final photographerSignUpRequest = PhotographerSignUpRequest(
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+        phone: _phoneController.text.trim().isNotEmpty
+            ? _phoneController.text.trim()
+            : null,
+        locationAddress: _locationAddressController.text.trim().isNotEmpty
+            ? _locationAddressController.text.trim()
+            : null,
+        locationCity: _cityController.text.trim(),
+        yearsOfExperience: _selectedYearsOfExperience ?? '',
+        equipmentDescription: _equipmentController.text.trim(),
+        description: _descriptionController.text.trim().isNotEmpty
+            ? _descriptionController.text.trim()
+            : null,
+      );
+
+      final result = await _authService.registerPhotographer(
+        photographerSignUpRequest: photographerSignUpRequest,
+      );
 
       setState(() {
         _isLoading = false;
       });
 
-      // TODO: Implement actual photographer sign up logic
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Photographer account created successfully!',
-              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.white),
-            ),
-            backgroundColor: AppColors.success,
-          ),
+        result.fold(
+          (failure) {
+            String errorMessage;
+            if (failure is ValidationFailure) {
+              errorMessage = failure.message;
+            } else if (failure is AuthenticationFailure) {
+              errorMessage = failure.message;
+            } else if (failure is NetworkFailure) {
+              errorMessage = failure.message;
+            } else if (failure is ServerFailure) {
+              errorMessage = failure.message;
+            } else {
+              errorMessage =
+                  'Photographer registration failed. Please try again.';
+            }
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  errorMessage,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.white,
+                  ),
+                ),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          },
+          (photographerSignUpResponse) async {
+            // Store authentication tokens securely if available
+            if (photographerSignUpResponse.accessToken != null &&
+                photographerSignUpResponse.refreshToken != null) {
+              await _authService.storeAuthTokensFromPhotographerSignUp(
+                photographerSignUpResponse,
+              );
+            }
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Welcome, ${photographerSignUpResponse.user.name}! Photographer account created successfully!',
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.white,
+                  ),
+                ),
+                backgroundColor: AppColors.success,
+              ),
+            );
+
+            // Navigate back to login screen
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          },
         );
-        
-        // Navigate back to login or main app
-        Navigator.of(context).popUntil((route) => route.isFirst);
       }
     }
-  }
-
-  void _handleSocialSignUp(String platform) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          '$platform sign up - Coming soon!',
-          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.white),
-        ),
-        backgroundColor: AppColors.primary,
-      ),
-    );
   }
 
   @override
@@ -190,7 +248,7 @@ class _PhotographerSignUpScreenState extends State<PhotographerSignUpScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: AppDimensions.marginLarge),
-                    
+
                     // Title
                     Text(
                       'Create photographer account',
@@ -200,9 +258,9 @@ class _PhotographerSignUpScreenState extends State<PhotographerSignUpScreen> {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    
+
                     const SizedBox(height: AppDimensions.marginXLarge),
-                    
+
                     // Name field
                     CustomInputField(
                       hintText: 'Name',
@@ -211,9 +269,9 @@ class _PhotographerSignUpScreenState extends State<PhotographerSignUpScreen> {
                       controller: _nameController,
                       validator: _validateName,
                     ),
-                    
+
                     const SizedBox(height: AppDimensions.marginMedium),
-                    
+
                     // Email field
                     CustomInputField(
                       hintText: 'Email',
@@ -222,31 +280,19 @@ class _PhotographerSignUpScreenState extends State<PhotographerSignUpScreen> {
                       controller: _emailController,
                       validator: _validateEmail,
                     ),
-                    
+
                     const SizedBox(height: AppDimensions.marginMedium),
-                    
+
                     // Phone field
                     CustomInputField(
                       hintText: 'Phone Number',
                       prefixIcon: Icons.phone_outlined,
                       keyboardType: TextInputType.phone,
                       controller: _phoneController,
-                      validator: _validatePhone,
                     ),
-                    
+
                     const SizedBox(height: AppDimensions.marginMedium),
-                    
-                    // City field
-                    CustomInputField(
-                      hintText: 'City',
-                      prefixIcon: Icons.location_city_outlined,
-                      keyboardType: TextInputType.text,
-                      controller: _cityController,
-                      validator: _validateCity,
-                    ),
-                    
-                    const SizedBox(height: AppDimensions.marginMedium),
-                    
+
                     // Password field
                     CustomInputField(
                       hintText: 'Password',
@@ -255,9 +301,9 @@ class _PhotographerSignUpScreenState extends State<PhotographerSignUpScreen> {
                       controller: _passwordController,
                       validator: _validatePassword,
                     ),
-                    
+
                     const SizedBox(height: AppDimensions.marginMedium),
-                    
+
                     // Confirm Password field
                     CustomInputField(
                       hintText: 'Confirm Password',
@@ -266,9 +312,9 @@ class _PhotographerSignUpScreenState extends State<PhotographerSignUpScreen> {
                       controller: _confirmPasswordController,
                       validator: _validateConfirmPassword,
                     ),
-                    
+
                     const SizedBox(height: AppDimensions.marginMedium),
-                    
+
                     // Equipment field (multiline)
                     TextFormField(
                       controller: _equipmentController,
@@ -279,7 +325,8 @@ class _PhotographerSignUpScreenState extends State<PhotographerSignUpScreen> {
                         color: AppColors.textPrimary,
                       ),
                       decoration: InputDecoration(
-                        hintText: 'Describe your photography equipment\n(Camera, lenses, lighting, etc.)',
+                        hintText:
+                            'Describe your photography equipment\n(Camera, lenses, lighting, etc.)',
                         hintStyle: AppTextStyles.bodyMedium.copyWith(
                           color: AppColors.textSecondary,
                         ),
@@ -303,15 +350,24 @@ class _PhotographerSignUpScreenState extends State<PhotographerSignUpScreen> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(25),
-                          borderSide: BorderSide(color: AppColors.primary, width: 1),
+                          borderSide: BorderSide(
+                            color: AppColors.primary,
+                            width: 1,
+                          ),
                         ),
                         errorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(25),
-                          borderSide: BorderSide(color: AppColors.error, width: 1),
+                          borderSide: BorderSide(
+                            color: AppColors.error,
+                            width: 1,
+                          ),
                         ),
                         focusedErrorBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(25),
-                          borderSide: BorderSide(color: AppColors.error, width: 1),
+                          borderSide: BorderSide(
+                            color: AppColors.error,
+                            width: 1,
+                          ),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 20,
@@ -319,9 +375,161 @@ class _PhotographerSignUpScreenState extends State<PhotographerSignUpScreen> {
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: AppDimensions.marginMedium),
-                    
+
+                    // Years of Experience field (Required)
+                    DropdownButtonFormField<String>(
+                      initialValue: _selectedYearsOfExperience,
+                      decoration: InputDecoration(
+                        hintText: 'Select Years of Experience',
+                        hintStyle: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.work_outline,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
+                        filled: true,
+                        fillColor: const Color(0xFFB8D4D1),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: BorderSide(
+                            color: AppColors.primary,
+                            width: 1,
+                          ),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: BorderSide(
+                            color: AppColors.error,
+                            width: 1,
+                          ),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: BorderSide(
+                            color: AppColors.error,
+                            width: 1,
+                          ),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 16,
+                        ),
+                      ),
+                      items: _yearsOfExperienceOptions.map((String option) {
+                        return DropdownMenuItem<String>(
+                          value: option,
+                          child: Text(
+                            option,
+                            style: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.textPrimary,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _selectedYearsOfExperience = newValue;
+                        });
+                      },
+                      validator: _validateYearsOfExperience,
+                    ),
+
+                    const SizedBox(height: AppDimensions.marginMedium),
+
+                    // City field
+                    CustomInputField(
+                      hintText: 'City',
+                      prefixIcon: Icons.location_city_outlined,
+                      keyboardType: TextInputType.text,
+                      controller: _cityController,
+                      validator: _validateCity,
+                    ),
+
+                    const SizedBox(height: AppDimensions.marginMedium),
+
+                    // Location Address field (Optional)
+                    CustomInputField(
+                      hintText: 'Location Address (Optional)',
+                      prefixIcon: Icons.home_outlined,
+                      controller: _locationAddressController,
+                    ),
+
+                    const SizedBox(height: AppDimensions.marginMedium),
+
+                    // Description field (Optional, multiline)
+                    TextFormField(
+                      controller: _descriptionController,
+                      keyboardType: TextInputType.multiline,
+                      maxLines: 3,
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.textPrimary,
+                      ),
+                      decoration: InputDecoration(
+                        hintText:
+                            'Tell us about yourself and your photography style\n(Optional)',
+                        hintStyle: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
+                        prefixIcon: Padding(
+                          padding: const EdgeInsets.only(bottom: 40),
+                          child: Icon(
+                            Icons.description_outlined,
+                            color: AppColors.primary,
+                            size: 20,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: const Color(0xFFB8D4D1),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: BorderSide(
+                            color: AppColors.primary,
+                            width: 1,
+                          ),
+                        ),
+                        errorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: BorderSide(
+                            color: AppColors.error,
+                            width: 1,
+                          ),
+                        ),
+                        focusedErrorBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(25),
+                          borderSide: BorderSide(
+                            color: AppColors.error,
+                            width: 1,
+                          ),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 16,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: AppDimensions.marginMedium),
+
                     // Terms and conditions checkbox
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -374,9 +582,9 @@ class _PhotographerSignUpScreenState extends State<PhotographerSignUpScreen> {
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: AppDimensions.marginLarge),
-                    
+
                     // Sign up button
                     SizedBox(
                       height: 50,
@@ -406,9 +614,9 @@ class _PhotographerSignUpScreenState extends State<PhotographerSignUpScreen> {
                               ),
                       ),
                     ),
-                    
+
                     // const SizedBox(height: AppDimensions.marginLarge),
-                    
+
                     // // "Or sign up with" text
                     // Text(
                     //   'Or sign up with',
@@ -417,9 +625,9 @@ class _PhotographerSignUpScreenState extends State<PhotographerSignUpScreen> {
                     //   ),
                     //   textAlign: TextAlign.center,
                     // ),
-                    
+
                     // const SizedBox(height: AppDimensions.marginMedium),
-                    
+
                     // // Social sign up buttons
                     // Row(
                     //   mainAxisAlignment: MainAxisAlignment.center,
@@ -440,9 +648,8 @@ class _PhotographerSignUpScreenState extends State<PhotographerSignUpScreen> {
                     //     ),
                     //   ],
                     // ),
-                    
                     const SizedBox(height: AppDimensions.marginLarge),
-                    
+
                     // Login link
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -458,8 +665,12 @@ class _PhotographerSignUpScreenState extends State<PhotographerSignUpScreen> {
                             // Pop back to login screen (skip account type selection)
                             // Navigation stack: Welcome → Login → AccountType → PhotographerSignUp
                             // We need to pop 2 screens to get back to Login
-                            Navigator.of(context).pop(); // Pop PhotographerSignUp
-                            Navigator.of(context).pop(); // Pop AccountType, back to Login
+                            Navigator.of(
+                              context,
+                            ).pop(); // Pop PhotographerSignUp
+                            Navigator.of(
+                              context,
+                            ).pop(); // Pop AccountType, back to Login
                           },
                           child: Text(
                             'Login',
@@ -471,7 +682,7 @@ class _PhotographerSignUpScreenState extends State<PhotographerSignUpScreen> {
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: AppDimensions.marginSmall),
                   ],
                 ),

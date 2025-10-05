@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:snapdi/features/auth/presentation/screens/account_type_selection_screen.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
 import 'login_screen.dart';
+import 'photographer_sign_up_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -75,12 +77,9 @@ class WelcomeScreen extends StatelessWidget {
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () {
-                    // TODO: Navigate to photographer registration
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('Photographer Registration - Coming soon!', style: AppTextStyles.bodyMedium.copyWith(color: AppColors.white)),
-                        backgroundColor: AppColors.secondary,
-                      ),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const PhotographerSignUpScreen(accountType: AccountType.snapper)),
                     );
                   },
                   style: OutlinedButton.styleFrom(

@@ -20,7 +20,7 @@ class User {
   final String email;
   
   @JsonKey(name: 'phone')
-  final String phone;
+  final String? phone;
   
   @JsonKey(name: 'isActive')
   final bool isActive;
@@ -46,7 +46,7 @@ class User {
     required this.roleName,
     required this.name,
     required this.email,
-    required this.phone,
+    this.phone,
     required this.isActive,
     required this.isVerify,
     required this.createdAt,

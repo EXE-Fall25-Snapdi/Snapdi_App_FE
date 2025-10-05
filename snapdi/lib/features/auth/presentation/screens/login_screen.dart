@@ -74,8 +74,11 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             );
           },
-          (loginResponse) {
+          (loginResponse) async {
             // Handle login success
+            // Store authentication tokens securely using AuthService
+            await _authService.storeAuthTokens(loginResponse);
+            
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
@@ -87,7 +90,6 @@ class _LoginScreenState extends State<LoginScreen> {
             );
             
             // TODO: Navigate to main app screen
-            // TODO: Store authentication tokens
           },
         );
       }
@@ -121,15 +123,11 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
         child: SafeArea(
-          child: SingleChildScrollView(
-            child: SizedBox(
-              height: MediaQuery.of(context).size.height - 
-                     MediaQuery.of(context).padding.top,
-              child: Column(
-                children: [
+          child: Column(
+            children: [
                   // Top section with logo
-                  Expanded(
-                    flex: 4,
+                  SizedBox(
+                    height: 200,
                     child: Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -159,7 +157,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   
                   // Bottom section with form
                   Expanded(
-                    flex: 6,
                     child: Container(
                       decoration: const BoxDecoration(
                         color: AppColors.white,
@@ -168,14 +165,20 @@ class _LoginScreenState extends State<LoginScreen> {
                           topRight: Radius.circular(30),
                         ),
                       ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(AppDimensions.paddingLarge),
+                      child: SingleChildScrollView(
+                        child: Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          AppDimensions.paddingLarge,
+                          AppDimensions.paddingLarge,
+                          AppDimensions.paddingLarge,
+                          AppDimensions.paddingLarge + 20, // Extra bottom padding
+                        ),
                         child: Form(
                           key: _formKey,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              const SizedBox(height: AppDimensions.marginLarge),
+                              const SizedBox(height: AppDimensions.marginMedium),
                               
                               // Email field
                               CustomInputField(
@@ -290,7 +293,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ],
                               ),
                               
-                              const Spacer(),
+                              const SizedBox(height: AppDimensions.marginLarge),
                               
                               // Sign up link
                               Row(
@@ -329,10 +332,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ),
+                ),
                 ],
-              ),
             ),
-          ),
         ),
       ),
     );

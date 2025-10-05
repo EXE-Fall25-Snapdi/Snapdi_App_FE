@@ -2,21 +2,47 @@ import 'package:dio/dio.dart';
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/network/api_service.dart';
+import '../../../../core/storage/token_storage.dart';
 import '../../data/models/login_request.dart';
 import '../../data/models/login_response.dart';
+import '../../data/models/sign_up_request.dart';
+import '../../data/models/sign_up_response.dart';
+import '../../data/models/photographer_sign_up_request.dart';
+import '../../data/models/photographer_sign_up_response.dart';
 
 abstract class AuthService {
   Future<Either<Failure, LoginResponse>> login({
     required String emailOrPhone,
     required String password,
   });
+  
+  Future<Either<Failure, SignUpResponse>> register({
+    required SignUpRequest signUpRequest,
+  });
+  
+  Future<Either<Failure, PhotographerSignUpResponse>> registerPhotographer({
+    required PhotographerSignUpRequest photographerSignUpRequest,
+  });
+  
+  // Session Management
+  Future<bool> storeAuthTokens(LoginResponse loginResponse);
+  Future<bool> storeAuthTokensFromSignUp(SignUpResponse signUpResponse);
+  Future<bool> storeAuthTokensFromPhotographerSignUp(PhotographerSignUpResponse photographerSignUpResponse);
+  Future<bool> isLoggedIn();
+  Future<String?> getAccessToken();
+  Future<bool> logout();
+  Future<AuthTokens?> getCurrentSession();
 }
 
 class AuthServiceImpl implements AuthService {
   final ApiService _apiService;
+  final TokenStorage _tokenStorage;
 
-  AuthServiceImpl({ApiService? apiService}) 
-    : _apiService = apiService ?? ApiService();
+  AuthServiceImpl({
+    ApiService? apiService,
+    TokenStorage? tokenStorage,
+  }) : _apiService = apiService ?? ApiService(),
+       _tokenStorage = tokenStorage ?? TokenStorage.instance;
 
   @override
   Future<Either<Failure, LoginResponse>> login({
@@ -53,6 +79,163 @@ class AuthServiceImpl implements AuthService {
       return Left(ServerFailure(
         'Unexpected error during login: ${e.toString()}',
       ));
+    }
+  }
+
+  @override
+  Future<Either<Failure, SignUpResponse>> register({
+    required SignUpRequest signUpRequest,
+  }) async {
+    try {
+      final response = await _apiService.post(
+        '/api/auth/register',
+        data: signUpRequest.toJson(),
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (response.data != null) {
+          final signUpResponse = SignUpResponse.fromJson(response.data);
+          return Right(signUpResponse);
+        } else {
+          return Left(ServerFailure(
+            'Registration successful but no response data received',
+          ));
+        }
+      } else {
+        return Left(ServerFailure(
+          'Registration failed with status: ${response.statusCode}',
+        ));
+      }
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return Left(ServerFailure(
+        'Unexpected error during registration: ${e.toString()}',
+      ));
+    }
+  }
+
+  @override
+  Future<bool> storeAuthTokens(LoginResponse loginResponse) async {
+    try {
+      return await _tokenStorage.storeTokens(
+        accessToken: loginResponse.token,
+        refreshToken: loginResponse.refreshToken,
+        userId: loginResponse.user.userId,
+      );
+    } catch (e) {
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> storeAuthTokensFromSignUp(SignUpResponse signUpResponse) async {
+    try {
+      if (signUpResponse.accessToken != null && signUpResponse.refreshToken != null) {
+        return await _tokenStorage.storeTokens(
+          accessToken: signUpResponse.accessToken!,
+          refreshToken: signUpResponse.refreshToken!,
+          userId: signUpResponse.user.userId,
+        );
+      }
+      return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> isLoggedIn() async {
+    try {
+      return await _tokenStorage.isLoggedIn();
+    } catch (e) {
+      return false;
+    }
+  }
+
+  @override
+  Future<String?> getAccessToken() async {
+    try {
+      return await _tokenStorage.getAccessToken();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  @override
+  Future<bool> logout() async {
+    try {
+      return await _tokenStorage.clearTokens();
+    } catch (e) {
+      return false;
+    }
+  }
+
+  @override
+  Future<AuthTokens?> getCurrentSession() async {
+    try {
+      return await _tokenStorage.getAllTokens();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  @override
+  Future<Either<Failure, PhotographerSignUpResponse>> registerPhotographer({
+    required PhotographerSignUpRequest photographerSignUpRequest,
+  }) async {
+    try {
+      final response = await _apiService.post(
+        '/api/auth/register-photographer',
+        data: photographerSignUpRequest.toJson(),
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (response.data != null) {
+          final photographerSignUpResponse = PhotographerSignUpResponse.fromJson(response.data);
+          return Right(photographerSignUpResponse);
+        } else {
+          return Left(ServerFailure(
+            'Photographer registration successful but no response data received',
+          ));
+        }
+      } else {
+        return Left(ServerFailure(
+          'Photographer registration failed with status: ${response.statusCode}',
+        ));
+      }
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return Left(ServerFailure(
+        'Unexpected error during photographer registration: ${e.toString()}',
+      ));
+    }
+  }
+
+  @override
+  Future<bool> storeAuthTokensFromPhotographerSignUp(PhotographerSignUpResponse photographerSignUpResponse) async {
+    try {
+      if (photographerSignUpResponse.accessToken != null && photographerSignUpResponse.refreshToken != null) {
+        return await _tokenStorage.storeTokens(
+          accessToken: photographerSignUpResponse.accessToken!,
+          refreshToken: photographerSignUpResponse.refreshToken!,
+          userId: photographerSignUpResponse.user.userId,
+        );
+      }
+      return false;
+    } catch (e) {
+      return false;
     }
   }
 

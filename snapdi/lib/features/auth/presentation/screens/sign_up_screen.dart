@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/widgets/custom_input_field.dart';
 import 'account_type_selection_screen.dart';
+import '../../domain/services/auth_service.dart';
+import '../../data/models/sign_up_request.dart';
+import '../../../../core/error/failures.dart';
 
 class SignUpScreen extends StatefulWidget {
   final AccountType accountType;
@@ -19,15 +22,22 @@ class _SignUpScreenState extends State<SignUpScreen> {
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
   bool _agreeToTerms = false;
+  final AuthService _authService = AuthServiceImpl();
+
+  int get _roleId {
+    return widget.accountType == AccountType.user ? 2 : 3;
+  }
 
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -51,6 +61,20 @@ class _SignUpScreenState extends State<SignUpScreen> {
       return 'Please enter a valid email';
     }
     return null;
+  }
+
+  String? _validatePhone(String? value) {
+    if (value != null && value.isNotEmpty) {
+      // Remove all non-digit characters for validation
+      String phoneDigits = value.replaceAll(RegExp(r'[^0-9]'), '');
+      if (phoneDigits.length < 10) {
+        return 'Phone number must be at least 10 digits';
+      }
+      if (phoneDigits.length > 15) {
+        return 'Phone number must not exceed 15 digits';
+      }
+    }
+    return null; // Phone is optional
   }
 
   String? _validatePassword(String? value) {
@@ -92,27 +116,72 @@ class _SignUpScreenState extends State<SignUpScreen> {
         _isLoading = true;
       });
 
-      // Simulate sign up process
-      await Future.delayed(const Duration(seconds: 2));
+      final signUpRequest = SignUpRequest(
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+        phone: _phoneController.text.trim().isNotEmpty ? _phoneController.text.trim() : null,
+        password: _passwordController.text,
+        roleId: _roleId,
+        // Optional fields can be null for basic sign up
+        locationAddress: null,
+        locationCity: null,
+        avatarUrl: null,
+      );
+
+      final result = await _authService.register(
+        signUpRequest: signUpRequest,
+      );
 
       setState(() {
         _isLoading = false;
       });
 
-      // TODO: Implement actual sign up logic
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Account created successfully!',
-              style: AppTextStyles.bodyMedium.copyWith(color: AppColors.white),
-            ),
-            backgroundColor: AppColors.success,
-          ),
+        result.fold(
+          (failure) {
+            String errorMessage;
+            if (failure is ValidationFailure) {
+              errorMessage = failure.message;
+            } else if (failure is AuthenticationFailure) {
+              errorMessage = failure.message;
+            } else if (failure is NetworkFailure) {
+              errorMessage = failure.message;
+            } else if (failure is ServerFailure) {
+              errorMessage = failure.message;
+            } else {
+              errorMessage = 'Registration failed. Please try again.';
+            }
+
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  errorMessage,
+                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.white),
+                ),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          },
+          (signUpResponse) async {
+            // Store authentication tokens securely using AuthService
+            await _authService.storeAuthTokensFromSignUp(signUpResponse);
+            
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Welcome, ${signUpResponse.user.name}! Account created successfully!',
+                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.white),
+                ),
+                backgroundColor: AppColors.success,
+              ),
+            );
+            
+            // TODO: Navigate to main app screen
+            
+            // Navigate back to login screen
+            Navigator.of(context).popUntil((route) => route.isFirst);
+          },
         );
-        
-        // Navigate back to login or main app
-        Navigator.of(context).popUntil((route) => route.isFirst);
       }
     }
   }
@@ -184,6 +253,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       keyboardType: TextInputType.emailAddress,
                       controller: _emailController,
                       validator: _validateEmail,
+                    ),
+                    
+                    const SizedBox(height: AppDimensions.marginMedium),
+                    
+                    // Phone field (optional)
+                    CustomInputField(
+                      hintText: 'Phone Number (Optional)',
+                      prefixIcon: Icons.phone_outlined,
+                      keyboardType: TextInputType.phone,
+                      controller: _phoneController,
+                      validator: _validatePhone,
                     ),
                     
                     const SizedBox(height: AppDimensions.marginMedium),

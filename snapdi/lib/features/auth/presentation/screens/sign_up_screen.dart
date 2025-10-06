@@ -5,6 +5,7 @@ import 'account_type_selection_screen.dart';
 import '../../domain/services/auth_service.dart';
 import '../../data/models/sign_up_request.dart';
 import '../../../../core/error/failures.dart';
+import 'verify_code_screen.dart';
 
 class SignUpScreen extends StatefulWidget {
   final AccountType accountType;
@@ -163,23 +164,28 @@ class _SignUpScreenState extends State<SignUpScreen> {
             );
           },
           (signUpResponse) async {
-            // Store authentication tokens securely using AuthService
-            await _authService.storeAuthTokensFromSignUp(signUpResponse);
-            
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  'Welcome, ${signUpResponse.user.name}! Account created successfully!',
+                  'Account created successfully! Please check your email for verification code.',
                   style: AppTextStyles.bodyMedium.copyWith(color: AppColors.white),
                 ),
                 backgroundColor: AppColors.success,
               ),
             );
             
-            // TODO: Navigate to main app screen
-            
-            // Navigate back to login screen
-            Navigator.of(context).popUntil((route) => route.isFirst);
+            // Navigate to verify code screen for email verification
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => VerifyCodeScreen(
+                  email: _emailController.text.trim(),
+                  onVerificationSuccess: () {
+                    // After successful verification, navigate to login screen
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  },
+                ),
+              ),
+            );
           },
         );
       }

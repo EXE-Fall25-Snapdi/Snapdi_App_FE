@@ -9,6 +9,9 @@ import '../../data/models/sign_up_request.dart';
 import '../../data/models/sign_up_response.dart';
 import '../../data/models/photographer_sign_up_request.dart';
 import '../../data/models/photographer_sign_up_response.dart';
+import '../../data/models/send_verification_code_request.dart';
+import '../../data/models/verify_email_code_request.dart';
+import '../../data/models/verification_response.dart';
 
 abstract class AuthService {
   Future<Either<Failure, LoginResponse>> login({
@@ -22,6 +25,20 @@ abstract class AuthService {
   
   Future<Either<Failure, PhotographerSignUpResponse>> registerPhotographer({
     required PhotographerSignUpRequest photographerSignUpRequest,
+  });
+  
+  // Email Verification
+  Future<Either<Failure, VerificationResponse>> sendVerificationCode({
+    required String email,
+  });
+  
+  Future<Either<Failure, VerificationResponse>> verifyEmailCode({
+    required String email,
+    required String code,
+  });
+  
+  Future<Either<Failure, VerificationResponse>> resendVerificationCode({
+    required String email,
   });
   
   // Session Management
@@ -236,6 +253,124 @@ class AuthServiceImpl implements AuthService {
       return false;
     } catch (e) {
       return false;
+    }
+  }
+
+  @override
+  Future<Either<Failure, VerificationResponse>> sendVerificationCode({
+    required String email,
+  }) async {
+    try {
+      final request = SendVerificationCodeRequest(email: email);
+      final response = await _apiService.post(
+        '/api/auth/send-verification-code',
+        data: request.toJson(),
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        if (response.data != null) {
+          final verificationResponse = VerificationResponse.fromJson(response.data);
+          return Right(verificationResponse);
+        } else {
+          return Left(ServerFailure(
+            'Verification code sent but no response data received',
+          ));
+        }
+      } else {
+        return Left(ServerFailure(
+          'Failed to send verification code with status: ${response.statusCode}',
+        ));
+      }
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return Left(ServerFailure(
+        'Unexpected error while sending verification code: ${e.toString()}',
+      ));
+    }
+  }
+
+  @override
+  Future<Either<Failure, VerificationResponse>> verifyEmailCode({
+    required String email,
+    required String code,
+  }) async {
+    try {
+      final request = VerifyEmailCodeRequest(email: email, code: code);
+      final response = await _apiService.post(
+        '/api/auth/verify-email-code',
+        data: request.toJson(),
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        if (response.data != null) {
+          final verificationResponse = VerificationResponse.fromJson(response.data);
+          return Right(verificationResponse);
+        } else {
+          return Left(ServerFailure(
+            'Email verification successful but no response data received',
+          ));
+        }
+      } else {
+        return Left(ServerFailure(
+          'Email verification failed with status: ${response.statusCode}',
+        ));
+      }
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return Left(ServerFailure(
+        'Unexpected error during email verification: ${e.toString()}',
+      ));
+    }
+  }
+
+  @override
+  Future<Either<Failure, VerificationResponse>> resendVerificationCode({
+    required String email,
+  }) async {
+    try {
+      final request = SendVerificationCodeRequest(email: email);
+      final response = await _apiService.post(
+        '/api/auth/resend-verification-code',
+        data: request.toJson(),
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        if (response.data != null) {
+          final verificationResponse = VerificationResponse.fromJson(response.data);
+          return Right(verificationResponse);
+        } else {
+          return Left(ServerFailure(
+            'Verification code resent but no response data received',
+          ));
+        }
+      } else {
+        return Left(ServerFailure(
+          'Failed to resend verification code with status: ${response.statusCode}',
+        ));
+      }
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return Left(ServerFailure(
+        'Unexpected error while resending verification code: ${e.toString()}',
+      ));
     }
   }
 

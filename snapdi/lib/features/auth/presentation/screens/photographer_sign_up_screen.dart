@@ -5,6 +5,7 @@ import 'account_type_selection_screen.dart';
 import '../../domain/services/auth_service.dart';
 import '../../data/models/photographer_sign_up_request.dart';
 import '../../../../core/error/failures.dart';
+import 'verify_code_screen.dart';
 
 class PhotographerSignUpScreen extends StatefulWidget {
   final AccountType accountType;
@@ -196,18 +197,10 @@ class _PhotographerSignUpScreenState extends State<PhotographerSignUpScreen> {
             );
           },
           (photographerSignUpResponse) async {
-            // Store authentication tokens securely if available
-            if (photographerSignUpResponse.accessToken != null &&
-                photographerSignUpResponse.refreshToken != null) {
-              await _authService.storeAuthTokensFromPhotographerSignUp(
-                photographerSignUpResponse,
-              );
-            }
-
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  'Welcome, ${photographerSignUpResponse.user.name}! Photographer account created successfully!',
+                  'Photographer account created successfully! Please check your email for verification code.',
                   style: AppTextStyles.bodyMedium.copyWith(
                     color: AppColors.white,
                   ),
@@ -216,8 +209,18 @@ class _PhotographerSignUpScreenState extends State<PhotographerSignUpScreen> {
               ),
             );
 
-            // Navigate back to login screen
-            Navigator.of(context).popUntil((route) => route.isFirst);
+            // Navigate to verify code screen for email verification
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => VerifyCodeScreen(
+                  email: _emailController.text.trim(),
+                  onVerificationSuccess: () {
+                    // After successful verification, navigate to login screen
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                  },
+                ),
+              ),
+            );
           },
         );
       }

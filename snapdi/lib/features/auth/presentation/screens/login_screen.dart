@@ -3,6 +3,7 @@ import '../../../../core/constants/app_theme.dart';
 import '../../../../core/widgets/custom_input_field.dart';
 import 'account_type_selection_screen.dart';
 import '../../domain/services/auth_service.dart';
+import '../../../shared/presentation/screens/main_navigation_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -89,7 +90,13 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             );
             
-            // TODO: Navigate to main app screen
+            // Navigate to main app screen
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(
+                builder: (context) => const MainNavigationScreen(),
+              ),
+              (route) => false,
+            );
           },
         );
       }

@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../home/presentation/screens/home_screen.dart';
+import '../../../snap/presentation/screens/snap_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   const MainNavigationScreen({super.key});
@@ -18,7 +19,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final List<Widget> _pages = [
     const HomeScreen(),
     const PlaceholderScreen(title: 'Explore', icon: Icons.explore),
-    const PlaceholderScreen(title: 'Camera', icon: Icons.camera_alt),
+    const SnapScreen(),
     const PlaceholderScreen(title: 'History', icon: Icons.history),
     const PlaceholderScreen(title: 'Profile', icon: Icons.person),
   ];

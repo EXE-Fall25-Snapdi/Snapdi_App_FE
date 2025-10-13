@@ -33,6 +33,12 @@ class AppAssets {
   static const String promotion1 = '$_imagesPath/promotion1.png';
   static const String promotion2 = '$_imagesPath/promotion2.png';
   
+  // Locations
+  static const String locationImage1 = '$_imagesPath/location_image_1.png';
+  static const String locationImage2 = '$_imagesPath/location_image_2.png';
+  static const String locationImage3 = '$_imagesPath/location_image_3.png';
+  static const String screenSaleBag = '$_imagesPath/screen_saleBag.png';
+  
   // Onboarding
   // static const String onboardingImage1 = '$_imagesPath/onboarding_1.png';
   // static const String onboardingImage2 = '$_imagesPath/onboarding_2.png';
@@ -68,6 +74,8 @@ class AppAssets {
   static const String vipIcon = '$_iconsPath/vip_icon.svg';
   static const String vouncherIcon = '$_iconsPath/voucher_icon.svg';
   static const String searchIcon = '$_iconsPath/search_icon.svg';
+  static const String locationIcon = '$_iconsPath/location_icon.svg';
+  static const String mapIcon = '$_iconsPath/map_icon.svg';
   
   // Account Type Icons
   static const String snapperAccountIcon = '$_iconsPath/snaper_acc_icon.svg';
@@ -141,6 +149,10 @@ class AppAssets {
     mascotWave,
     promotion1,
     promotion2,
+    locationImage1,
+    locationImage2,
+    locationImage3,
+    screenSaleBag,
     // onboardingImage1,
     // onboardingImage2,
     // onboardingImage3,
@@ -166,6 +178,8 @@ class AppAssets {
     vipIcon,
     vouncherIcon,
     searchIcon,
+    locationIcon,
+    mapIcon,
     snapperAccountIcon,
     userAccountIcon,
     // weddingIcon,

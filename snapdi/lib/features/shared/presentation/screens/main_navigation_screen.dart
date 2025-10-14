@@ -31,7 +31,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         children: [
           // Main content
           _pages[_currentIndex],
-          
+
           // Custom Floating Navigation Bar
           Positioned(
             left: 24,
@@ -63,7 +63,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                       ),
                     ),
                   ),
-                  
+
                   // Navigation Items
                   Positioned(
                     left: 0,
@@ -92,16 +92,18 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       ),
     );
   }
-  
+
   Widget _buildNavItem(int index, String iconPath, String label) {
     final isSelected = _currentIndex == index;
     final isCameraIcon = index == 2;
-    
+
     return GestureDetector(
       onTap: () => setState(() => _currentIndex = index),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: EdgeInsets.only(bottom: isCameraIcon ? 5 : (isSelected ? 10 : 5)),
+        padding: EdgeInsets.only(
+          bottom: isCameraIcon ? 5 : (isSelected ? 10 : 5),
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -132,11 +134,7 @@ class PlaceholderScreen extends StatelessWidget {
   final String title;
   final IconData icon;
 
-  const PlaceholderScreen({
-    super.key,
-    required this.title,
-    required this.icon,
-  });
+  const PlaceholderScreen({super.key, required this.title, required this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -146,11 +144,7 @@ class PlaceholderScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              size: 64,
-              color: AppColors.primary,
-            ),
+            Icon(icon, size: 64, color: AppColors.primary),
             const SizedBox(height: 16),
             Text(
               title,

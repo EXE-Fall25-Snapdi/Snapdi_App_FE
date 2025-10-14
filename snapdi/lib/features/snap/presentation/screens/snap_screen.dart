@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:snapdi/features/shared/presentation/screens/main_navigation_screen.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
 import 'choose_location_screen.dart';
@@ -25,21 +26,9 @@ class _SnapScreenState extends State<SnapScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background gradient
+          // Background gradient image
           Positioned.fill(
-            child: Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Color(0xFF06302C),
-                    Color(0xFF0A4A43),
-                    Color(0xFF0E5D54),
-                  ],
-                ),
-              ),
-            ),
+            child: Image.asset(AppAssets.backgroundGradient, fit: BoxFit.cover),
           ),
 
           // Content
@@ -57,7 +46,7 @@ class _SnapScreenState extends State<SnapScreen> {
                         height: 40,
                         decoration: BoxDecoration(
                           color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(36),
                         ),
                         child: IconButton(
                           icon: const Icon(
@@ -65,7 +54,15 @@ class _SnapScreenState extends State<SnapScreen> {
                             color: Colors.black,
                             size: 20,
                           ),
-                          onPressed: () => Navigator.pop(context),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const MainNavigationScreen(),
+                              ),
+                            );
+                          },
                           padding: EdgeInsets.zero,
                         ),
                       ),
@@ -79,20 +76,20 @@ class _SnapScreenState extends State<SnapScreen> {
                         ),
                       ),
                       const Spacer(),
-                      // Sale bag icon
+                      // Map icon
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 12,
-                          vertical: 6,
+                          vertical: 8,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
+                          color: Color(0xFFAACBC4),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
                           children: [
                             SvgPicture.asset(
-                              AppAssets.menuIcon,
+                              AppAssets.mapIcon,
                               width: 16,
                               height: 16,
                             ),
@@ -100,7 +97,7 @@ class _SnapScreenState extends State<SnapScreen> {
                             const Text(
                               'Bản đồ',
                               style: TextStyle(
-                                color: Colors.white,
+                                color: Colors.black,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -114,22 +111,10 @@ class _SnapScreenState extends State<SnapScreen> {
 
                 // Promo banner
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
                   child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          AppColors.primary.withOpacity(0.3),
-                          Colors.transparent,
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: AppColors.primary.withOpacity(0.5),
-                        width: 1,
-                      ),
-                    ),
+                    padding: const EdgeInsets.only(left: 18),
+
                     child: Row(
                       children: [
                         Expanded(
@@ -137,7 +122,7 @@ class _SnapScreenState extends State<SnapScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Đi du lịch nhiều lắm? Cần ảnh đẹp để Snapper lo!',
+                                'Đi du lịch mùa lễ? Cần ảnh đẹp để Snapper lo!',
                                 style: AppTextStyles.bodyMedium.copyWith(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w600,
@@ -179,73 +164,10 @@ class _SnapScreenState extends State<SnapScreen> {
                         // Promo icons
                         Column(
                           children: [
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Icon(
-                                    Icons.camera_alt,
-                                    color: AppColors.primary,
-                                    size: 20,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade300,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Text(
-                                    '%',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.primaryDarker,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade300,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Text(
-                                    '%',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.primaryDarker,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.all(8),
-                                  decoration: BoxDecoration(
-                                    color: AppColors.primary,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Text(
-                                    '%',
-                                    style: TextStyle(
-                                      fontSize: 20,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                            Image.asset(
+                              AppAssets.screenSaleBag,
+                              width: 184,
+                              height: 184,
                             ),
                           ],
                         ),
@@ -254,125 +176,23 @@ class _SnapScreenState extends State<SnapScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 16),
-
-                // Search bar with Snap button
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(28),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Row(
-                      children: [
-                        // Location icon
-                        Padding(
-                          padding: const EdgeInsets.only(left: 16.0),
-                          child: SvgPicture.asset(
-                            AppAssets.locationIcon,
-                            width: 24,
-                            height: 24,
-                          ),
-                        ),
-                        // Search field
-                        Expanded(
-                          child: GestureDetector(
-                            onTap: () {
-                              // Navigate to choose location screen
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const ChooseLocationScreen(),
-                                ),
-                              );
-                            },
-                            child: AbsorbPointer(
-                              child: TextField(
-                                controller: _searchController,
-                                decoration: InputDecoration(
-                                  hintText: 'Bạn muốn snap ở đâu?',
-                                  hintStyle: AppTextStyles.bodyMedium.copyWith(
-                                    color: Colors.grey.shade600,
-                                  ),
-                                  border: InputBorder.none,
-                                  contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 14,
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        // Snap button
-                        Container(
-                          margin: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(24),
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () {
-                                // TODO: Handle snap search
-                              },
-                              borderRadius: BorderRadius.circular(24),
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 10,
-                                ),
-                                child: Row(
-                                  children: [
-                                    SvgPicture.asset(
-                                      AppAssets.cameraIcon,
-                                      width: 20,
-                                      height: 20,
-                                    ),
-                                    const SizedBox(width: 6),
-                                    const Text(
-                                      'Snap',
-                                      style: TextStyle(
-                                        color: Colors.black,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
                 // Main content area
                 Expanded(
                   child: Container(
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(32),
-                        topRight: Radius.circular(32),
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
                       ),
                     ),
                     child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.fromLTRB(
+                        20,
+                        50,
+                        20,
+                        20,
+                      ), // Top padding for floating search bar
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -381,18 +201,18 @@ class _SnapScreenState extends State<SnapScreen> {
                             'Dinh Độc Lập',
                             '135 Nam Kỳ Khởi Nghĩa, phường Bến Thành, Quận 1, Thành phố Hồ Chí Minh',
                           ),
-                          const Divider(height: 32),
+                          const Divider(height: 16),
                           _buildLocationItem(
                             'Công viên Tao Đàn',
                             'Quận 1, Thành phố Hồ Chí Minh, Việt Nam',
                           ),
-                          const Divider(height: 32),
+                          const Divider(height: 16),
                           _buildLocationItem(
                             'KATINAT Cống viên Thủ Thiêm',
                             'QPG6+F2H, rr 2, Thủ Thiêm, Thủ Đức, Hồ Chí Minh',
                           ),
 
-                          const SizedBox(height: 32),
+                          const SizedBox(height: 24),
 
                           // Hot destinations section
                           Row(
@@ -516,14 +336,118 @@ class _SnapScreenState extends State<SnapScreen> {
 
                           const SizedBox(height: 24),
                         ],
+                      ), // End of inner Column children
+                    ), // End of SingleChildScrollView
+                  ), // End of Container
+                ), // End of Expanded
+              ], // End of main Column children
+            ), // End of Column
+          ), // End of SafeArea
+          // Floating search bar
+          Positioned(
+            left: 16,
+            right: 16,
+            top: 280, // Adjust based on promo banner height
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(28),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  // Location icon
+                  Padding(
+                    padding: const EdgeInsets.only(left: 16.0),
+                    child: SvgPicture.asset(
+                      AppAssets.whiteLocationIcon,
+                      width: 28,
+                      height: 28,
+                    ),
+                  ),
+                  // Search field
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: () {
+                        // Navigate to choose location screen
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const ChooseLocationScreen(),
+                          ),
+                        );
+                      },
+                      child: AbsorbPointer(
+                        child: TextField(
+                          controller: _searchController,
+                          decoration: InputDecoration(
+                            hintText: 'Bạn muốn snap ở đâu?',
+                            hintStyle: AppTextStyles.bodyMedium.copyWith(
+                              color: AppColors.primaryDark,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 14,
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                  // Snap button
+                  Container(
+                    margin: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primaryDarker,
+                      borderRadius: BorderRadius.circular(18),
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          // TODO: Handle snap search
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          child: Row(
+                            children: [
+                              SvgPicture.asset(
+                                AppAssets.cameraIcon,
+                                width: 24,
+                                height: 24,
+                              ),
+                              const SizedBox(width: 6),
+                              const Text(
+                                'Snap',
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ],
+        ], // End of Stack children
       ),
     );
   }
@@ -540,15 +464,15 @@ class _SnapScreenState extends State<SnapScreen> {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
+              color: AppColors.greyLight,
+              borderRadius: BorderRadius.circular(20),
             ),
             child: SvgPicture.asset(
               AppAssets.locationIcon,
-              width: 24,
-              height: 24,
+              width: 28,
+              height: 28,
             ),
           ),
           const SizedBox(width: 16),
@@ -567,7 +491,7 @@ class _SnapScreenState extends State<SnapScreen> {
                 Text(
                   address,
                   style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.textSecondary,
+                    color: AppColors.textPrimary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,

@@ -12,7 +12,7 @@ class PromotionalCard extends StatefulWidget {
 class _PromotionalCardState extends State<PromotionalCard> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
-  
+
   final List<String> _promotionImages = [
     AppAssets.promotion1,
     AppAssets.promotion2,
@@ -54,9 +54,9 @@ class _PromotionalCardState extends State<PromotionalCard> {
             },
           ),
         ),
-        
+
         const SizedBox(height: 24),
-        
+
         // Page indicators
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -67,7 +67,7 @@ class _PromotionalCardState extends State<PromotionalCard> {
               width: _currentPage == index ? 24 : 8,
               height: 8,
               decoration: BoxDecoration(
-                color: _currentPage == index 
+                color: _currentPage == index
                     ? AppColors.primaryDark
                     : AppColors.grey.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(4),

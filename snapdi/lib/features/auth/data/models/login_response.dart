@@ -7,10 +7,10 @@ part 'login_response.g.dart';
 class LoginResponse {
   @JsonKey(name: 'token')
   final String token;
-  
+
   @JsonKey(name: 'refreshToken')
   final String refreshToken;
-  
+
   @JsonKey(name: 'user')
   final User user;
 

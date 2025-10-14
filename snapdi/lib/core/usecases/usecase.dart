@@ -7,13 +7,13 @@ abstract class UseCase<T, Params> {
 
 class NoParams {
   const NoParams();
-  
+
   @override
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     return other is NoParams;
   }
-  
+
   @override
   int get hashCode => 0;
 }

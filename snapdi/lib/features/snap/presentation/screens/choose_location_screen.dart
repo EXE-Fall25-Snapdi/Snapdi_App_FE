@@ -70,274 +70,260 @@ class _ChooseLocationScreenState extends State<ChooseLocationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE8F5F2),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Header section with gradient background
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Color(0xFF4DD4AC), Color(0xFFB8E5D8)],
-                ),
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(32),
-                  bottomRight: Radius.circular(32),
-                ),
-              ),
-              child: Column(
-                children: [
-                  // Top bar with back button and current location
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      children: [
-                        // Back button
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: IconButton(
-                            icon: const Icon(
-                              Icons.arrow_back,
-                              color: Colors.black,
-                              size: 20,
-                            ),
-                            onPressed: () => Navigator.pop(context),
-                            padding: EdgeInsets.zero,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        // Current location
-                        Expanded(
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.9),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Row(
-                              children: [
-                                SvgPicture.asset(
-                                  AppAssets.locationIcon,
-                                  width: 20,
-                                  height: 20,
-                                ),
-                                const SizedBox(width: 8),
-                                const Expanded(
-                                  child: Text(
-                                    'Vị trí hiện tại',
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.black87,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        // Menu button
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: IconButton(
-                            icon: const Icon(
-                              Icons.menu,
-                              color: Colors.black,
-                              size: 20,
-                            ),
-                            onPressed: () {
-                              // TODO: Open menu
-                            },
-                            padding: EdgeInsets.zero,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Search bar
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFE8F5F2),
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(AppAssets.backgroundWhite),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: SafeArea(
+          bottom: false,
+          child: Column(
+            children: [
+              // Header section with gradient background
+              Container(
+                child: Column(
+                  children: [
+                    // Top bar with back button and current location
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
                       child: Row(
                         children: [
-                          // Location icon
-                          Padding(
-                            padding: const EdgeInsets.only(left: 16.0),
-                            child: SvgPicture.asset(
-                              AppAssets.locationIcon,
-                              width: 20,
-                              height: 20,
+                          // Back button
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(36),
+                            ),
+                            child: IconButton(
+                              icon: const Icon(
+                                Icons.arrow_back,
+                                color: Colors.black,
+                                size: 20,
+                              ),
+                              onPressed: () => Navigator.pop(context),
+                              padding: EdgeInsets.zero,
                             ),
                           ),
-                          // Search field
+                          const SizedBox(width: 12),
+                          // Current location
                           Expanded(
-                            child: TextField(
-                              controller: _searchController,
-                              decoration: InputDecoration(
-                                hintText: 'Tìm địa điểm chụp ảnh đẹp',
-                                hintStyle: TextStyle(
-                                  color: Colors.grey.shade600,
-                                  fontSize: 14,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.9),
+                                border: Border.all(
+                                  color: Colors.cyan.shade100,
+                                  width: 1,
                                 ),
-                                border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 12,
-                                  vertical: 14,
-                                ),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Row(
+                                children: [
+                                  SvgPicture.asset(
+                                    AppAssets.whiteLocationIcon,
+                                    width: 20,
+                                    height: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  const Expanded(
+                                    child: Text(
+                                      'Vị trí hiện tại',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: AppColors.primaryDark,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                          // Search button
+                          const SizedBox(width: 12),
+                          // City button
                           Container(
-                            margin: const EdgeInsets.all(4),
+                            width: 32,
+                            height: 32,
                             decoration: BoxDecoration(
                               color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(36),
                             ),
                             child: IconButton(
                               icon: SvgPicture.asset(
-                                AppAssets.cameraIcon,
-                                width: 20,
-                                height: 20,
+                                AppAssets.starIcon,
+                                width: 16,
+                                height: 16,
                               ),
                               onPressed: () {
-                                // TODO: Handle search
+                                // TODO: Open menu
                               },
-                              padding: const EdgeInsets.all(8),
+                              padding: EdgeInsets.zero,
                             ),
                           ),
                         ],
                       ),
                     ),
-                  ),
-                ],
-              ),
-            ),
 
-            // Filter chips
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-              child: Row(
-                children: [
-                  _buildFilterChip('Dùng gần đây'),
-                  const SizedBox(width: 8),
-                  _buildFilterChip('Đề xuất'),
-                  const SizedBox(width: 8),
-                  _buildFilterChip('Đã lưu'),
-                ],
-              ),
-            ),
-
-            // Location list
-            Expanded(
-              child: ListView.separated(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: _locations.length,
-                separatorBuilder: (context, index) => const Divider(
-                  height: 1,
-                  thickness: 1,
-                  color: Color(0xFFE0E0E0),
-                ),
-                itemBuilder: (context, index) {
-                  final location = _locations[index];
-                  return _buildLocationItem(location);
-                },
-              ),
-            ),
-
-            // Bottom button
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF0A4A43),
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(24),
-                  topRight: Radius.circular(24),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
-              ),
-              child: SafeArea(
-                top: false,
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      // Navigate to booking detail with map selection
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const BookingDetailScreen(
-                            selectedLocation: 'Vị trí từ bản đồ',
-                          ),
+                    // Search bar
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.grayField,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
                         ),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        child: Row(
+                          children: [
+                            // Location icon
+                            Padding(
+                              padding: const EdgeInsets.only(left: 16.0),
+                              child: SvgPicture.asset(
+                                AppAssets.whiteLocationIcon,
+                                color: AppColors.primaryDark,
+                                width: 24,
+                                height: 24,
+                              ),
+                            ),
+                            // Search field
+                            Expanded(
+                              child: TextField(
+                                controller: _searchController,
+                                decoration: InputDecoration(
+                                  hintText: 'Tìm địa điểm chụp ảnh đẹp',
+                                  hintStyle: TextStyle(
+                                    color: AppColors.primaryDark,
+                                    fontSize: 14,
+                                  ),
+                                  border: InputBorder.none,
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 14,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            // Search button
+                            Container(
+                              margin: const EdgeInsets.all(4),
+
+                              child: IconButton(
+                                icon: SvgPicture.asset(
+                                  AppAssets.camera_altIcon,
+                                  width: 20,
+                                  height: 20,
+                                ),
+                                onPressed: () {
+                                  // TODO: Handle search
+                                },
+                                padding: const EdgeInsets.all(8),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                      elevation: 0,
                     ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SvgPicture.asset(
-                          AppAssets.mapIcon,
-                          width: 20,
-                          height: 20,
-                        ),
-                        const SizedBox(width: 8),
-                        const Text(
-                          'Chọn trên Snapmaps',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
+                  ],
+                ),
+              ),
+
+              // Filter chips
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 16,
+                ),
+                child: Row(
+                  children: [
+                    _buildFilterChip('Dùng gần đây'),
+                    const SizedBox(width: 8),
+                    _buildFilterChip('Đề xuất'),
+                    const SizedBox(width: 8),
+                    _buildFilterChip('Đã lưu'),
+                  ],
+                ),
+              ),
+
+              // Location list
+              Expanded(
+                child: ListView.separated(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  itemCount: _locations.length,
+                  separatorBuilder: (context, index) =>
+                      const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final location = _locations[index];
+                    return _buildLocationItem(location);
+                  },
+                ),
+              ), // Bottom button
+              GestureDetector(
+                onTap: () {
+                  // Navigate to booking detail with map selection
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const BookingDetailScreen(
+                        selectedLocation: 'Vị trí từ bản đồ',
+                      ),
                     ),
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.only(
+                    left: 16,
+                    right: 16,
+                    top: 20,
+                    bottom: 5 + MediaQuery.of(context).padding.bottom,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Color(0xFFAACBC4),
+                    
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.5),
+                        blurRadius: 10,
+                        offset: const Offset(0, -2),
+                      ),
+                    ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      SvgPicture.asset(
+                        AppAssets.mapIcon,
+                        width: 24,
+                        height: 24,
+                        
+                      ),
+                      const SizedBox(width: 12),
+                      const Text(
+                        'Chọn trên Snapmaps',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -386,8 +372,11 @@ class _ChooseLocationScreenState extends State<ChooseLocationScreen> {
         );
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        color: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -395,10 +384,10 @@ class _ChooseLocationScreenState extends State<ChooseLocationScreen> {
             Column(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(12),
+                    color: AppColors.greyLight,
+                    borderRadius: BorderRadius.circular(24),
                   ),
                   child: SvgPicture.asset(
                     AppAssets.locationIcon,

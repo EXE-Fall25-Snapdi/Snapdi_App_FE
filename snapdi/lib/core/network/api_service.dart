@@ -27,7 +27,7 @@ class ApiService {
     _dio.options = BaseOptions(
       baseUrl: baseUrl,
       connectTimeout: const Duration(minutes: 2), // Increased for development
-      receiveTimeout: const Duration(minutes: 2), // Increased for development  
+      receiveTimeout: const Duration(minutes: 2), // Increased for development
       sendTimeout: const Duration(minutes: 1),
       headers: {
         'Content-Type': 'application/json',
@@ -45,7 +45,7 @@ class ApiService {
           // if (token != null) {
           //   options.headers['Authorization'] = 'Bearer $token';
           // }
-          
+
           // Request logging for development
           // print('REQUEST[${options.method}] => ${options.path}');
           handler.next(options);
@@ -64,8 +64,8 @@ class ApiService {
     );
 
     // SSL certificate handling for development
-    if (baseUrl.contains('localhost') || 
-        baseUrl.contains('10.0.2.2') || 
+    if (baseUrl.contains('localhost') ||
+        baseUrl.contains('10.0.2.2') ||
         baseUrl.contains('192.168.') ||
         baseUrl.startsWith('https://192.168.')) {
       // Skip SSL certificate verification for development

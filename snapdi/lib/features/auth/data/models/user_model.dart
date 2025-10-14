@@ -18,7 +18,8 @@ class UserModel extends User {
     required super.role,
   });
 
-  factory UserModel.fromJson(Map<String, dynamic> json) => _$UserModelFromJson(json);
+  factory UserModel.fromJson(Map<String, dynamic> json) =>
+      _$UserModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$UserModelToJson(this);
 
@@ -46,7 +47,8 @@ class AuthTokenModel extends AuthToken {
     required super.expiresAt,
   });
 
-  factory AuthTokenModel.fromJson(Map<String, dynamic> json) => _$AuthTokenModelFromJson(json);
+  factory AuthTokenModel.fromJson(Map<String, dynamic> json) =>
+      _$AuthTokenModelFromJson(json);
 
   Map<String, dynamic> toJson() => _$AuthTokenModelToJson(this);
 
@@ -64,12 +66,10 @@ class LoginRequest {
   final String email;
   final String password;
 
-  const LoginRequest({
-    required this.email,
-    required this.password,
-  });
+  const LoginRequest({required this.email, required this.password});
 
-  factory LoginRequest.fromJson(Map<String, dynamic> json) => _$LoginRequestFromJson(json);
+  factory LoginRequest.fromJson(Map<String, dynamic> json) =>
+      _$LoginRequestFromJson(json);
 
   Map<String, dynamic> toJson() => _$LoginRequestToJson(this);
 }
@@ -92,7 +92,8 @@ class RegisterRequest {
     required this.role,
   });
 
-  factory RegisterRequest.fromJson(Map<String, dynamic> json) => _$RegisterRequestFromJson(json);
+  factory RegisterRequest.fromJson(Map<String, dynamic> json) =>
+      _$RegisterRequestFromJson(json);
 
   Map<String, dynamic> toJson() => _$RegisterRequestToJson(this);
 }

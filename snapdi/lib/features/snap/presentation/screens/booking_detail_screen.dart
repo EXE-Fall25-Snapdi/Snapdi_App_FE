@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
+import 'finding_snappers_screen.dart';
 
 class BookingDetailScreen extends StatefulWidget {
   final String? selectedLocation;
@@ -17,7 +18,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   TimeOfDay _selectedTime = TimeOfDay.now();
   String _selectedCategory = 'Chân dung';
   String _selectedStyle = 'Hiền đại';
-  String _selectedBudget = 'Ưu đãi';
+  String _selectedBudgetType = 'Ưu đãi';
+  final TextEditingController _userLocationController = TextEditingController();
+  final TextEditingController _bookingLocationController =
+      TextEditingController();
+  final TextEditingController _budgetController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
 
   final List<String> _categories = [
@@ -28,7 +33,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     'Thiên nhiên',
   ];
   final List<String> _styles = ['Hiền đại', 'Cổ trang', 'Tự do', 'Lịch sử'];
-  final List<String> _budgets = [
+  final List<String> _budgetTypes = [
     'Ưu đãi',
     'Y2K',
     'Tự do',
@@ -37,7 +42,19 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    // Set initial booking location from widget
+    if (widget.selectedLocation != null) {
+      _bookingLocationController.text = widget.selectedLocation!;
+    }
+  }
+
+  @override
   void dispose() {
+    _userLocationController.dispose();
+    _bookingLocationController.dispose();
+    _budgetController.dispose();
     _notesController.dispose();
     super.dispose();
   }
@@ -142,16 +159,49 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     _buildSectionCard(
                       child: Column(
                         children: [
-                          _buildLocationRow(
-                            icon: AppAssets.locationIcon,
-                            text: widget.selectedLocation ?? 'Vị trí hiện tại',
-                            hasRefresh: true,
+                          // User location field
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildLocationTextField(
+                                  icon: AppAssets.locationIcon,
+                                  controller: _userLocationController,
+                                  hintText: 'Vị trí hiện tại',
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              // Swap button on the right
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFE8F5F2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: IconButton(
+                                  onPressed: () {
+                                    // Swap the two locations
+                                    final temp = _userLocationController.text;
+                                    setState(() {
+                                      _userLocationController.text =
+                                          _bookingLocationController.text;
+                                      _bookingLocationController.text = temp;
+                                    });
+                                  },
+                                  icon: Icon(
+                                    Icons.swap_vert,
+                                    color: AppColors.primary,
+                                    size: 24,
+                                  ),
+                                  padding: const EdgeInsets.all(8),
+                                ),
+                              ),
+                            ],
                           ),
                           const SizedBox(height: 12),
-                          _buildLocationRow(
+                          // Booking location field
+                          _buildLocationTextField(
                             icon: AppAssets.searchIcon,
-                            text: 'Khu vực tìm kiếm Snapper',
-                            hasRefresh: false,
+                            controller: _bookingLocationController,
+                            hintText: 'Khu vực tìm kiếm Snapper',
                           ),
                         ],
                       ),
@@ -363,34 +413,67 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                             ],
                           ),
                           const SizedBox(height: 12),
+                          // Budget amount input and type dropdown in one row
                           Row(
                             children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 20,
-                                  vertical: 10,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: const Color(0xFFB8D4CF),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: const Text(
-                                  'VND',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.black87,
+                              Expanded(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFB8D4CF),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Text(
+                                        'VND',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: _budgetController,
+                                          keyboardType: TextInputType.number,
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.black87,
+                                          ),
+                                          decoration: InputDecoration(
+                                            hintText: 'Nhập số tiền',
+                                            hintStyle: TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey.shade600,
+                                            ),
+                                            border: InputBorder.none,
+                                            isDense: true,
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                                  vertical: 8,
+                                                ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ),
                               const SizedBox(width: 12),
+                              // Budget type dropdown
                               Expanded(
                                 child: _buildDropdownButton(
-                                  value: _selectedBudget,
-                                  items: _budgets,
+                                  value: _selectedBudgetType,
+                                  items: _budgetTypes,
                                   onChanged: (value) {
                                     setState(() {
-                                      _selectedBudget = value!;
+                                      _selectedBudgetType = value!;
                                     });
                                   },
                                 ),
@@ -482,11 +565,15 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             width: double.infinity,
             child: ElevatedButton(
               onPressed: () {
-                // TODO: Handle booking submission
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Đang xử lý đặt chụp...'),
-                    backgroundColor: AppColors.primary,
+                // Navigate to finding snappers screen
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => FindingSnappersScreen(
+                      location: widget.selectedLocation,
+                      date: _selectedDate,
+                      time: _selectedTime,
+                    ),
                   ),
                 );
               },
@@ -528,10 +615,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     );
   }
 
-  Widget _buildLocationRow({
+  Widget _buildLocationTextField({
     required String icon,
-    required String text,
-    required bool hasRefresh,
+    required TextEditingController controller,
+    required String hintText,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -544,13 +631,18 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           SvgPicture.asset(icon, width: 20, height: 20),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(
-              text,
+            child: TextField(
+              controller: controller,
               style: const TextStyle(fontSize: 14, color: Colors.black87),
+              decoration: InputDecoration(
+                hintText: hintText,
+                hintStyle: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: EdgeInsets.zero,
+              ),
             ),
           ),
-          if (hasRefresh)
-            Icon(Icons.refresh, color: AppColors.primary, size: 20),
         ],
       ),
     );

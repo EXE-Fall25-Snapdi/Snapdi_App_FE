@@ -14,10 +14,10 @@ Future<void> init() async {
   await _initPhotographer();
   await _initBooking();
   await _initProfile();
-  
+
   // Core
   await _initCore();
-  
+
   // External
   await _initExternal();
 }
@@ -62,44 +62,52 @@ Future<void> _initCore() async {
 Future<void> _initExternal() async {
   final sharedPreferences = await SharedPreferences.getInstance();
   sl.registerLazySingleton(() => sharedPreferences);
-  
+
   sl.registerLazySingleton(() => Connectivity());
-  
+
   sl.registerLazySingleton(() {
     final dio = Dio();
     dio.options.baseUrl = AppConstants.baseUrl;
-    dio.options.connectTimeout = Duration(milliseconds: AppConstants.connectionTimeout);
-    dio.options.receiveTimeout = Duration(milliseconds: AppConstants.receiveTimeout);
-    
+    dio.options.connectTimeout = Duration(
+      milliseconds: AppConstants.connectionTimeout,
+    );
+    dio.options.receiveTimeout = Duration(
+      milliseconds: AppConstants.receiveTimeout,
+    );
+
     // Add interceptors
-    dio.interceptors.add(LogInterceptor(
-      request: true,
-      requestHeader: true,
-      requestBody: true,
-      responseHeader: true,
-      responseBody: true,
-    ));
-    
+    dio.interceptors.add(
+      LogInterceptor(
+        request: true,
+        requestHeader: true,
+        requestBody: true,
+        responseHeader: true,
+        responseBody: true,
+      ),
+    );
+
     // Add auth interceptor
-    dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) async {
-        // Add auth token to headers
-        final prefs = sl<SharedPreferences>();
-        final token = prefs.getString(AppConstants.authTokenKey);
-        if (token != null) {
-          options.headers['Authorization'] = 'Bearer $token';
-        }
-        handler.next(options);
-      },
-      onError: (error, handler) async {
-        // Handle token refresh on 401
-        if (error.response?.statusCode == 401) {
-          // TODO: Implement token refresh logic
-        }
-        handler.next(error);
-      },
-    ));
-    
+    dio.interceptors.add(
+      InterceptorsWrapper(
+        onRequest: (options, handler) async {
+          // Add auth token to headers
+          final prefs = sl<SharedPreferences>();
+          final token = prefs.getString(AppConstants.authTokenKey);
+          if (token != null) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
+          handler.next(options);
+        },
+        onError: (error, handler) async {
+          // Handle token refresh on 401
+          if (error.response?.statusCode == 401) {
+            // TODO: Implement token refresh logic
+          }
+          handler.next(error);
+        },
+      ),
+    );
+
     return dio;
   });
 }

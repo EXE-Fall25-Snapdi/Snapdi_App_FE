@@ -6,37 +6,37 @@ part 'user.g.dart';
 class User {
   @JsonKey(name: 'userId')
   final int userId;
-  
+
   @JsonKey(name: 'roleId')
   final int roleId;
-  
+
   @JsonKey(name: 'roleName')
   final String roleName;
-  
+
   @JsonKey(name: 'name')
   final String name;
-  
+
   @JsonKey(name: 'email')
   final String email;
-  
+
   @JsonKey(name: 'phone')
   final String? phone;
-  
+
   @JsonKey(name: 'isActive')
   final bool isActive;
-  
+
   @JsonKey(name: 'isVerify')
   final bool isVerify;
-  
+
   @JsonKey(name: 'createdAt')
   final DateTime createdAt;
-  
+
   @JsonKey(name: 'locationAddress')
   final String? locationAddress;
-  
+
   @JsonKey(name: 'locationCity')
   final String? locationCity;
-  
+
   @JsonKey(name: 'avatarUrl')
   final String? avatarUrl;
 

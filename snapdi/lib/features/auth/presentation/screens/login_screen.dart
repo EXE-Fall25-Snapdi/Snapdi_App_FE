@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../../core/constants/app_theme.dart';
+import '../../../../core/constants/app_assets.dart';
 import '../../../../core/widgets/custom_input_field.dart';
 import 'account_type_selection_screen.dart';
 import '../../domain/services/auth_service.dart';
+import '../../../shared/presentation/screens/main_navigation_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -68,7 +71,9 @@ class _LoginScreenState extends State<LoginScreen> {
               SnackBar(
                 content: Text(
                   failure.message,
-                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.white),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.white,
+                  ),
                 ),
                 backgroundColor: AppColors.error,
               ),
@@ -78,18 +83,26 @@ class _LoginScreenState extends State<LoginScreen> {
             // Handle login success
             // Store authentication tokens securely using AuthService
             await _authService.storeAuthTokens(loginResponse);
-            
+
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
                   'Welcome back, ${loginResponse.user.name}!',
-                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.white),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.white,
+                  ),
                 ),
                 backgroundColor: AppColors.success,
               ),
             );
-            
-            // TODO: Navigate to main app screen
+
+            // Navigate to main app screen
+            Navigator.of(context).pushAndRemoveUntil(
+              MaterialPageRoute(
+                builder: (context) => const MainNavigationScreen(),
+              ),
+              (route) => false,
+            );
           },
         );
       }
@@ -111,75 +124,77 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              AppColors.gradientStart,
-              AppColors.gradientEnd,
-            ],
+      extendBodyBehindAppBar: true,
+      extendBody: true,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Positioned.fill(
+            child: Image.asset(AppAssets.backgroundGradient, fit: BoxFit.cover),
           ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-                  // Top section with logo
-                  SizedBox(
-                    height: 200,
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          // Logo placeholder
-                          Container(
-                            width: 120,
-                            height: 120,
-                            decoration: BoxDecoration(
-                              color: AppColors.white.withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Center(
-                              child: Text(
-                                'LOGO',
-                                style: AppTextStyles.headline3.copyWith(
-                                  color: AppColors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
+
+          // Content on top of background
+          SafeArea(
+            child: Column(
+              children: [
+                // Top section with logo (includes status bar height)
+                SizedBox(
+                  height: 200 + MediaQuery.of(context).padding.top,
+                  child: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        // Logo placeholder
+                        Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            color: AppColors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Center(
+                            child: Text(
+                              'LOGO',
+                              style: AppTextStyles.headline3.copyWith(
+                                color: AppColors.white,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ),
-                  
-                  // Bottom section with form
-                  Expanded(
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        color: AppColors.white,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(30),
-                          topRight: Radius.circular(30),
-                        ),
+                ),
+
+                // Bottom section with form
+                Expanded(
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: AppColors.white,
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(35),
+                        topRight: Radius.circular(35),
                       ),
-                      child: SingleChildScrollView(
-                        child: Padding(
+                    ),
+                    child: SingleChildScrollView(
+                      child: Padding(
                         padding: const EdgeInsets.fromLTRB(
                           AppDimensions.paddingLarge,
                           AppDimensions.paddingLarge,
                           AppDimensions.paddingLarge,
-                          AppDimensions.paddingLarge + 20, // Extra bottom padding
+                          AppDimensions.paddingLarge +
+                              20, // Extra bottom padding
                         ),
                         child: Form(
                           key: _formKey,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              const SizedBox(height: AppDimensions.marginMedium),
-                              
+                              const SizedBox(
+                                height: AppDimensions.marginMedium,
+                              ),
+
                               // Email field
                               CustomInputField(
                                 hintText: 'Email',
@@ -188,9 +203,11 @@ class _LoginScreenState extends State<LoginScreen> {
                                 controller: _emailController,
                                 validator: _validateEmail,
                               ),
-                              
-                              const SizedBox(height: AppDimensions.marginMedium),
-                              
+
+                              const SizedBox(
+                                height: AppDimensions.marginMedium,
+                              ),
+
                               // Password field
                               CustomInputField(
                                 hintText: 'Passwords',
@@ -199,9 +216,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 controller: _passwordController,
                                 validator: _validatePassword,
                               ),
-                              
+
                               const SizedBox(height: AppDimensions.marginSmall),
-                              
+
                               // Forgot password
                               Align(
                                 alignment: Alignment.centerRight,
@@ -212,7 +229,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                       SnackBar(
                                         content: Text(
                                           'Forgot password - Coming soon!',
-                                          style: AppTextStyles.bodyMedium.copyWith(color: AppColors.white),
+                                          style: AppTextStyles.bodyMedium
+                                              .copyWith(color: AppColors.white),
                                         ),
                                         backgroundColor: AppColors.secondary,
                                       ),
@@ -226,9 +244,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ),
                               ),
-                              
+
                               const SizedBox(height: AppDimensions.marginLarge),
-                              
+
                               // Login button
                               SizedBox(
                                 height: 50,
@@ -247,9 +265,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                           width: 20,
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2,
-                                            valueColor: AlwaysStoppedAnimation<Color>(
-                                              AppColors.white,
-                                            ),
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                  AppColors.white,
+                                                ),
                                           ),
                                         )
                                       : Text(
@@ -258,9 +277,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                         ),
                                 ),
                               ),
-                              
+
                               const SizedBox(height: AppDimensions.marginLarge),
-                              
+
                               // "Or log in with" text
                               Text(
                                 'Or log in with',
@@ -269,32 +288,38 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                                 textAlign: TextAlign.center,
                               ),
-                              
-                              const SizedBox(height: AppDimensions.marginMedium),
-                              
+
+                              const SizedBox(
+                                height: AppDimensions.marginMedium,
+                              ),
+
                               // Social login buttons
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   _SocialLoginButton(
-                                    icon: Icons.g_mobiledata, // Google placeholder
-                                    onPressed: () => _handleSocialLogin('Google'),
+                                    icon: Icons
+                                        .g_mobiledata, // Google placeholder
+                                    onPressed: () =>
+                                        _handleSocialLogin('Google'),
                                   ),
                                   const SizedBox(width: 20),
                                   _SocialLoginButton(
                                     icon: Icons.facebook, // Facebook
-                                    onPressed: () => _handleSocialLogin('Facebook'),
+                                    onPressed: () =>
+                                        _handleSocialLogin('Facebook'),
                                   ),
                                   const SizedBox(width: 20),
                                   _SocialLoginButton(
                                     icon: Icons.code, // GitHub placeholder
-                                    onPressed: () => _handleSocialLogin('GitHub'),
+                                    onPressed: () =>
+                                        _handleSocialLogin('GitHub'),
                                   ),
                                 ],
                               ),
-                              
+
                               const SizedBox(height: AppDimensions.marginLarge),
-                              
+
                               // Sign up link
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -310,7 +335,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                       Navigator.push(
                                         context,
                                         MaterialPageRoute(
-                                          builder: (context) => const AccountTypeSelectionScreen(),
+                                          builder: (context) =>
+                                              const AccountTypeSelectionScreen(),
                                         ),
                                       );
                                     },
@@ -324,7 +350,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   ),
                                 ],
                               ),
-                              
+
                               const SizedBox(height: AppDimensions.marginSmall),
                             ],
                           ),
@@ -333,9 +359,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-                ],
+              ],
             ),
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -345,10 +372,7 @@ class _SocialLoginButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onPressed;
 
-  const _SocialLoginButton({
-    required this.icon,
-    required this.onPressed,
-  });
+  const _SocialLoginButton({required this.icon, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -360,11 +384,7 @@ class _SocialLoginButton extends StatelessWidget {
         shape: BoxShape.circle,
       ),
       child: IconButton(
-        icon: Icon(
-          icon,
-          color: AppColors.textSecondary,
-          size: 24,
-        ),
+        icon: Icon(icon, color: AppColors.textSecondary, size: 24),
         onPressed: onPressed,
       ),
     );

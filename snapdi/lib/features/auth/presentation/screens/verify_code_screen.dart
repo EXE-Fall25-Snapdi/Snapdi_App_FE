@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 import '../../../../core/constants/app_theme.dart';
 import '../../domain/services/auth_service.dart';
+import '../../../shared/presentation/screens/main_navigation_screen.dart';
 
 class VerifyCodeScreen extends StatefulWidget {
   final String email;
@@ -215,7 +216,13 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                 if (widget.onVerificationSuccess != null) {
                   widget.onVerificationSuccess!();
                 } else {
-                  Navigator.of(context).popUntil((route) => route.isFirst);
+                  // Navigate to main app after successful verification
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                      builder: (context) => const MainNavigationScreen(),
+                    ),
+                    (route) => false,
+                  );
                 }
               },
               style: ElevatedButton.styleFrom(

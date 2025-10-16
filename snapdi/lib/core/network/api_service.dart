@@ -64,7 +64,10 @@ class ApiService {
     );
 
     // SSL certificate handling for development
-    if (baseUrl.contains('localhost') || baseUrl.contains('10.0.2.2')) {
+    if (baseUrl.contains('localhost') || 
+        baseUrl.contains('10.0.2.2') || 
+        baseUrl.contains('192.168.') ||
+        baseUrl.startsWith('https://192.168.')) {
       // Skip SSL certificate verification for development
       // Note: This is only for development purposes
       (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {

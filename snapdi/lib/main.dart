@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'core/dependency_injection/injection_container.dart' as di;
 import 'core/constants/app_theme.dart';
 import 'features/auth/presentation/screens/welcome_screen.dart';
+import 'features/shared/presentation/screens/main_navigation_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -74,6 +75,9 @@ class SnapdiApp extends StatelessWidget {
       ),
       // TODO: Add proper routing with go_router
       home: const WelcomeScreen(),
+      routes: {
+        '/home': (context) => const MainNavigationScreen(),
+      },
     );
   }
 }

@@ -2,22 +2,17 @@ class VerifyEmailCodeRequest {
   final String email;
   final String code;
 
-  const VerifyEmailCodeRequest({
-    required this.email,
-    required this.code,
-  });
+  const VerifyEmailCodeRequest({required this.email, required this.code});
 
   /// Factory constructor for creating a new VerifyEmailCodeRequest instance from a map
-  factory VerifyEmailCodeRequest.fromJson(Map<String, dynamic> json) => VerifyEmailCodeRequest(
-    email: json['email'] as String,
-    code: json['code'] as String,
-  );
+  factory VerifyEmailCodeRequest.fromJson(Map<String, dynamic> json) =>
+      VerifyEmailCodeRequest(
+        email: json['email'] as String,
+        code: json['code'] as String,
+      );
 
   /// Method for converting VerifyEmailCodeRequest instance to a map
-  Map<String, dynamic> toJson() => {
-    'email': email,
-    'code': code,
-  };
+  Map<String, dynamic> toJson() => {'email': email, 'code': code};
 
   @override
   String toString() {

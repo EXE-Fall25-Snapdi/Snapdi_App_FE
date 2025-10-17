@@ -44,26 +44,20 @@ class _CustomInputFieldState extends State<CustomInputField> {
       validator: widget.validator,
       keyboardType: widget.keyboardType,
       obscureText: widget.isPassword ? _obscureText : false,
-      style: AppTextStyles.bodyMedium.copyWith(
-        color: AppColors.textPrimary,
-      ),
+      style: AppTextStyles.bodyMedium.copyWith(color: AppColors.primaryDark),
       decoration: InputDecoration(
         hintText: widget.hintText,
         hintStyle: AppTextStyles.bodyMedium.copyWith(
-          color: AppColors.textSecondary,
+          color: AppColors.primaryDark,
         ),
         prefixIcon: widget.prefixIcon != null
-            ? Icon(
-                widget.prefixIcon,
-                color: AppColors.primary,
-                size: 20,
-              )
+            ? Icon(widget.prefixIcon, color: AppColors.primaryDark, size: 20)
             : null,
         suffixIcon: widget.isPassword
             ? IconButton(
                 icon: Icon(
                   _obscureText ? Icons.visibility_off : Icons.visibility,
-                  color: AppColors.textSecondary,
+                  color: AppColors.primaryDark,
                   size: 20,
                 ),
                 onPressed: () {
@@ -73,14 +67,11 @@ class _CustomInputFieldState extends State<CustomInputField> {
                 },
               )
             : widget.suffixIcon != null
-                ? Icon(
-                    widget.suffixIcon,
-                    color: AppColors.primary,
-                    size: 20,
-                  )
-                : null,
+            ? Icon(widget.suffixIcon, color: AppColors.primaryDark, size: 20)
+            : null,
         filled: true,
-        fillColor: const Color(0xFFB8D4D1), // Light green/teal background as in mockup
+        fillColor:
+            AppColors.grayField, // Light green/teal background as in mockup
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(25),
           borderSide: BorderSide.none,

@@ -7,13 +7,13 @@ part 'sign_up_response.g.dart';
 class SignUpResponse {
   @JsonKey(name: 'message')
   final String? message;
-  
+
   @JsonKey(name: 'user')
   final User user;
-  
+
   @JsonKey(name: 'accessToken')
   final String? accessToken;
-  
+
   @JsonKey(name: 'refreshToken')
   final String? refreshToken;
 
@@ -24,7 +24,8 @@ class SignUpResponse {
     this.refreshToken,
   });
 
-  factory SignUpResponse.fromJson(Map<String, dynamic> json) => _$SignUpResponseFromJson(json);
-  
+  factory SignUpResponse.fromJson(Map<String, dynamic> json) =>
+      _$SignUpResponseFromJson(json);
+
   Map<String, dynamic> toJson() => _$SignUpResponseToJson(this);
 }

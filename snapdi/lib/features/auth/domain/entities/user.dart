@@ -61,11 +61,7 @@ class User {
   int get hashCode => id.hashCode;
 }
 
-enum UserRole {
-  client,
-  photographer,
-  admin,
-}
+enum UserRole { client, photographer, admin }
 
 class AuthToken {
   final String accessToken;
@@ -84,8 +80,8 @@ class AuthToken {
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     return other is AuthToken &&
-           other.accessToken == accessToken &&
-           other.refreshToken == refreshToken;
+        other.accessToken == accessToken &&
+        other.refreshToken == refreshToken;
   }
 
   @override

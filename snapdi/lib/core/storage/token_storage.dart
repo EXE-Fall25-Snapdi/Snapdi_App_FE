@@ -8,24 +8,20 @@ class TokenStorage {
   static const String _isLoggedInKey = 'is_logged_in';
 
   static TokenStorage? _instance;
-  
+
   // Configure secure storage with encryption options
   static const _secureStorage = FlutterSecureStorage(
-    aOptions: AndroidOptions(
-      encryptedSharedPreferences: true,
-    ),
+    aOptions: AndroidOptions(encryptedSharedPreferences: true),
     iOptions: IOSOptions(
       accessibility: KeychainAccessibility.first_unlock_this_device,
     ),
     lOptions: LinuxOptions(),
-    wOptions: WindowsOptions(
-      useBackwardCompatibility: true,
-    ),
+    wOptions: WindowsOptions(useBackwardCompatibility: true),
     mOptions: MacOsOptions(
       accessibility: KeychainAccessibility.first_unlock_this_device,
     ),
   );
-  
+
   static TokenStorage get instance {
     _instance ??= TokenStorage._internal();
     return _instance!;
@@ -44,9 +40,10 @@ class TokenStorage {
         _secureStorage.write(key: _accessTokenKey, value: accessToken),
         _secureStorage.write(key: _refreshTokenKey, value: refreshToken),
         _secureStorage.write(key: _isLoggedInKey, value: 'true'),
-        if (userId != null) _secureStorage.write(key: _userIdKey, value: userId.toString()),
+        if (userId != null)
+          _secureStorage.write(key: _userIdKey, value: userId.toString()),
       ]);
-      
+
       return true;
     } catch (e) {
       return false;
@@ -110,7 +107,7 @@ class TokenStorage {
         _secureStorage.delete(key: _userIdKey),
         _secureStorage.delete(key: _isLoggedInKey),
       ]);
-      
+
       return true;
     } catch (e) {
       return false;
@@ -126,15 +123,15 @@ class TokenStorage {
         _secureStorage.read(key: _userIdKey),
         _secureStorage.read(key: _isLoggedInKey),
       ]);
-      
+
       final accessToken = results[0];
       final refreshToken = results[1];
       final userIdString = results[2];
       final isLoggedInString = results[3];
-      
+
       final userId = userIdString != null ? int.tryParse(userIdString) : null;
       final isLoggedIn = isLoggedInString == 'true';
-      
+
       if (accessToken != null && refreshToken != null && isLoggedIn) {
         return AuthTokens(
           accessToken: accessToken,
@@ -142,7 +139,7 @@ class TokenStorage {
           userId: userId,
         );
       }
-      
+
       return null;
     } catch (e) {
       return null;
@@ -157,17 +154,17 @@ class TokenStorage {
         _secureStorage.read(key: _refreshTokenKey),
         _secureStorage.read(key: _isLoggedInKey),
       ]);
-      
+
       final hasAccess = results[0] != null && results[0]!.isNotEmpty;
       final hasRefresh = results[1] != null && results[1]!.isNotEmpty;
       final isLoggedIn = results[2] == 'true';
-      
+
       return hasAccess && hasRefresh && isLoggedIn;
     } catch (e) {
       return false;
     }
   }
-  
+
   /// Clear all stored data (including non-auth data)
   Future<bool> clearAll() async {
     try {
@@ -206,5 +203,6 @@ class AuthTokens {
           userId == other.userId;
 
   @override
-  int get hashCode => accessToken.hashCode ^ refreshToken.hashCode ^ userId.hashCode;
+  int get hashCode =>
+      accessToken.hashCode ^ refreshToken.hashCode ^ userId.hashCode;
 }

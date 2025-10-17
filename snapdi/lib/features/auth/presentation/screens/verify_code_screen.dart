@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'dart:async';
 import '../../../../core/constants/app_theme.dart';
 import '../../domain/services/auth_service.dart';
+import '../../../shared/presentation/screens/main_navigation_screen.dart';
 
 class VerifyCodeScreen extends StatefulWidget {
   final String email;
@@ -19,11 +20,14 @@ class VerifyCodeScreen extends StatefulWidget {
 }
 
 class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
-  final List<TextEditingController> _controllers = List.generate(6, (index) => TextEditingController());
+  final List<TextEditingController> _controllers = List.generate(
+    6,
+    (index) => TextEditingController(),
+  );
   final List<FocusNode> _focusNodes = List.generate(6, (index) => FocusNode());
-  
+
   final AuthService _authService = AuthServiceImpl();
-  
+
   bool _isLoading = false;
   bool _isResending = false;
   int _resendCooldown = 0;
@@ -66,12 +70,12 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
       // Move to previous field
       _focusNodes[index - 1].requestFocus();
     }
-    
+
     // Auto-verify when code is complete
     if (_isCodeComplete && !_isLoading) {
       _verifyCode();
     }
-    
+
     setState(() {});
   }
 
@@ -95,7 +99,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
         email: widget.email,
         code: _verificationCode,
       );
-      
+
       result.fold(
         (failure) {
           if (mounted) {
@@ -134,7 +138,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
       final result = await _authService.resendVerificationCode(
         email: widget.email,
       );
-      
+
       result.fold(
         (failure) {
           if (mounted) {
@@ -143,7 +147,9 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
         },
         (response) {
           if (mounted) {
-            _showSuccessSnackBar("Verification code sent! Please check your email.");
+            _showSuccessSnackBar(
+              "Verification code sent! Please check your email.",
+            );
             _startResendCooldown();
           }
         },
@@ -165,7 +171,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
     setState(() {
       _resendCooldown = 60; // 60 seconds cooldown
     });
-    
+
     _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (_resendCooldown > 0) {
         setState(() {
@@ -188,11 +194,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
           ),
           title: Row(
             children: [
-              Icon(
-                Icons.check_circle,
-                color: AppColors.success,
-                size: 28,
-              ),
+              Icon(Icons.check_circle, color: AppColors.success, size: 28),
               const SizedBox(width: 12),
               Text(
                 'Verified!',
@@ -215,7 +217,13 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                 if (widget.onVerificationSuccess != null) {
                   widget.onVerificationSuccess!();
                 } else {
-                  Navigator.of(context).popUntil((route) => route.isFirst);
+                  // Navigate to main app after successful verification
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(
+                      builder: (context) => const MainNavigationScreen(),
+                    ),
+                    (route) => false,
+                  );
                 }
               },
               style: ElevatedButton.styleFrom(
@@ -242,9 +250,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
         ),
         backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
@@ -258,9 +264,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
         ),
         backgroundColor: AppColors.error,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
@@ -273,10 +277,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF2E8B7B),
-              Color(0xFF1E5F56),
-            ],
+            colors: [Color(0xFF2E8B7B), Color(0xFF1E5F56)],
           ),
         ),
         child: SafeArea(
@@ -289,10 +290,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                   children: [
                     IconButton(
                       onPressed: () => Navigator.of(context).pop(),
-                      icon: Icon(
-                        Icons.arrow_back,
-                        color: AppColors.white,
-                      ),
+                      icon: Icon(Icons.arrow_back, color: AppColors.white),
                     ),
                     const SizedBox(width: 8),
                     Text(
@@ -304,9 +302,9 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                     ),
                   ],
                 ),
-                
+
                 const SizedBox(height: 40),
-                
+
                 // Main content
                 Expanded(
                   child: Column(
@@ -326,9 +324,9 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                           color: AppColors.white,
                         ),
                       ),
-                      
+
                       const SizedBox(height: 32),
-                      
+
                       // Title
                       Text(
                         'Check Your Email',
@@ -338,9 +336,9 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      
+
                       const SizedBox(height: 16),
-                      
+
                       // Description
                       Text(
                         'We\'ve sent a 6-digit verification code to',
@@ -349,9 +347,9 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      
+
                       const SizedBox(height: 8),
-                      
+
                       // Email
                       Text(
                         widget.email,
@@ -361,9 +359,9 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      
+
                       const SizedBox(height: 48),
-                      
+
                       // Code input fields
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -402,7 +400,8 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                                   vertical: 16,
                                 ),
                               ),
-                              onChanged: (value) => _onCodeChanged(value, index),
+                              onChanged: (value) =>
+                                  _onCodeChanged(value, index),
                               onTap: () {
                                 // Clear field on tap for better UX
                                 _controllers[index].clear();
@@ -411,9 +410,9 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                           );
                         }),
                       ),
-                      
+
                       const SizedBox(height: 32),
-                      
+
                       // Loading indicator or verify button
                       if (_isLoading)
                         Row(
@@ -459,9 +458,9 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                             ),
                           ),
                         ),
-                      
+
                       const SizedBox(height: 48),
-                      
+
                       // Resend code section
                       Column(
                         children: [
@@ -491,17 +490,17 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                                           height: 16,
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2,
-                                            valueColor: AlwaysStoppedAnimation<Color>(
-                                              AppColors.white,
-                                            ),
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                  AppColors.white,
+                                                ),
                                           ),
                                         ),
                                         const SizedBox(width: 8),
                                         Text(
                                           'Sending...',
-                                          style: AppTextStyles.bodyMedium.copyWith(
-                                            color: AppColors.white,
-                                          ),
+                                          style: AppTextStyles.bodyMedium
+                                              .copyWith(color: AppColors.white),
                                         ),
                                       ],
                                     )

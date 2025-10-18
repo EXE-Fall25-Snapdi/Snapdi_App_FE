@@ -7,13 +7,13 @@ part 'photographer_sign_up_response.g.dart';
 class PhotographerSignUpResponse {
   @JsonKey(name: 'message')
   final String? message;
-  
+
   @JsonKey(name: 'user')
   final User user;
-  
+
   @JsonKey(name: 'accessToken')
   final String? accessToken;
-  
+
   @JsonKey(name: 'refreshToken')
   final String? refreshToken;
 
@@ -24,9 +24,9 @@ class PhotographerSignUpResponse {
     this.refreshToken,
   });
 
-  factory PhotographerSignUpResponse.fromJson(Map<String, dynamic> json) => 
+  factory PhotographerSignUpResponse.fromJson(Map<String, dynamic> json) =>
       _$PhotographerSignUpResponseFromJson(json);
-  
+
   Map<String, dynamic> toJson() => _$PhotographerSignUpResponseToJson(this);
 
   @override

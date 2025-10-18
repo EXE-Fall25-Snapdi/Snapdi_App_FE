@@ -18,33 +18,35 @@ abstract class AuthService {
     required String emailOrPhone,
     required String password,
   });
-  
+
   Future<Either<Failure, SignUpResponse>> register({
     required SignUpRequest signUpRequest,
   });
-  
+
   Future<Either<Failure, PhotographerSignUpResponse>> registerPhotographer({
     required PhotographerSignUpRequest photographerSignUpRequest,
   });
-  
+
   // Email Verification
   Future<Either<Failure, VerificationResponse>> sendVerificationCode({
     required String email,
   });
-  
+
   Future<Either<Failure, VerificationResponse>> verifyEmailCode({
     required String email,
     required String code,
   });
-  
+
   Future<Either<Failure, VerificationResponse>> resendVerificationCode({
     required String email,
   });
-  
+
   // Session Management
   Future<bool> storeAuthTokens(LoginResponse loginResponse);
   Future<bool> storeAuthTokensFromSignUp(SignUpResponse signUpResponse);
-  Future<bool> storeAuthTokensFromPhotographerSignUp(PhotographerSignUpResponse photographerSignUpResponse);
+  Future<bool> storeAuthTokensFromPhotographerSignUp(
+    PhotographerSignUpResponse photographerSignUpResponse,
+  );
   Future<bool> isLoggedIn();
   Future<String?> getAccessToken();
   Future<bool> logout();
@@ -55,11 +57,9 @@ class AuthServiceImpl implements AuthService {
   final ApiService _apiService;
   final TokenStorage _tokenStorage;
 
-  AuthServiceImpl({
-    ApiService? apiService,
-    TokenStorage? tokenStorage,
-  }) : _apiService = apiService ?? ApiService(),
-       _tokenStorage = tokenStorage ?? TokenStorage.instance;
+  AuthServiceImpl({ApiService? apiService, TokenStorage? tokenStorage})
+    : _apiService = apiService ?? ApiService(),
+      _tokenStorage = tokenStorage ?? TokenStorage.instance;
 
   @override
   Future<Either<Failure, LoginResponse>> login({
@@ -75,27 +75,23 @@ class AuthServiceImpl implements AuthService {
       final response = await _apiService.post(
         '/api/auth/login',
         data: loginRequest.toJson(),
-        options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        ),
+        options: Options(headers: {'Content-Type': 'application/json'}),
       );
 
       if (response.statusCode == 200 && response.data != null) {
         final loginResponse = LoginResponse.fromJson(response.data);
         return Right(loginResponse);
       } else {
-        return Left(ServerFailure(
-          'Login failed with status: ${response.statusCode}',
-        ));
+        return Left(
+          ServerFailure('Login failed with status: ${response.statusCode}'),
+        );
       }
     } on DioException catch (e) {
       return Left(_handleDioError(e));
     } catch (e) {
-      return Left(ServerFailure(
-        'Unexpected error during login: ${e.toString()}',
-      ));
+      return Left(
+        ServerFailure('Unexpected error during login: ${e.toString()}'),
+      );
     }
   }
 
@@ -107,11 +103,7 @@ class AuthServiceImpl implements AuthService {
       final response = await _apiService.post(
         '/api/auth/register',
         data: signUpRequest.toJson(),
-        options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        ),
+        options: Options(headers: {'Content-Type': 'application/json'}),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -119,21 +111,25 @@ class AuthServiceImpl implements AuthService {
           final signUpResponse = SignUpResponse.fromJson(response.data);
           return Right(signUpResponse);
         } else {
-          return Left(ServerFailure(
-            'Registration successful but no response data received',
-          ));
+          return Left(
+            ServerFailure(
+              'Registration successful but no response data received',
+            ),
+          );
         }
       } else {
-        return Left(ServerFailure(
-          'Registration failed with status: ${response.statusCode}',
-        ));
+        return Left(
+          ServerFailure(
+            'Registration failed with status: ${response.statusCode}',
+          ),
+        );
       }
     } on DioException catch (e) {
       return Left(_handleDioError(e));
     } catch (e) {
-      return Left(ServerFailure(
-        'Unexpected error during registration: ${e.toString()}',
-      ));
+      return Left(
+        ServerFailure('Unexpected error during registration: ${e.toString()}'),
+      );
     }
   }
 
@@ -153,7 +149,8 @@ class AuthServiceImpl implements AuthService {
   @override
   Future<bool> storeAuthTokensFromSignUp(SignUpResponse signUpResponse) async {
     try {
-      if (signUpResponse.accessToken != null && signUpResponse.refreshToken != null) {
+      if (signUpResponse.accessToken != null &&
+          signUpResponse.refreshToken != null) {
         return await _tokenStorage.storeTokens(
           accessToken: signUpResponse.accessToken!,
           refreshToken: signUpResponse.refreshToken!,
@@ -210,40 +207,46 @@ class AuthServiceImpl implements AuthService {
       final response = await _apiService.post(
         '/api/auth/register-photographer',
         data: photographerSignUpRequest.toJson(),
-        options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        ),
+        options: Options(headers: {'Content-Type': 'application/json'}),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (response.data != null) {
-          final photographerSignUpResponse = PhotographerSignUpResponse.fromJson(response.data);
+          final photographerSignUpResponse =
+              PhotographerSignUpResponse.fromJson(response.data);
           return Right(photographerSignUpResponse);
         } else {
-          return Left(ServerFailure(
-            'Photographer registration successful but no response data received',
-          ));
+          return Left(
+            ServerFailure(
+              'Photographer registration successful but no response data received',
+            ),
+          );
         }
       } else {
-        return Left(ServerFailure(
-          'Photographer registration failed with status: ${response.statusCode}',
-        ));
+        return Left(
+          ServerFailure(
+            'Photographer registration failed with status: ${response.statusCode}',
+          ),
+        );
       }
     } on DioException catch (e) {
       return Left(_handleDioError(e));
     } catch (e) {
-      return Left(ServerFailure(
-        'Unexpected error during photographer registration: ${e.toString()}',
-      ));
+      return Left(
+        ServerFailure(
+          'Unexpected error during photographer registration: ${e.toString()}',
+        ),
+      );
     }
   }
 
   @override
-  Future<bool> storeAuthTokensFromPhotographerSignUp(PhotographerSignUpResponse photographerSignUpResponse) async {
+  Future<bool> storeAuthTokensFromPhotographerSignUp(
+    PhotographerSignUpResponse photographerSignUpResponse,
+  ) async {
     try {
-      if (photographerSignUpResponse.accessToken != null && photographerSignUpResponse.refreshToken != null) {
+      if (photographerSignUpResponse.accessToken != null &&
+          photographerSignUpResponse.refreshToken != null) {
         return await _tokenStorage.storeTokens(
           accessToken: photographerSignUpResponse.accessToken!,
           refreshToken: photographerSignUpResponse.refreshToken!,
@@ -265,33 +268,37 @@ class AuthServiceImpl implements AuthService {
       final response = await _apiService.post(
         '/api/auth/send-verification-code',
         data: request.toJson(),
-        options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        ),
+        options: Options(headers: {'Content-Type': 'application/json'}),
       );
 
       if (response.statusCode == 200) {
         if (response.data != null) {
-          final verificationResponse = VerificationResponse.fromJson(response.data);
+          final verificationResponse = VerificationResponse.fromJson(
+            response.data,
+          );
           return Right(verificationResponse);
         } else {
-          return Left(ServerFailure(
-            'Verification code sent but no response data received',
-          ));
+          return Left(
+            ServerFailure(
+              'Verification code sent but no response data received',
+            ),
+          );
         }
       } else {
-        return Left(ServerFailure(
-          'Failed to send verification code with status: ${response.statusCode}',
-        ));
+        return Left(
+          ServerFailure(
+            'Failed to send verification code with status: ${response.statusCode}',
+          ),
+        );
       }
     } on DioException catch (e) {
       return Left(_handleDioError(e));
     } catch (e) {
-      return Left(ServerFailure(
-        'Unexpected error while sending verification code: ${e.toString()}',
-      ));
+      return Left(
+        ServerFailure(
+          'Unexpected error while sending verification code: ${e.toString()}',
+        ),
+      );
     }
   }
 
@@ -305,33 +312,37 @@ class AuthServiceImpl implements AuthService {
       final response = await _apiService.post(
         '/api/auth/verify-email-code',
         data: request.toJson(),
-        options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        ),
+        options: Options(headers: {'Content-Type': 'application/json'}),
       );
 
       if (response.statusCode == 200) {
         if (response.data != null) {
-          final verificationResponse = VerificationResponse.fromJson(response.data);
+          final verificationResponse = VerificationResponse.fromJson(
+            response.data,
+          );
           return Right(verificationResponse);
         } else {
-          return Left(ServerFailure(
-            'Email verification successful but no response data received',
-          ));
+          return Left(
+            ServerFailure(
+              'Email verification successful but no response data received',
+            ),
+          );
         }
       } else {
-        return Left(ServerFailure(
-          'Email verification failed with status: ${response.statusCode}',
-        ));
+        return Left(
+          ServerFailure(
+            'Email verification failed with status: ${response.statusCode}',
+          ),
+        );
       }
     } on DioException catch (e) {
       return Left(_handleDioError(e));
     } catch (e) {
-      return Left(ServerFailure(
-        'Unexpected error during email verification: ${e.toString()}',
-      ));
+      return Left(
+        ServerFailure(
+          'Unexpected error during email verification: ${e.toString()}',
+        ),
+      );
     }
   }
 
@@ -344,33 +355,37 @@ class AuthServiceImpl implements AuthService {
       final response = await _apiService.post(
         '/api/auth/resend-verification-code',
         data: request.toJson(),
-        options: Options(
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        ),
+        options: Options(headers: {'Content-Type': 'application/json'}),
       );
 
       if (response.statusCode == 200) {
         if (response.data != null) {
-          final verificationResponse = VerificationResponse.fromJson(response.data);
+          final verificationResponse = VerificationResponse.fromJson(
+            response.data,
+          );
           return Right(verificationResponse);
         } else {
-          return Left(ServerFailure(
-            'Verification code resent but no response data received',
-          ));
+          return Left(
+            ServerFailure(
+              'Verification code resent but no response data received',
+            ),
+          );
         }
       } else {
-        return Left(ServerFailure(
-          'Failed to resend verification code with status: ${response.statusCode}',
-        ));
+        return Left(
+          ServerFailure(
+            'Failed to resend verification code with status: ${response.statusCode}',
+          ),
+        );
       }
     } on DioException catch (e) {
       return Left(_handleDioError(e));
     } catch (e) {
-      return Left(ServerFailure(
-        'Unexpected error while resending verification code: ${e.toString()}',
-      ));
+      return Left(
+        ServerFailure(
+          'Unexpected error while resending verification code: ${e.toString()}',
+        ),
+      );
     }
   }
 
@@ -382,22 +397,23 @@ class AuthServiceImpl implements AuthService {
         return NetworkFailure(
           'Connection timeout. Please check your internet connection.',
         );
-      
+
       case DioExceptionType.badResponse:
         final statusCode = error.response?.statusCode;
-        
+
         // Safely extract error message from response
         String errorMessage = 'Server error occurred';
         final responseData = error.response?.data;
-        
+
         if (responseData is Map<String, dynamic>) {
-          errorMessage = responseData['message']?.toString() ?? 
-                        responseData['error']?.toString() ?? 
-                        errorMessage;
+          errorMessage =
+              responseData['message']?.toString() ??
+              responseData['error']?.toString() ??
+              errorMessage;
         } else if (responseData is String) {
           errorMessage = responseData;
         }
-        
+
         switch (statusCode) {
           case 400:
             return ValidationFailure(errorMessage);
@@ -411,10 +427,10 @@ class AuthServiceImpl implements AuthService {
           default:
             return ServerFailure(errorMessage);
         }
-      
+
       case DioExceptionType.cancel:
         return NetworkFailure('Request was cancelled');
-      
+
       case DioExceptionType.connectionError:
         // Check if it's a timeout error based on the message
         if (error.message?.contains('timeout') == true) {
@@ -425,13 +441,13 @@ class AuthServiceImpl implements AuthService {
         return NetworkFailure(
           'No internet connection. Please check your network settings.',
         );
-      
+
       case DioExceptionType.badCertificate:
         return NetworkFailure('SSL certificate error');
-      
+
       case DioExceptionType.unknown:
         // Check if it's a timeout error
-        if (error.message?.contains('timeout') == true || 
+        if (error.message?.contains('timeout') == true ||
             error.message?.contains('took longer') == true) {
           return NetworkFailure(
             'Request timeout. The server may be slow or unavailable. Please try again.',

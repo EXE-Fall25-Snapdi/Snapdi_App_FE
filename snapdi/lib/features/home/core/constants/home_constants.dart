@@ -9,18 +9,18 @@ class HomeConstants {
   static const Color voucherButtonColor = Color(0xFFFF9800);
   static const Color flashButtonColor = Color(0xFFF44336);
   static const Color allButtonColor = Color(0xFF607D8B);
-  
+
   // Promotional card gradients
   static const List<Color> photoCompetitionGradient = [
     Color(0xFF81C784),
     Color(0xFF4FC3F7),
   ];
-  
+
   static const List<Color> flashSaleGradient = [
     Color(0xFFFF8A65),
     Color(0xFFFF7043),
   ];
-  
+
   static const List<Color> vipOfferGradient = [
     Color(0xFFBA68C8),
     Color(0xFF9C27B0),
@@ -34,7 +34,7 @@ extension HomeTheme on ThemeData {
     blurRadius: 20,
     offset: const Offset(0, 5),
   );
-  
+
   BoxShadow get featureButtonShadow => BoxShadow(
     color: Colors.black.withOpacity(0.1),
     blurRadius: 8,

@@ -6,10 +6,10 @@ import 'features/shared/presentation/screens/main_navigation_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
+
   // Initialize dependency injection
   await di.init();
-  
+
   runApp(const SnapdiApp());
 }
 
@@ -30,7 +30,9 @@ class SnapdiApp extends StatelessWidget {
           backgroundColor: AppColors.primary,
           foregroundColor: AppColors.white,
           elevation: 0,
-          titleTextStyle: AppTextStyles.headline4.copyWith(color: AppColors.white),
+          titleTextStyle: AppTextStyles.headline4.copyWith(
+            color: AppColors.white,
+          ),
         ),
         textTheme: TextTheme(
           displayLarge: AppTextStyles.headline1,
@@ -75,11 +77,7 @@ class SnapdiApp extends StatelessWidget {
       ),
       // TODO: Add proper routing with go_router
       home: const WelcomeScreen(),
-      routes: {
-        '/home': (context) => const MainNavigationScreen(),
-      },
+      routes: {'/home': (context) => const MainNavigationScreen()},
     );
   }
 }
-
-

@@ -84,18 +84,6 @@ class _LoginScreenState extends State<LoginScreen> {
             // Store authentication tokens securely using AuthService
             await _authService.storeAuthTokens(loginResponse);
 
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Welcome back, ${loginResponse.user.name}!',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.white,
-                  ),
-                ),
-                backgroundColor: AppColors.success,
-              ),
-            );
-
             // Navigate to main app screen
             Navigator.of(context).pushAndRemoveUntil(
               MaterialPageRoute(

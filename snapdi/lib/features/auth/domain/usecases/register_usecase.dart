@@ -25,22 +25,22 @@ class RegisterParams {
   bool operator ==(Object other) {
     if (identical(this, other)) return true;
     return other is RegisterParams &&
-           other.email == email &&
-           other.password == password &&
-           other.firstName == firstName &&
-           other.lastName == lastName &&
-           other.phoneNumber == phoneNumber &&
-           other.role == role;
+        other.email == email &&
+        other.password == password &&
+        other.firstName == firstName &&
+        other.lastName == lastName &&
+        other.phoneNumber == phoneNumber &&
+        other.role == role;
   }
 
   @override
   int get hashCode {
     return email.hashCode ^
-           password.hashCode ^
-           firstName.hashCode ^
-           lastName.hashCode ^
-           phoneNumber.hashCode ^
-           role.hashCode;
+        password.hashCode ^
+        firstName.hashCode ^
+        lastName.hashCode ^
+        phoneNumber.hashCode ^
+        role.hashCode;
   }
 }
 

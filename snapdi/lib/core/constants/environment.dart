@@ -155,8 +155,9 @@ class Environment {
     'PLATFORM_COMMISSION_RATE',
     defaultValue: '0.15',
   );
-  
-  static double get platformCommissionRate => double.tryParse(_platformCommissionRateStr) ?? 0.15;
+
+  static double get platformCommissionRate =>
+      double.tryParse(_platformCommissionRateStr) ?? 0.15;
 
   static const int minBookingAmount = int.fromEnvironment(
     'MIN_BOOKING_AMOUNT',

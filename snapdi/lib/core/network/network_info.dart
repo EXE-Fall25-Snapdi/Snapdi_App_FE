@@ -5,7 +5,7 @@ abstract class NetworkInfo {
 class NetworkInfoImpl implements NetworkInfo {
   // This will be implemented with connectivity_plus package
   // For now, creating the interface
-  
+
   @override
   Future<bool> get isConnected async {
     // TODO: Implement with connectivity_plus package

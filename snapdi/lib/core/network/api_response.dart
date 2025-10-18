@@ -4,7 +4,7 @@ class ApiResponse<T> {
   final String? message;
   final int? statusCode;
   final Map<String, dynamic>? errors;
-  
+
   const ApiResponse({
     required this.success,
     this.data,
@@ -12,22 +12,22 @@ class ApiResponse<T> {
     this.statusCode,
     this.errors,
   });
-  
+
   factory ApiResponse.fromJson(
     Map<String, dynamic> json,
     T Function(Map<String, dynamic>)? fromJsonT,
   ) {
     return ApiResponse<T>(
       success: json['success'] ?? false,
-      data: json['data'] != null && fromJsonT != null 
-          ? fromJsonT(json['data']) 
+      data: json['data'] != null && fromJsonT != null
+          ? fromJsonT(json['data'])
           : json['data'],
       message: json['message'],
       statusCode: json['statusCode'],
       errors: json['errors'],
     );
   }
-  
+
   Map<String, dynamic> toJson(Map<String, dynamic> Function(T)? toJsonT) {
     return {
       'success': success,
@@ -47,7 +47,7 @@ class PaginatedResponse<T> {
   final int pageSize;
   final bool hasNext;
   final bool hasPrevious;
-  
+
   const PaginatedResponse({
     required this.data,
     required this.currentPage,
@@ -57,7 +57,7 @@ class PaginatedResponse<T> {
     required this.hasNext,
     required this.hasPrevious,
   });
-  
+
   factory PaginatedResponse.fromJson(
     Map<String, dynamic> json,
     T Function(Map<String, dynamic>) fromJsonT,

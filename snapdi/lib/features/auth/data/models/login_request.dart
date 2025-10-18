@@ -6,14 +6,11 @@ part 'login_request.g.dart';
 class LoginRequest {
   @JsonKey(name: 'emailOrPhone')
   final String emailOrPhone;
-  
+
   @JsonKey(name: 'password')
   final String password;
 
-  const LoginRequest({
-    required this.emailOrPhone,
-    required this.password,
-  });
+  const LoginRequest({required this.emailOrPhone, required this.password});
 
   /// Factory constructor for creating a new LoginRequest instance from a map
   factory LoginRequest.fromJson(Map<String, dynamic> json) =>

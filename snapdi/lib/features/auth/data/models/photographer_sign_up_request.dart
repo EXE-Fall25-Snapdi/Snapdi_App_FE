@@ -6,34 +6,34 @@ part 'photographer_sign_up_request.g.dart';
 class PhotographerSignUpRequest {
   @JsonKey(name: 'name')
   final String name;
-  
+
   @JsonKey(name: 'email')
   final String email;
-  
+
   @JsonKey(name: 'password')
   final String password;
-  
+
   @JsonKey(name: 'phone', includeIfNull: false)
   final String? phone;
-  
+
   @JsonKey(name: 'locationAddress', includeIfNull: false)
   final String? locationAddress;
-  
+
   @JsonKey(name: 'locationCity')
   final String locationCity;
-  
+
   @JsonKey(name: 'yearsOfExperience')
   final String yearsOfExperience;
-  
+
   @JsonKey(name: 'equipmentDescription')
   final String equipmentDescription;
-  
+
   @JsonKey(name: 'description', includeIfNull: false)
   final String? description;
-  
+
   @JsonKey(name: 'isAvailable', includeIfNull: false)
   final bool? isAvailable;
-  
+
   @JsonKey(name: 'avatarUrl', includeIfNull: false)
   final String? avatarUrl;
 

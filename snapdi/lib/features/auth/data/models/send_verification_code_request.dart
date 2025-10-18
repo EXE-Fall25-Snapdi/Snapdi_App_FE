@@ -1,19 +1,14 @@
 class SendVerificationCodeRequest {
   final String email;
 
-  const SendVerificationCodeRequest({
-    required this.email,
-  });
+  const SendVerificationCodeRequest({required this.email});
 
   /// Factory constructor for creating a new SendVerificationCodeRequest instance from a map
-  factory SendVerificationCodeRequest.fromJson(Map<String, dynamic> json) => SendVerificationCodeRequest(
-    email: json['email'] as String,
-  );
+  factory SendVerificationCodeRequest.fromJson(Map<String, dynamic> json) =>
+      SendVerificationCodeRequest(email: json['email'] as String);
 
   /// Method for converting SendVerificationCodeRequest instance to a map
-  Map<String, dynamic> toJson() => {
-    'email': email,
-  };
+  Map<String, dynamic> toJson() => {'email': email};
 
   @override
   String toString() {

@@ -10,10 +10,7 @@ import 'verify_code_screen.dart';
 class SignUpScreen extends StatefulWidget {
   final AccountType accountType;
 
-  const SignUpScreen({
-    super.key,
-    required this.accountType,
-  });
+  const SignUpScreen({super.key, required this.accountType});
 
   @override
   State<SignUpScreen> createState() => _SignUpScreenState();
@@ -120,7 +117,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
       final signUpRequest = SignUpRequest(
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
-        phone: _phoneController.text.trim().isNotEmpty ? _phoneController.text.trim() : null,
+        phone: _phoneController.text.trim().isNotEmpty
+            ? _phoneController.text.trim()
+            : null,
         password: _passwordController.text,
         roleId: _roleId,
         // Optional fields can be null for basic sign up
@@ -129,9 +128,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         avatarUrl: null,
       );
 
-      final result = await _authService.register(
-        signUpRequest: signUpRequest,
-      );
+      final result = await _authService.register(signUpRequest: signUpRequest);
 
       setState(() {
         _isLoading = false;
@@ -157,7 +154,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
               SnackBar(
                 content: Text(
                   errorMessage,
-                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.white),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.white,
+                  ),
                 ),
                 backgroundColor: AppColors.error,
               ),
@@ -168,12 +167,14 @@ class _SignUpScreenState extends State<SignUpScreen> {
               SnackBar(
                 content: Text(
                   'Account created successfully! Please check your email for verification code.',
-                  style: AppTextStyles.bodyMedium.copyWith(color: AppColors.white),
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.white,
+                  ),
                 ),
                 backgroundColor: AppColors.success,
               ),
             );
-            
+
             // Navigate to verify code screen for email verification
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
@@ -228,7 +229,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const SizedBox(height: AppDimensions.marginLarge),
-                    
+
                     // Title
                     Text(
                       'Create your account',
@@ -238,9 +239,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    
+
                     const SizedBox(height: AppDimensions.marginXLarge),
-                    
+
                     // Name field
                     CustomInputField(
                       hintText: 'Name',
@@ -249,9 +250,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       controller: _nameController,
                       validator: _validateName,
                     ),
-                    
+
                     const SizedBox(height: AppDimensions.marginMedium),
-                    
+
                     // Email field
                     CustomInputField(
                       hintText: 'Email',
@@ -260,9 +261,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       controller: _emailController,
                       validator: _validateEmail,
                     ),
-                    
+
                     const SizedBox(height: AppDimensions.marginMedium),
-                    
+
                     // Phone field (optional)
                     CustomInputField(
                       hintText: 'Phone Number (Optional)',
@@ -271,9 +272,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       controller: _phoneController,
                       validator: _validatePhone,
                     ),
-                    
+
                     const SizedBox(height: AppDimensions.marginMedium),
-                    
+
                     // Password field
                     CustomInputField(
                       hintText: 'Passwords',
@@ -282,9 +283,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       controller: _passwordController,
                       validator: _validatePassword,
                     ),
-                    
+
                     const SizedBox(height: AppDimensions.marginMedium),
-                    
+
                     // Confirm Password field
                     CustomInputField(
                       hintText: 'Confirm Passwords',
@@ -293,9 +294,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       controller: _confirmPasswordController,
                       validator: _validateConfirmPassword,
                     ),
-                    
+
                     const SizedBox(height: AppDimensions.marginMedium),
-                    
+
                     // Terms and conditions checkbox
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -348,9 +349,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: AppDimensions.marginLarge),
-                    
+
                     // Sign up button
                     SizedBox(
                       height: 50,
@@ -374,15 +375,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   ),
                                 ),
                               )
-                            : Text(
-                                'Sign up',
-                                style: AppTextStyles.buttonLarge,
-                              ),
+                            : Text('Sign up', style: AppTextStyles.buttonLarge),
                       ),
                     ),
-                    
+
                     const SizedBox(height: AppDimensions.marginLarge),
-                    
+
                     // "Or sign up with" text
                     Text(
                       'Or sign up with',
@@ -391,9 +389,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                       textAlign: TextAlign.center,
                     ),
-                    
+
                     const SizedBox(height: AppDimensions.marginMedium),
-                    
+
                     // Social sign up buttons
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -414,9 +412,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: AppDimensions.marginLarge),
-                    
+
                     // Login link
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -433,7 +431,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                             // Navigation stack: Welcome → Login → AccountType → SignUp
                             // We need to pop 2 screens to get back to Login
                             Navigator.of(context).pop(); // Pop SignUp
-                            Navigator.of(context).pop(); // Pop AccountType, back to Login
+                            Navigator.of(
+                              context,
+                            ).pop(); // Pop AccountType, back to Login
                           },
                           child: Text(
                             'Login',
@@ -445,7 +445,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                       ],
                     ),
-                    
+
                     const SizedBox(height: AppDimensions.marginSmall),
                   ],
                 ),
@@ -462,10 +462,7 @@ class _SocialSignUpButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onPressed;
 
-  const _SocialSignUpButton({
-    required this.icon,
-    required this.onPressed,
-  });
+  const _SocialSignUpButton({required this.icon, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
@@ -484,11 +481,7 @@ class _SocialSignUpButton extends StatelessWidget {
         ],
       ),
       child: IconButton(
-        icon: Icon(
-          icon,
-          color: AppColors.textSecondary,
-          size: 24,
-        ),
+        icon: Icon(icon, color: AppColors.textSecondary, size: 24),
         onPressed: onPressed,
       ),
     );

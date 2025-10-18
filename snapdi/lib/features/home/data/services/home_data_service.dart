@@ -13,12 +13,12 @@ class HomeDataService {
       return 'Chào buổi tối';
     }
   }
-  
+
   static String getUserName() {
     // TODO: Get from user session/storage
     return 'Per';
   }
-  
+
   // Mock promotional data
   static List<PromotionalData> getPromotionalCards() {
     return [
@@ -26,23 +26,19 @@ class HomeDataService {
         id: '1',
         title: 'PHOTO COMPETITION',
         subtitle: 'Win amazing prizes!',
-        description: 'Join our monthly photo competition and showcase your creativity.',
+        description:
+            'Join our monthly photo competition and showcase your creativity.',
         buttonText: 'Join Now',
-        gradientColors: const [
-          Color(0xFF81C784),
-          Color(0xFF4FC3F7),
-        ],
+        gradientColors: const [Color(0xFF81C784), Color(0xFF4FC3F7)],
       ),
       PromotionalData(
         id: '2',
         title: 'FLASH SALE',
         subtitle: '50% off all sessions!',
-        description: 'Limited time offer for professional photography sessions.',
+        description:
+            'Limited time offer for professional photography sessions.',
         buttonText: 'Book Now',
-        gradientColors: const [
-          Color(0xFFFF8A65),
-          Color(0xFFFF7043),
-        ],
+        gradientColors: const [Color(0xFFFF8A65), Color(0xFFFF7043)],
       ),
       PromotionalData(
         id: '3',
@@ -50,10 +46,7 @@ class HomeDataService {
         subtitle: 'Unlock premium features',
         description: 'Get priority booking and exclusive photographer access.',
         buttonText: 'Upgrade',
-        gradientColors: const [
-          Color(0xFFBA68C8),
-          Color(0xFF9C27B0),
-        ],
+        gradientColors: const [Color(0xFFBA68C8), Color(0xFF9C27B0)],
       ),
     ];
   }

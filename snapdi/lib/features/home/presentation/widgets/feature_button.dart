@@ -16,7 +16,10 @@ class FeatureButton extends StatelessWidget {
     required this.label,
     required this.backgroundColor,
     required this.onTap,
-  }) : assert(icon != null || iconPath != null, 'Either icon or iconPath must be provided');
+  }) : assert(
+         icon != null || iconPath != null,
+         'Either icon or iconPath must be provided',
+       );
 
   @override
   Widget build(BuildContext context) {
@@ -42,16 +45,8 @@ class FeatureButton extends StatelessWidget {
             ),
             child: Center(
               child: iconPath != null
-                  ? SvgPicture.asset(
-                      iconPath!,
-                      width: 30,
-                      height: 30,
-                    )
-                  : Icon(
-                      icon!,
-                      color: Colors.white,
-                      size: 24,
-                    ),
+                  ? SvgPicture.asset(iconPath!, width: 30, height: 30)
+                  : Icon(icon!, color: Colors.white, size: 24),
             ),
           ),
           const SizedBox(height: 6),

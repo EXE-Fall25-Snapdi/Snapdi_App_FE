@@ -44,20 +44,14 @@ class _CustomInputFieldState extends State<CustomInputField> {
       validator: widget.validator,
       keyboardType: widget.keyboardType,
       obscureText: widget.isPassword ? _obscureText : false,
-      style: AppTextStyles.bodyMedium.copyWith(
-        color: AppColors.primaryDark,
-      ),
+      style: AppTextStyles.bodyMedium.copyWith(color: AppColors.primaryDark),
       decoration: InputDecoration(
         hintText: widget.hintText,
         hintStyle: AppTextStyles.bodyMedium.copyWith(
           color: AppColors.primaryDark,
         ),
         prefixIcon: widget.prefixIcon != null
-            ? Icon(
-                widget.prefixIcon,
-                color: AppColors.primaryDark,
-                size: 20,
-              )
+            ? Icon(widget.prefixIcon, color: AppColors.primaryDark, size: 20)
             : null,
         suffixIcon: widget.isPassword
             ? IconButton(
@@ -73,14 +67,11 @@ class _CustomInputFieldState extends State<CustomInputField> {
                 },
               )
             : widget.suffixIcon != null
-                ? Icon(
-                    widget.suffixIcon,
-                    color: AppColors.primaryDark,
-                    size: 20,
-                  )
-                : null,
+            ? Icon(widget.suffixIcon, color: AppColors.primaryDark, size: 20)
+            : null,
         filled: true,
-        fillColor: AppColors.grayField, // Light green/teal background as in mockup
+        fillColor:
+            AppColors.grayField, // Light green/teal background as in mockup
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(25),
           borderSide: BorderSide.none,

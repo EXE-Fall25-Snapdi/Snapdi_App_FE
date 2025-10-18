@@ -18,21 +18,21 @@ class WelcomeScreen extends StatelessWidget {
           child: Column(
             children: [
               const Spacer(flex: 2),
-              
+
               // Logo Section
               Image.asset(AppAssets.snapdiLogoIcon),
-              
+
               const SizedBox(height: AppDimensions.marginXLarge),
-              
+
               // Welcome Text
               Text(
                 'Welcome to Snapdi',
                 style: AppTextStyles.headline1,
                 textAlign: TextAlign.center,
               ),
-              
+
               const SizedBox(height: AppDimensions.marginMedium),
-              
+
               // Description
               Text(
                 'Find and book professional photographers for your special moments. From weddings to portraits, we connect you with talented photographers in your area.',
@@ -42,9 +42,9 @@ class WelcomeScreen extends StatelessWidget {
                 ),
                 textAlign: TextAlign.center,
               ),
-              
+
               const Spacer(flex: 3),
-              
+
               // Get Started Button
               SizedBox(
                 width: double.infinity,
@@ -52,26 +52,29 @@ class WelcomeScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const LoginScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const LoginScreen(),
+                      ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     foregroundColor: AppColors.white,
-                    padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingMedium),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppDimensions.paddingMedium,
+                    ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusMedium,
+                      ),
                     ),
                   ),
-                  child: Text(
-                    'Get Started',
-                    style: AppTextStyles.buttonLarge,
-                  ),
+                  child: Text('Get Started', style: AppTextStyles.buttonLarge),
                 ),
               ),
-              
+
               const SizedBox(height: AppDimensions.marginMedium),
-              
+
               // Photographer Register Button
               SizedBox(
                 width: double.infinity,
@@ -79,14 +82,22 @@ class WelcomeScreen extends StatelessWidget {
                   onPressed: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const PhotographerSignUpScreen(accountType: AccountType.snapper)),
+                      MaterialPageRoute(
+                        builder: (context) => const PhotographerSignUpScreen(
+                          accountType: AccountType.snapper,
+                        ),
+                      ),
                     );
                   },
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: AppColors.primary),
-                    padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingMedium),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: AppDimensions.paddingMedium,
+                    ),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusMedium,
+                      ),
                     ),
                   ),
                   child: Text(
@@ -97,7 +108,7 @@ class WelcomeScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              
+
               const Spacer(flex: 1),
             ],
           ),

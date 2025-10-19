@@ -277,9 +277,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final photographerProfile = _photographerDetail?.photographerProfile;
     final levelPhotographer =
         photographerProfile?.levelPhotographer ??
-        (_isPhotographer && _portfolios.isEmpty
-            ? 'Disabled Photographer'
-            : null);
+        (_isPhotographer && _portfolios.isEmpty ? 'Disabled' : null);
 
     return Container(
       margin: const EdgeInsets.symmetric(

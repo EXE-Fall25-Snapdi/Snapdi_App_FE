@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:snapdi/features/shared/presentation/screens/main_navigation_screen.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
 import 'choose_location_screen.dart';
@@ -55,13 +55,7 @@ class _SnapScreenState extends State<SnapScreen> {
                             size: 20,
                           ),
                           onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const MainNavigationScreen(),
-                              ),
-                            );
+                            context.go('/home');
                           },
                           padding: EdgeInsets.zero,
                         ),

@@ -73,8 +73,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               onPrimary: Colors.black,
               surface: Colors.white,
               onSurface: Colors.black,
-            ),
-            dialogBackgroundColor: Colors.white,
+            ), dialogTheme: DialogThemeData(backgroundColor: Colors.white),
           ),
           child: child!,
         );

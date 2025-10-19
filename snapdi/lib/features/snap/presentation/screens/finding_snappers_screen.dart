@@ -3,6 +3,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
 import 'dart:async';
+import '../../../profile/presentation/widgets/cloudinary_image.dart';
 
 class FindingSnappersScreen extends StatefulWidget {
   final String? location;
@@ -425,22 +426,29 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
           // Avatar
           Stack(
             children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: Colors.grey.shade300,
-                  image: snapper.avatarUrl != null
-                      ? DecorationImage(
-                          image: NetworkImage(snapper.avatarUrl!),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
-                ),
-                child: snapper.avatarUrl == null
-                    ? Icon(Icons.person, size: 30, color: Colors.grey.shade600)
-                    : null,
+              ClipOval(
+                child: snapper.avatarUrl != null
+                    ? CloudinaryImage(
+                        publicId: snapper.avatarUrl!,
+                        width: 60,
+                        height: 60,
+                        crop: 'fill',
+                        gravity: 'face',
+                        quality: 80,
+                      )
+                    : Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.grey.shade300,
+                        ),
+                        child: Icon(
+                          Icons.person,
+                          size: 30,
+                          color: Colors.grey.shade600,
+                        ),
+                      ),
               ),
               if (snapper.isOnline)
                 Positioned(

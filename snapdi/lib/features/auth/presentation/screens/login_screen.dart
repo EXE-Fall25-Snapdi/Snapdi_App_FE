@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/widgets/custom_input_field.dart';
 import 'account_type_selection_screen.dart';
 import '../../domain/services/auth_service.dart';
-import '../../../shared/presentation/screens/main_navigation_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -59,41 +58,56 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text,
       );
 
+      if (!mounted) return;
+
       setState(() {
         _isLoading = false;
       });
 
-      if (mounted) {
-        result.fold(
-          (failure) {
-            // Handle login failure
+      result.fold(
+        (failure) {
+          // Handle login failure
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                failure.message,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.white,
+                ),
+              ),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        },
+        (loginResponse) async {
+          // Handle login success
+          // Store authentication tokens securely using AuthService
+          await _authService.storeAuthTokens(loginResponse);
+
+          // Show success message
+          if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  failure.message,
+                  'Login successful! Welcome ${loginResponse.user.name}',
                   style: AppTextStyles.bodyMedium.copyWith(
                     color: AppColors.white,
                   ),
                 ),
-                backgroundColor: AppColors.error,
+                backgroundColor: AppColors.success,
+                duration: const Duration(milliseconds: 1500),
               ),
             );
-          },
-          (loginResponse) async {
-            // Handle login success
-            // Store authentication tokens securely using AuthService
-            await _authService.storeAuthTokens(loginResponse);
 
-            // Navigate to main app screen
-            Navigator.of(context).pushAndRemoveUntil(
-              MaterialPageRoute(
-                builder: (context) => const MainNavigationScreen(),
-              ),
-              (route) => false,
-            );
-          },
-        );
-      }
+            // Wait a bit for the snackbar to be visible, then navigate
+            await Future.delayed(const Duration(milliseconds: 800));
+
+            if (mounted) {
+              context.go('/home');
+            }
+          }
+        },
+      );
     }
   }
 

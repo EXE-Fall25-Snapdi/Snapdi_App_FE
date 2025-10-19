@@ -307,13 +307,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                   ClipOval(
                     child: hasAvatar
-                        ? CloudinaryImage(
-                            publicId: avatarUrl,
+                        ? SizedBox(
                             width: 60,
                             height: 60,
-                            crop: 'fill',
-                            gravity: 'face',
-                            quality: 80,
+                            child: CloudinaryImage(
+                              publicId: avatarUrl,
+                              width: 60,
+                              height: 60,
+                              crop: 'fill',
+                              gravity: 'face',
+                              quality: 80,
+                            ),
                           )
                         : Container(
                             width: 60,
@@ -569,7 +573,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
 
     if (confirm == true && mounted) {
-      await _tokenStorage.clearTokens();
+      await _tokenStorage.clearAll();
       if (mounted) {
         context.go('/');
       }

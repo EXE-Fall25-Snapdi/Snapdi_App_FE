@@ -103,13 +103,14 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
     if (_selectedImage == null) return null;
 
     // If user already has an avatar publicId, delete the old one first
-    if (_userProfile?.avatarUrl != null &&
-        _userProfile!.avatarUrl!.isNotEmpty) {
-      await _cloudinaryService.deleteImage(_userProfile!.avatarUrl!);
-    }
+    // if (_userProfile?.avatarUrl != null &&
+    //     _userProfile!.avatarUrl!.isNotEmpty) {
+    //   await _cloudinaryService.deleteImage(_userProfile!.avatarUrl!);
+    // }
 
     final uploadResult = await _cloudinaryService.uploadSingleImage(
       _selectedImage!,
+      publicId: 'avatar',
       uploadType: 'avatar',
       overwrite: true,
     );
@@ -276,10 +277,10 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
               )
             // Show CloudinaryImage if user has avatar publicId
             else if (hasAvatar)
-              SizedBox(
-                width: 120,
-                height: 120,
-                child: ClipOval(
+              ClipOval(
+                child: SizedBox(
+                  width: 120,
+                  height: 120,
                   child: CloudinaryImage(
                     publicId: avatarPublicId,
                     width: 200,

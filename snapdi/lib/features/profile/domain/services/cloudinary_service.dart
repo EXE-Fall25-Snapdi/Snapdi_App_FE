@@ -133,8 +133,10 @@ class CloudinaryServiceImpl implements CloudinaryService {
         options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
-      // API trả về URL string trực tiếp
-      final url = response.data as String;
+      // API trả về object {"url": "..."}
+      final url = response.data is Map
+          ? response.data['url'] as String
+          : response.data as String;
       return Right(url);
     } on DioException catch (e) {
       return Left(_handleDioError(e));

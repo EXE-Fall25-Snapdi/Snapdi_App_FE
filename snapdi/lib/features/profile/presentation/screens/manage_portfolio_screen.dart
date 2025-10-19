@@ -317,12 +317,16 @@ class _ManagePortfolioScreenState extends State<ManagePortfolioScreen> {
           ),
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
-            child: CloudinaryImage(
-              publicId: portfolio.photoUrl,
-              width: double.maxFinite.toInt(),
-              height: double.maxFinite.toInt(),
-              crop: 'fill',
-              quality: 80,
+            child: SizedBox(
+              width: double.infinity,
+              height: double.infinity,
+              child: CloudinaryImage(
+                publicId: portfolio.photoUrl,
+                width: 400,
+                height: 400,
+                crop: 'fill',
+                quality: 80,
+              ),
             ),
           ),
         ),

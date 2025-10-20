@@ -4,13 +4,26 @@ import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
 import 'dart:async';
 import '../../../profile/presentation/widgets/cloudinary_image.dart';
+import '../../data/services/snapper_service.dart';
+import '../../data/models/find_snappers_request.dart';
 
 class FindingSnappersScreen extends StatefulWidget {
   final String? location;
   final DateTime? date;
   final TimeOfDay? time;
+  final String? city;
+  final List<int>? styleIds;
+  final double? budget;
 
-  const FindingSnappersScreen({super.key, this.location, this.date, this.time});
+  const FindingSnappersScreen({
+    super.key,
+    this.location,
+    this.date,
+    this.time,
+    this.city,
+    this.styleIds,
+    this.budget,
+  });
 
   @override
   State<FindingSnappersScreen> createState() => _FindingSnappersScreenState();
@@ -21,6 +34,7 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
   late AnimationController _animationController;
   bool _isSearching = true;
   final List<SnapperProfile> _foundSnappers = [];
+  final SnapperService _snapperService = SnapperService();
 
   @override
   void initState() {
@@ -30,16 +44,8 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
       duration: const Duration(seconds: 2),
     );
 
-    // Simulate finding snappers after 3 seconds
-    Timer(const Duration(seconds: 3), () {
-      if (mounted) {
-        setState(() {
-          _isSearching = false;
-          _foundSnappers.addAll(_getMockSnappers());
-        });
-        _animationController.stop();
-      }
-    });
+    // Find snappers using the API
+    _findSnappers();
   }
 
   @override
@@ -48,33 +54,105 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
     super.dispose();
   }
 
-  List<SnapperProfile> _getMockSnappers() {
-    return [
-      SnapperProfile(
-        name: 'Nguyễn Tuấn Kiệt',
-        subtitle: 'Snapper Chuyên Nghiệp',
-        rating: 5.0,
-        reviewCount: 25,
-        isOnline: true,
-        avatarUrl: null,
+  String _getLevelFromBudget(double? budget) {
+    if (budget == null || budget <= 0) {
+      return 'Chưa có cấp độ';
+    }
+    
+    // Budget ranges (in VND):
+    // Chưa có cấp độ: Invalid/no budget
+    // Người mới: < 300,000
+    // Nghiệp Dư: 300,000 - 600,000
+    // Bán Chuyên: 600,000 - 1,000,000
+    // Chuyên Nghiệp: 1,000,000 - 2,000,000
+    // Chuyên Gia: > 2,000,000
+    
+    if (budget < 300000) {
+      return 'Người mới';
+    } else if (budget < 600000) {
+      return 'Nghiệp Dư';
+    } else if (budget < 1000000) {
+      return 'Bán Chuyên';
+    } else if (budget < 2000000) {
+      return 'Chuyên Nghiệp';
+    } else {
+      return 'Chuyên Gia';
+    }
+  }
+
+  Future<void> _findSnappers() async {
+    setState(() {
+      _isSearching = true;
+      _foundSnappers.clear();
+    });
+
+    try {
+      final level = _getLevelFromBudget(widget.budget);
+      
+      final request = FindSnappersRequest(
+        city: widget.city ?? 'HCMC',
+        level: level,
+        styleIds: widget.styleIds ?? [],
+        isAvailable: true,
+        page: 1,
+        pageSize: 3,
+        sortBy: 'rating',
+        sortDirection: 'desc',
+      );
+
+      final response = await _snapperService.findSnappers(request);
+
+      if (mounted) {
+        if (response.success && response.data != null) {
+          setState(() {
+            _isSearching = false;
+            _foundSnappers.addAll(
+              response.data!.items.map((snapper) => SnapperProfile(
+                    userId: snapper.userId,
+                    name: snapper.fullName,
+                    subtitle: snapper.level,
+                    rating: snapper.rating,
+                    reviewCount: snapper.reviewCount,
+                    isOnline: snapper.isAvailable,
+                    avatarUrl: snapper.avatarUrl,
+                  )),
+            );
+          });
+        } else {
+          setState(() {
+            _isSearching = false;
+          });
+          if (mounted) {
+            _showErrorDialog('Không tìm thấy Snapper nào phù hợp');
+          }
+        }
+        _animationController.stop();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isSearching = false;
+        });
+        _animationController.stop();
+        _showErrorDialog('Lỗi khi tìm kiếm Snapper: $e');
+      }
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Thông báo'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Đóng'),
+          ),
+        ],
       ),
-      SnapperProfile(
-        name: 'Lưu Hoàng Phú',
-        subtitle: 'Snapper Nghiệp Dư',
-        rating: 5.0,
-        reviewCount: 20,
-        isOnline: true,
-        avatarUrl: null,
-      ),
-      SnapperProfile(
-        name: 'Phạm Hoàng Duy',
-        subtitle: 'Snapper Trung Cấp',
-        rating: 5.0,
-        reviewCount: 10,
-        isOnline: true,
-        avatarUrl: null,
-      ),
-    ];
+    );
   }
 
   @override
@@ -136,20 +214,8 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                             size: 20,
                           ),
                           onPressed: () {
-                            setState(() {
-                              _isSearching = true;
-                              _foundSnappers.clear();
-                            });
                             _animationController.repeat();
-                            Timer(const Duration(seconds: 3), () {
-                              if (mounted) {
-                                setState(() {
-                                  _isSearching = false;
-                                  _foundSnappers.addAll(_getMockSnappers());
-                                });
-                                _animationController.stop();
-                              }
-                            });
+                            _findSnappers();
                           },
                           padding: EdgeInsets.zero,
                         ),
@@ -611,6 +677,7 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
 }
 
 class SnapperProfile {
+  final int userId;
   final String name;
   final String subtitle;
   final double rating;
@@ -619,6 +686,7 @@ class SnapperProfile {
   final String? avatarUrl;
 
   SnapperProfile({
+    required this.userId,
     required this.name,
     required this.subtitle,
     required this.rating,

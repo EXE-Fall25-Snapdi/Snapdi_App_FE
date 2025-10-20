@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
+import '../../../../core/storage/token_storage.dart';
+import '../../data/models/booking_request.dart';
+import '../../data/services/booking_service.dart';
 import 'finding_snappers_screen.dart';
 
 class BookingDetailScreen extends StatefulWidget {
@@ -24,6 +27,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       TextEditingController();
   final TextEditingController _budgetController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
+  final BookingService _bookingService = BookingService();
+  final TokenStorage _tokenStorage = TokenStorage.instance;
+  bool _isSubmitting = false;
 
   final List<String> _categories = [
     'Sự kiện',
@@ -111,6 +117,131 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         _selectedTime = picked;
       });
     }
+  }
+
+  Future<void> _submitBooking() async {
+    // Validate inputs
+    if (_bookingLocationController.text.isEmpty) {
+      _showErrorDialog('Vui lòng chọn địa điểm chụp ảnh');
+      return;
+    }
+
+    if (_budgetController.text.isEmpty) {
+      _showErrorDialog('Vui lòng nhập ngân sách');
+      return;
+    }
+
+    final budget = double.tryParse(_budgetController.text);
+    if (budget == null || budget <= 0) {
+      _showErrorDialog('Ngân sách không hợp lệ');
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      // Get user ID from token storage
+      final userId = await _tokenStorage.getUserId();
+      if (userId == null) {
+        _showErrorDialog('Không tìm thấy thông tin người dùng');
+        setState(() {
+          _isSubmitting = false;
+        });
+        return;
+      }
+
+      // Combine date and time into ISO 8601 format
+      final scheduleDateTime = DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+        _selectedTime.hour,
+        _selectedTime.minute,
+      );
+
+      // Map style to styleId (you may need to adjust this based on your API)
+      int styleId = 0;
+      switch (_selectedStyle) {
+        case 'Hiền đại':
+          styleId = 1;
+          break;
+        case 'Cổ trang':
+          styleId = 2;
+          break;
+        case 'Tự do':
+          styleId = 3;
+          break;
+        case 'Lịch sử':
+          styleId = 4;
+          break;
+        default:
+          styleId = 0;
+      }
+
+      final bookingRequest = BookingRequest(
+        customerId: userId,
+        photographerId: 0, // Will be set after finding snappers
+        scheduleAt: scheduleDateTime.toIso8601String(),
+        locationCity: _userLocationController.text.isEmpty 
+            ? 'Unknown' 
+            : _userLocationController.text,
+        locationAddress: _bookingLocationController.text,
+        styleId: styleId,
+        price: budget,
+      );
+
+      final response = await _bookingService.createBooking(bookingRequest);
+
+      if (!mounted) return;
+
+      if (response.success) {
+        // Navigate to finding snappers screen on success
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => FindingSnappersScreen(
+              location: _bookingLocationController.text,
+              date: _selectedDate,
+              time: _selectedTime,
+              city: _userLocationController.text.isEmpty 
+                  ? 'HCMC' 
+                  : _userLocationController.text,
+              styleIds: styleId > 0 ? [styleId] : [],
+              budget: budget,
+            ),
+          ),
+        );
+      } else {
+        _showErrorDialog(response.message ?? 'Không thể tạo đặt chỗ');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      _showErrorDialog('Lỗi: ${e.toString()}');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Lỗi'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -563,19 +694,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           child: SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
-                // Navigate to finding snappers screen
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => FindingSnappersScreen(
-                      location: widget.selectedLocation,
-                      date: _selectedDate,
-                      time: _selectedTime,
-                    ),
-                  ),
-                );
-              },
+              onPressed: _isSubmitting ? null : _submitBooking,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.black,
@@ -584,11 +703,21 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 elevation: 0,
+                disabledBackgroundColor: AppColors.primary.withOpacity(0.5),
               ),
-              child: const Text(
-                'Tìm ngay',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
+              child: _isSubmitting
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                      ),
+                    )
+                  : const Text(
+                      'Tìm ngay',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
             ),
           ),
         ),

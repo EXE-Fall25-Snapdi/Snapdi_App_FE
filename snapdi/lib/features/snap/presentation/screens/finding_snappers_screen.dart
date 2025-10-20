@@ -4,6 +4,7 @@ import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
 import 'dart:async';
 import '../../../profile/presentation/widgets/cloudinary_image.dart';
+import 'booking_confirm_screen.dart';
 
 class FindingSnappersScreen extends StatefulWidget {
   final String? location;
@@ -526,11 +527,17 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: () {
-                      // TODO: Navigate to snapper profile or booking
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Đặt chụp với ${snapper.name}'),
-                          backgroundColor: AppColors.primary,
+                      // Navigate to booking confirm screen
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BookingConfirmScreen(
+                            snapper: snapper,
+                            location: widget.location,
+                            date: widget.date,
+                            time: widget.time,
+                            // Truyền các thông tin booking khác
+                          ),
                         ),
                       );
                     },

@@ -194,7 +194,7 @@ class _AccountTypeCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Custom asset icon
-            Container(
+            SizedBox(
               width: 95,
               height: 95,
 

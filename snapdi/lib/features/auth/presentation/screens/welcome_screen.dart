@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:snapdi/features/auth/presentation/screens/account_type_selection_screen.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
-import 'login_screen.dart';
-import 'photographer_sign_up_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -50,12 +48,8 @@ class WelcomeScreen extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const LoginScreen(),
-                      ),
-                    );
+                    // Use go_router for navigation
+                    context.push('/login');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
@@ -80,14 +74,8 @@ class WelcomeScreen extends StatelessWidget {
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const PhotographerSignUpScreen(
-                          accountType: AccountType.snapper,
-                        ),
-                      ),
-                    );
+                    // Use go_router for navigation
+                    context.push('/signup');
                   },
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: AppColors.primary),

@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:dartz/dartz.dart';
+import 'dart:convert';
 import '../../../../core/error/failures.dart';
 import '../../../../core/network/api_service.dart';
 import '../../../../core/storage/token_storage.dart';
@@ -136,10 +137,14 @@ class AuthServiceImpl implements AuthService {
   @override
   Future<bool> storeAuthTokens(LoginResponse loginResponse) async {
     try {
+      // Convert user object to JSON string for storage
+      final userJson = jsonEncode(loginResponse.user.toJson());
+
       return await _tokenStorage.storeTokens(
         accessToken: loginResponse.token,
         refreshToken: loginResponse.refreshToken,
         userId: loginResponse.user.userId,
+        userInfo: userJson,
       );
     } catch (e) {
       return false;

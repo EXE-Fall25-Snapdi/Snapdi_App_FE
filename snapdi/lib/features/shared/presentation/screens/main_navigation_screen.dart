@@ -1,36 +1,89 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
-import '../../../home/presentation/screens/home_screen.dart';
-import '../../../snap/presentation/screens/snap_screen.dart';
+import '../../../../core/storage/token_storage.dart';
 
 class MainNavigationScreen extends StatefulWidget {
-  const MainNavigationScreen({super.key});
+  final Widget child;
+
+  const MainNavigationScreen({super.key, required this.child});
 
   @override
   State<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
+  final _tokenStorage = TokenStorage.instance;
+  String? _userId;
   int _currentIndex = 0;
 
-  // Pages for bottom navigation
-  final List<Widget> _pages = [
-    const HomeScreen(),
-    const PlaceholderScreen(title: 'Explore', icon: Icons.explore),
-    const SnapScreen(),
-    const PlaceholderScreen(title: 'History', icon: Icons.history),
-    const PlaceholderScreen(title: 'Profile', icon: Icons.person),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadUserId();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _updateCurrentIndex();
+  }
+
+  Future<void> _loadUserId() async {
+    final userId = await _tokenStorage.getUserId();
+    setState(() {
+      _userId = userId?.toString();
+    });
+  }
+
+  void _updateCurrentIndex() {
+    final location = GoRouterState.of(context).uri.path;
+    setState(() {
+      if (location == '/home') {
+        _currentIndex = 0;
+      } else if (location == '/explore') {
+        _currentIndex = 1;
+      } else if (location == '/snap') {
+        _currentIndex = 2;
+      } else if (location == '/history') {
+        _currentIndex = 3;
+      } else if (location.startsWith('/profile')) {
+        _currentIndex = 4;
+      }
+    });
+  }
+
+  void _onNavItemTapped(int index) {
+    switch (index) {
+      case 0:
+        context.go('/home');
+        break;
+      case 1:
+        context.go('/explore');
+        break;
+      case 2:
+        context.go('/snap');
+        break;
+      case 3:
+        context.go('/history');
+        break;
+      case 4:
+        if (_userId != null) {
+          context.go('/profile/$_userId');
+        }
+        break;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
-          // Main content
-          _pages[_currentIndex],
+          // Main content - display the child widget passed from router
+          widget.child,
 
           // Custom Floating Navigation Bar
           Positioned(
@@ -98,7 +151,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     final isCameraIcon = index == 2;
 
     return GestureDetector(
-      onTap: () => setState(() => _currentIndex = index),
+      onTap: () => _onNavItemTapped(index),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: EdgeInsets.only(
@@ -122,43 +175,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 ),
               ),
             ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-// Placeholder screens for other navigation items
-class PlaceholderScreen extends StatelessWidget {
-  final String title;
-  final IconData icon;
-
-  const PlaceholderScreen({super.key, required this.title, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 64, color: AppColors.primary),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: AppTextStyles.headline3.copyWith(
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Coming Soon',
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
           ],
         ),
       ),

@@ -44,6 +44,7 @@ dependencies:
   # Network
   dio: ^5.3.2
   connectivity_plus: ^5.0.1
+  http: ^0.13.6
 
   # Local Storage
   shared_preferences: ^2.2.2
@@ -68,6 +69,7 @@ dependencies:
   # UI Components
   flutter_svg: ^2.0.9
   shimmer: ^3.0.0
+  qr_flutter: ^4.1.0
 
   # Navigation
   go_router: ^12.1.1

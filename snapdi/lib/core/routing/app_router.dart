@@ -4,6 +4,7 @@ import 'package:snapdi/features/auth/presentation/screens/account_type_selection
 import 'package:snapdi/features/auth/presentation/screens/login_screen.dart';
 import 'package:snapdi/features/auth/presentation/screens/photographer_sign_up_screen.dart';
 import 'package:snapdi/features/auth/presentation/screens/welcome_screen.dart';
+import 'package:snapdi/features/auth/presentation/screens/splash_screen.dart';
 import 'package:snapdi/features/profile/presentation/screens/profile_screen.dart';
 import 'package:snapdi/features/profile/presentation/screens/manage_portfolio_screen.dart';
 import 'package:snapdi/features/profile/presentation/screens/account_settings_screen.dart';
@@ -20,8 +21,11 @@ final GoRouter router = GoRouter(
   navigatorKey: _rootNavigatorKey,
   initialLocation: '/',
   routes: [
+    // --- Splash Screen (checks auth and redirects) ---
+    GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
+    
     // --- Auth Routes (without navigation bar) ---
-    GoRoute(path: '/', builder: (context, state) => const WelcomeScreen()),
+    GoRoute(path: '/welcome', builder: (context, state) => const WelcomeScreen()),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(
       path: '/signup',
@@ -54,11 +58,6 @@ final GoRouter router = GoRouter(
           ),
         ),
         GoRoute(
-          path: '/snap',
-          pageBuilder: (context, state) =>
-              NoTransitionPage(key: state.pageKey, child: const SnapScreen()),
-        ),
-        GoRoute(
           path: '/history',
           pageBuilder: (context, state) => NoTransitionPage(
             key: state.pageKey,
@@ -79,6 +78,13 @@ final GoRouter router = GoRouter(
           },
         ),
       ],
+    ),
+
+    // --- SNAP Flow Routes (without navigation bar) ---
+    GoRoute(
+      path: '/snap',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const SnapScreen(),
     ),
 
     // --- Portfolio Management Route (without navigation bar) ---

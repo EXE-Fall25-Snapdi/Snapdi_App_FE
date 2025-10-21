@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -18,7 +19,7 @@ class WelcomeScreen extends StatelessWidget {
               const Spacer(flex: 2),
 
               // Logo Section
-              Image.asset(AppAssets.snapdiLogoIcon),
+              SvgPicture.asset(AppAssets.snapdiLogo),
 
               const SizedBox(height: AppDimensions.marginXLarge),
 

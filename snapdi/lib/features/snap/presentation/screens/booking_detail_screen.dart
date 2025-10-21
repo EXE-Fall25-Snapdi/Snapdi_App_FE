@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
+import '../../../../core/storage/token_storage.dart';
+import '../../data/services/style_service.dart';
+import '../../data/services/photo_type_service.dart';
+import '../../data/services/nominatim_service.dart';
+import '../../data/models/style.dart';
+import '../../data/models/photo_type.dart';
 import 'finding_snappers_screen.dart';
 
 class BookingDetailScreen extends StatefulWidget {
@@ -16,37 +23,78 @@ class BookingDetailScreen extends StatefulWidget {
 class _BookingDetailScreenState extends State<BookingDetailScreen> {
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
-  String _selectedCategory = 'Chân dung';
-  String _selectedStyle = 'Hiền đại';
-  String _selectedBudgetType = 'Ưu đãi';
+  String? _selectedCategory;
+  int? _selectedCategoryId;
+  String? _selectedStyle;
+  int? _selectedStyleId;
   final TextEditingController _userLocationController = TextEditingController();
   final TextEditingController _bookingLocationController =
       TextEditingController();
-  final TextEditingController _budgetController = TextEditingController();
+  final TextEditingController _minBudgetController = TextEditingController();
+  final TextEditingController _maxBudgetController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
+  final TokenStorage _tokenStorage = TokenStorage.instance;
+  final StyleService _styleService = StyleService();
+  final PhotoTypeService _photoTypeService = PhotoTypeService();
+  final NominatimService _nominatimService = NominatimService();
+  bool _isSubmitting = false;
+  bool _useUserLocation = true;
+  String _chosenBookingLocation = '';
+  bool _isLoadingData = true;
+  bool _isLoadingUserLocation = false;
 
-  final List<String> _categories = [
-    'Sự kiện',
-    'Kiến trúc',
-    'Chân dung',
-    'Photobooth',
-    'Thiên nhiên',
-  ];
-  final List<String> _styles = ['Hiền đại', 'Cổ trang', 'Tự do', 'Lịch sử'];
-  final List<String> _budgetTypes = [
-    'Ưu đãi',
-    'Y2K',
-    'Tự do',
-    'Cổ trang',
-    'Lịch sử',
-  ];
+  List<PhotoType> _photoTypes = [];
+  List<Style> _styles = [];
 
   @override
   void initState() {
     super.initState();
+    _loadDropdownData();
     // Set initial booking location from widget
     if (widget.selectedLocation != null) {
       _bookingLocationController.text = widget.selectedLocation!;
+      _chosenBookingLocation = widget.selectedLocation!;
+      _useUserLocation = false;
+    } else {
+      _useUserLocation = true;
+      // Fetch GPS location when using user location (from Snap button)
+      _getUserCurrentLocation();
+    }
+    // Keep chosen booking location in sync when user edits the booking location
+    _bookingLocationController.addListener(() {
+      if (!_useUserLocation) {
+        _chosenBookingLocation = _bookingLocationController.text;
+      }
+    });
+  }
+
+  Future<void> _loadDropdownData() async {
+    setState(() {
+      _isLoadingData = true;
+    });
+
+    try {
+      final photoTypes = await _photoTypeService.getPhotoTypes();
+      final styles = await _styleService.getStyles();
+
+      if (mounted) {
+        setState(() {
+          _photoTypes = photoTypes;
+          _styles = styles;
+          // Set defaults to null (bypass filter option)
+          _selectedCategory = 'Tất cả';
+          _selectedCategoryId = null;
+          _selectedStyle = 'Tất cả';
+          _selectedStyleId = null;
+          _isLoadingData = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingData = false;
+        });
+      }
     }
   }
 
@@ -54,9 +102,83 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   void dispose() {
     _userLocationController.dispose();
     _bookingLocationController.dispose();
-    _budgetController.dispose();
+    _minBudgetController.dispose();
+    _maxBudgetController.dispose();
     _notesController.dispose();
     super.dispose();
+  }
+
+  Future<void> _getUserCurrentLocation() async {
+    setState(() {
+      _isLoadingUserLocation = true;
+    });
+
+    try {
+      // Check location permission
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          setState(() {
+            _isLoadingUserLocation = false;
+          });
+          if (mounted) {
+            _showErrorDialog('Quyền truy cập vị trí bị từ chối');
+          }
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        setState(() {
+          _isLoadingUserLocation = false;
+        });
+        if (mounted) {
+          _showErrorDialog('Quyền truy cập vị trí bị từ chối vĩnh viễn. Vui lòng bật trong cài đặt.');
+        }
+        return;
+      }
+
+      // Get current position
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      // Get address from coordinates
+      try {
+        final suggestion = await _nominatimService.reverseGeocode(
+          position.latitude,
+          position.longitude,
+        );
+        
+        if (mounted && suggestion != null) {
+          setState(() {
+            _userLocationController.text = suggestion.displayName;
+            _isLoadingUserLocation = false;
+          });
+        } else {
+          setState(() {
+            _userLocationController.text = 'Lat: ${position.latitude.toStringAsFixed(6)}, Lng: ${position.longitude.toStringAsFixed(6)}';
+            _isLoadingUserLocation = false;
+          });
+        }
+      } catch (e) {
+        // If reverse geocoding fails, use coordinates
+        if (mounted) {
+          setState(() {
+            _userLocationController.text = 'Lat: ${position.latitude.toStringAsFixed(6)}, Lng: ${position.longitude.toStringAsFixed(6)}';
+            _isLoadingUserLocation = false;
+          });
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoadingUserLocation = false;
+        });
+        _showErrorDialog('Không thể lấy vị trí hiện tại: ${e.toString()}');
+      }
+    }
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -83,34 +205,201 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
+        
+        // If new date is today, check if current time is in the past
+        final now = DateTime.now();
+        if (picked.year == now.year &&
+            picked.month == now.month &&
+            picked.day == now.day) {
+          final selectedDateTime = DateTime(
+            picked.year,
+            picked.month,
+            picked.day,
+            _selectedTime.hour,
+            _selectedTime.minute,
+          );
+          
+          // If selected time would be in the past, update to current time
+          if (selectedDateTime.isBefore(now)) {
+            _selectedTime = TimeOfDay.now();
+          }
+        }
       });
     }
   }
 
   Future<void> _selectTime(BuildContext context) async {
+    // Get current time to compare
+    final now = DateTime.now();
+    final currentTime = TimeOfDay.now();
+    
+    // Determine initial time
+    TimeOfDay initialTime = _selectedTime;
+    
+    // If selected date is today and selected time is in the past, use current time
+    if (_selectedDate.year == now.year &&
+        _selectedDate.month == now.month &&
+        _selectedDate.day == now.day) {
+      final selectedDateTime = DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+        _selectedTime.hour,
+        _selectedTime.minute,
+      );
+      
+      if (selectedDateTime.isBefore(now)) {
+        initialTime = currentTime;
+      }
+    }
+    
     final TimeOfDay? picked = await showTimePicker(
       context: context,
-      initialTime: _selectedTime,
+      initialTime: initialTime,
       builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.light(
-              primary: AppColors.primary,
-              onPrimary: Colors.black,
-              surface: Colors.white,
-              onSurface: Colors.black,
-            ),
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(
+            alwaysUse24HourFormat: false,
           ),
-          child: child!,
+          child: Theme(
+            data: Theme.of(context).copyWith(
+              colorScheme: ColorScheme.light(
+                primary: AppColors.primary,
+                onPrimary: Colors.black,
+                surface: Colors.white,
+                onSurface: Colors.black,
+              ),
+              timePickerTheme: TimePickerThemeData(
+                // Use input mode for scroll-type picker
+                hourMinuteTextStyle: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+                dayPeriodTextStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+            ),
+            child: child!,
+          ),
         );
       },
+      initialEntryMode: TimePickerEntryMode.dial, // Use dial for scroll-type interface
     );
 
-    if (picked != null && picked != _selectedTime) {
+    if (picked != null) {
+      // Check if selected time is in the past
+      final selectedDateTime = DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+        picked.hour,
+        picked.minute,
+      );
+      
+      if (selectedDateTime.isBefore(DateTime.now())) {
+        _showErrorDialog('Không thể chọn thời gian trong quá khứ');
+        return;
+      }
+      
       setState(() {
         _selectedTime = picked;
       });
     }
+  }
+
+  Future<void> _submitBooking() async {
+    // Validate inputs
+    if (_bookingLocationController.text.isEmpty) {
+      _showErrorDialog('Vui lòng chọn địa điểm chụp ảnh');
+      return;
+    }
+
+    // Budget, Category and Style are now optional (can be null/empty to bypass filter)
+
+    int? minBudget;
+    int? maxBudget;
+
+    if (_minBudgetController.text.isNotEmpty) {
+      minBudget = int.tryParse(_minBudgetController.text);
+      if (minBudget == null || minBudget < 0) {
+        _showErrorDialog('Ngân sách tối thiểu không hợp lệ');
+        return;
+      }
+    }
+
+    if (_maxBudgetController.text.isNotEmpty) {
+      maxBudget = int.tryParse(_maxBudgetController.text);
+      if (maxBudget == null || maxBudget < 0) {
+        _showErrorDialog('Ngân sách tối đa không hợp lệ');
+        return;
+      }
+    }
+
+    if (minBudget != null && maxBudget != null && minBudget > maxBudget) {
+      _showErrorDialog('Ngân sách tối thiểu không thể lớn hơn ngân sách tối đa');
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      // Get user ID from token storage
+      final userId = await _tokenStorage.getUserId();
+      if (userId == null) {
+        _showErrorDialog('Không tìm thấy thông tin người dùng');
+        setState(() {
+          _isSubmitting = false;
+        });
+        return;
+      }
+
+      // Determine the active location based on user's choice
+      final activeLocation = _useUserLocation 
+          ? _userLocationController.text 
+          : _bookingLocationController.text;
+
+      // Navigate to finding snappers screen - booking will be created after selecting photographer
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => FindingSnappersScreen(
+            location: activeLocation,
+            date: _selectedDate,
+            time: _selectedTime,
+            city: activeLocation.isEmpty ? '' : activeLocation,
+            styleIds: _selectedStyleId != null ? [_selectedStyleId!] : [],
+            photoTypeIds: _selectedCategoryId != null ? [_selectedCategoryId!] : [],
+            minBudget: minBudget,
+            maxBudget: maxBudget,
+            customerId: userId,
+            locationAddress: activeLocation,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      _showErrorDialog('Lỗi: ${e.toString()}');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Lỗi'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -131,7 +420,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     height: 40,
                     decoration: BoxDecoration(
                       color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(36),
                     ),
                     child: IconButton(
                       icon: const Icon(
@@ -162,33 +451,62 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                           Row(
                             children: [
                               Expanded(
-                                child: _buildLocationTextField(
-                                  icon: AppAssets.locationIcon,
-                                  controller: _userLocationController,
-                                  hintText: 'Vị trí hiện tại',
+                                child: Stack(
+                                  alignment: Alignment.centerRight,
+                                  children: [
+                                    _buildLocationTextField(
+                                      icon: AppAssets.locationIcon,
+                                      controller: _userLocationController,
+                                      hintText: _isLoadingUserLocation 
+                                          ? 'Đang lấy vị trí...' 
+                                          : 'Vị trí hiện tại',
+                                      isActive: _useUserLocation,
+                                      readOnly: _useUserLocation,
+                                    ),
+                                    if (_isLoadingUserLocation)
+                                      Positioned(
+                                        right: 12,
+                                        child: SizedBox(
+                                          width: 16,
+                                          height: 16,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                            valueColor: AlwaysStoppedAnimation<Color>(
+                                              AppColors.primary,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                  ],
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              // Swap button on the right
+                              // Swap toggle: use user location or chosen booking location
                               Container(
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFE8F5F2),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: IconButton(
-                                  onPressed: () {
-                                    // Swap the two locations
-                                    final temp = _userLocationController.text;
+                                  tooltip: _useUserLocation ? 'Sử dụng vị trí của bạn' : 'Sử dụng vị trí đã chọn',
+                                  onPressed: () async {
                                     setState(() {
-                                      _userLocationController.text =
-                                          _bookingLocationController.text;
-                                      _bookingLocationController.text = temp;
+                                      _useUserLocation = !_useUserLocation;
                                     });
+                                    
+                                    if (_useUserLocation) {
+                                      // Fetch GPS location when activating user location
+                                      await _getUserCurrentLocation();
+                                    } else {
+                                      // restore chosen booking location when toggling off
+                                      _bookingLocationController.text =
+                                          _chosenBookingLocation;
+                                    }
                                   },
                                   icon: Icon(
-                                    Icons.swap_vert,
-                                    color: AppColors.primary,
-                                    size: 24,
+                                    _useUserLocation ? Icons.my_location : Icons.place,
+                                    color: _useUserLocation ? AppColors.primary : Colors.grey[700],
+                                    size: 20,
                                   ),
                                   padding: const EdgeInsets.all(8),
                                 ),
@@ -201,6 +519,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                             icon: AppAssets.searchIcon,
                             controller: _bookingLocationController,
                             hintText: 'Khu vực tìm kiếm Snapper',
+                            readOnly: _useUserLocation,
+                            isActive: !_useUserLocation,
                           ),
                         ],
                       ),
@@ -331,15 +651,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                                   ],
                                 ),
                                 const SizedBox(height: 12),
-                                _buildDropdownButton(
-                                  value: _selectedCategory,
-                                  items: _categories,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _selectedCategory = value!;
-                                    });
-                                  },
-                                ),
+                                _isLoadingData
+                                    ? const Center(child: CircularProgressIndicator())
+                                    : _photoTypes.isEmpty
+                                        ? const Text('Không có dữ liệu')
+                                        : _buildPhotoTypeDropdown(),
                               ],
                             ),
                           ),
@@ -370,15 +686,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                                   ],
                                 ),
                                 const SizedBox(height: 12),
-                                _buildDropdownButton(
-                                  value: _selectedStyle,
-                                  items: _styles,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _selectedStyle = value!;
-                                    });
-                                  },
-                                ),
+                                _isLoadingData
+                                    ? const Center(child: CircularProgressIndicator())
+                                    : _styles.isEmpty
+                                        ? const Text('Không có dữ liệu')
+                                        : _buildStyleDropdown(),
                               ],
                             ),
                           ),
@@ -412,69 +724,136 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                             ],
                           ),
                           const SizedBox(height: 12),
-                          // Budget amount input and type dropdown in one row
+                          // Budget range inputs
                           Row(
                             children: [
+                              // Min budget
                               Expanded(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFB8D4CF),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      const Text(
-                                        'VND',
-                                        style: TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.w500,
-                                          color: Colors.black87,
-                                        ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Tối thiểu',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade700,
+                                        fontWeight: FontWeight.w500,
                                       ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: TextField(
-                                          controller: _budgetController,
-                                          keyboardType: TextInputType.number,
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w500,
-                                            color: Colors.black87,
-                                          ),
-                                          decoration: InputDecoration(
-                                            hintText: 'Nhập số tiền',
-                                            hintStyle: TextStyle(
-                                              fontSize: 14,
-                                              color: Colors.grey.shade600,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFB8D4CF),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Text(
+                                            'VND',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.black87,
                                             ),
-                                            border: InputBorder.none,
-                                            isDense: true,
-                                            contentPadding:
-                                                const EdgeInsets.symmetric(
-                                                  vertical: 8,
-                                                ),
                                           ),
-                                        ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: TextField(
+                                              controller: _minBudgetController,
+                                              keyboardType: TextInputType.number,
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                                color: Colors.black87,
+                                              ),
+                                              decoration: InputDecoration(
+                                                hintText: '0',
+                                                hintStyle: TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.grey.shade600,
+                                                ),
+                                                border: InputBorder.none,
+                                                isDense: true,
+                                                contentPadding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 8,
+                                                    ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              // Budget type dropdown
+                              const SizedBox(width: 16),
+                              // Max budget
                               Expanded(
-                                child: _buildDropdownButton(
-                                  value: _selectedBudgetType,
-                                  items: _budgetTypes,
-                                  onChanged: (value) {
-                                    setState(() {
-                                      _selectedBudgetType = value!;
-                                    });
-                                  },
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Tối đa',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey.shade700,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFB8D4CF),
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          const Text(
+                                            'VND',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.black87,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: TextField(
+                                              controller: _maxBudgetController,
+                                              keyboardType: TextInputType.number,
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.w500,
+                                                color: Colors.black87,
+                                              ),
+                                              decoration: InputDecoration(
+                                                hintText: '0',
+                                                hintStyle: TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.grey.shade600,
+                                                ),
+                                                border: InputBorder.none,
+                                                isDense: true,
+                                                contentPadding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 8,
+                                                    ),
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
@@ -563,19 +942,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           child: SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: () {
-                // Navigate to finding snappers screen
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => FindingSnappersScreen(
-                      location: widget.selectedLocation,
-                      date: _selectedDate,
-                      time: _selectedTime,
-                    ),
-                  ),
-                );
-              },
+              onPressed: _isSubmitting ? null : _submitBooking,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: Colors.black,
@@ -584,11 +951,21 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                   borderRadius: BorderRadius.circular(16),
                 ),
                 elevation: 0,
+                disabledBackgroundColor: AppColors.primary.withOpacity(0.5),
               ),
-              child: const Text(
-                'Tìm ngay',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
+              child: _isSubmitting
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                      ),
+                    )
+                  : const Text(
+                      'Tìm ngay',
+                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
             ),
           ),
         ),
@@ -618,12 +995,26 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     required String icon,
     required TextEditingController controller,
     required String hintText,
+    bool readOnly = false,
+    bool isActive = false,
   }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFE8F5F2),
+        color: isActive ? Colors.white : const Color(0xFFE8F5F2),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isActive ? AppColors.primary : Colors.transparent,
+          width: isActive ? 1.5 : 0,
+        ),
+        boxShadow: [
+          if (isActive)
+            BoxShadow(
+              color: AppColors.primary.withOpacity(0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+        ],
       ),
       child: Row(
         children: [
@@ -632,6 +1023,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           Expanded(
             child: TextField(
               controller: controller,
+              readOnly: readOnly,
               style: const TextStyle(fontSize: 14, color: Colors.black87),
               decoration: InputDecoration(
                 hintText: hintText,
@@ -647,11 +1039,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     );
   }
 
-  Widget _buildDropdownButton({
-    required String value,
-    required List<String> items,
-    required void Function(String?) onChanged,
-  }) {
+  Widget _buildPhotoTypeDropdown() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
@@ -660,7 +1048,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          value: value,
+          value: _selectedCategory,
           isExpanded: true,
           icon: Icon(Icons.expand_more, color: AppColors.primary),
           dropdownColor: Colors.white,
@@ -670,12 +1058,85 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             fontWeight: FontWeight.w500,
             color: Colors.black87,
           ),
-          items: items.map((String item) {
-            return DropdownMenuItem<String>(value: item, child: Text(item));
-          }).toList(),
-          onChanged: onChanged,
+          items: [
+            // Add "All" option
+            const DropdownMenuItem<String>(
+              value: 'Tất cả',
+              child: Text('Tất cả'),
+            ),
+            // Add actual photo types
+            ..._photoTypes.map((PhotoType photoType) {
+              return DropdownMenuItem<String>(
+                value: photoType.photoTypeName,
+                child: Text(photoType.photoTypeName),
+              );
+            }).toList(),
+          ],
+          onChanged: (value) {
+            setState(() {
+              _selectedCategory = value;
+              if (value == 'Tất cả') {
+                _selectedCategoryId = null;
+              } else {
+                _selectedCategoryId = _photoTypes
+                    .firstWhere((pt) => pt.photoTypeName == value)
+                    .photoTypeId;
+              }
+            });
+          },
         ),
       ),
     );
   }
+
+  Widget _buildStyleDropdown() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFB8D4CF),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedStyle,
+          isExpanded: true,
+          icon: Icon(Icons.expand_more, color: AppColors.primary),
+          dropdownColor: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          ),
+          items: [
+            // Add "All" option
+            const DropdownMenuItem<String>(
+              value: 'Tất cả',
+              child: Text('Tất cả'),
+            ),
+            // Add actual styles
+            ..._styles.map((Style style) {
+              return DropdownMenuItem<String>(
+                value: style.styleName,
+                child: Text(style.styleName),
+              );
+            }).toList(),
+          ],
+          onChanged: (value) {
+            setState(() {
+              _selectedStyle = value;
+              if (value == 'Tất cả') {
+                _selectedStyleId = null;
+              } else {
+                _selectedStyleId = _styles
+                    .firstWhere((s) => s.styleName == value)
+                    .styleId;
+              }
+            });
+          },
+        ),
+      ),
+    );
+  }
+
 }

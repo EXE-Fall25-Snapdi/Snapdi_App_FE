@@ -8,6 +8,7 @@ import '../../data/services/snapper_service.dart';
 import '../../data/services/booking_service.dart';
 import '../../data/models/find_snappers_request.dart';
 import '../../data/models/booking_request.dart';
+import 'booking_confirm_screen.dart';
 
 class FindingSnappersScreen extends StatefulWidget {
   final String? location;
@@ -643,6 +644,19 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                   child: InkWell(
                     onTap: _isCreatingBooking ? null : () {
                       _createBooking(snapper);
+                      // Navigate to booking confirm screen
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BookingConfirmScreen(
+                            snapper: snapper,
+                            location: widget.location,
+                            date: widget.date,
+                            time: widget.time,
+                            // Truyền các thông tin booking khác
+                          ),
+                        ),
+                      );
                     },
                     borderRadius: BorderRadius.circular(20),
                     child: Row(

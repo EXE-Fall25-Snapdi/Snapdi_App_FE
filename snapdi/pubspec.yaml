@@ -74,6 +74,7 @@ dependencies:
   # UI Components
   flutter_svg: ^2.0.9
   shimmer: ^3.0.0
+  qr_flutter: ^4.1.0
 
   # Navigation
   go_router: ^12.1.1

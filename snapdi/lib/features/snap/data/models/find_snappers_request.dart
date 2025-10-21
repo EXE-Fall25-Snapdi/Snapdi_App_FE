@@ -1,30 +1,39 @@
 class FindSnappersRequest {
-  final String city;
-  final String level;
+  final String workLocation;
+  final String? level;
+  final List<int> photoTypeIds;
   final List<int> styleIds;
   final bool isAvailable;
+  final int? minPrice;
+  final int? maxPrice;
   final int page;
   final int pageSize;
   final String sortBy;
   final String sortDirection;
 
   FindSnappersRequest({
-    required this.city,
-    this.level = 'Người Mới',
+    required this.workLocation,
+    this.level,
+    this.photoTypeIds = const [],
     this.styleIds = const [],
     this.isAvailable = true,
+    this.minPrice,
+    this.maxPrice,
     this.page = 1,
-    this.pageSize = 3,
-    this.sortBy = 'rating',
+    this.pageSize = 50,
+    this.sortBy = 'name',
     this.sortDirection = 'desc',
   });
 
   Map<String, dynamic> toJson() {
     return {
-      'city': city,
-      'level': level,
+      'workLocation': workLocation,
+      if (level != null) 'level': level,
+      'photoTypeIds': photoTypeIds,
       'styleIds': styleIds,
       'isAvailable': isAvailable,
+      if (minPrice != null) 'minPrice': minPrice,
+      if (maxPrice != null) 'maxPrice': maxPrice,
       'page': page,
       'pageSize': pageSize,
       'sortBy': sortBy,

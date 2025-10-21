@@ -19,28 +19,33 @@ class BookingService {
         );
       }
 
+      final requestBody = jsonEncode(request.toJson());
+
       final response = await http.post(
         Uri.parse('${Environment.apiBaseUrl}/api/Booking'),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode(request.toJson()),
+        body: requestBody,
       );
 
-      if (response.statusCode == 200) {
+      if (response.statusCode == 200 || response.statusCode == 201) {
         final jsonResponse = jsonDecode(response.body);
-        return BookingResponse(
-          success: true,
-          message: 'Booking created successfully',
-          data: jsonResponse,
-        );
+        return BookingResponse.fromJson(jsonResponse);
       } else {
-        final errorBody = jsonDecode(response.body);
-        return BookingResponse(
-          success: false,
-          message: errorBody['message'] ?? 'Failed to create booking',
-        );
+        try {
+          final errorBody = jsonDecode(response.body);
+          return BookingResponse(
+            success: false,
+            message: errorBody['message'] ?? 'Failed to create booking: ${response.statusCode}',
+          );
+        } catch (e) {
+          return BookingResponse(
+            success: false,
+            message: 'Failed to create booking: ${response.statusCode}',
+          );
+        }
       }
     } catch (e) {
       return BookingResponse(

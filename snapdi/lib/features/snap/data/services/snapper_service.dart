@@ -11,6 +11,7 @@ class SnapperService {
   Future<FindSnappersResponse> findSnappers(FindSnappersRequest request) async {
     try {
       final token = await TokenStorage.instance.getAccessToken();
+      final requestBody = jsonEncode(request.toJson());
       
       final response = await _client.post(
         Uri.parse('${Environment.apiBaseUrl}/api/Users/snappers/find'),
@@ -18,7 +19,7 @@ class SnapperService {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
         },
-        body: jsonEncode(request.toJson()),
+        body: requestBody,
       );
 
       if (response.statusCode == 200) {

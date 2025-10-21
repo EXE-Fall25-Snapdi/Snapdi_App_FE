@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
@@ -84,28 +85,10 @@ class _LoginScreenState extends State<LoginScreen> {
           // Store authentication tokens securely using AuthService
           await _authService.storeAuthTokens(loginResponse);
 
-          // Show success message
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Login successful! Welcome ${loginResponse.user.name}',
-                  style: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.white,
-                  ),
-                ),
-                backgroundColor: AppColors.success,
-                duration: const Duration(milliseconds: 1500),
-              ),
-            );
-
-            // Wait a bit for the snackbar to be visible, then navigate
-            await Future.delayed(const Duration(milliseconds: 800));
-
             if (mounted) {
               context.go('/home');
             }
-          }
+          
         },
       );
     }
@@ -148,20 +131,22 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         // Logo placeholder
                         Container(
-                          width: 120,
-                          height: 120,
+                          padding: const EdgeInsets.all(36),
                           decoration: BoxDecoration(
-                            color: AppColors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Center(
-                            child: Text(
-                              'LOGO',
-                              style: AppTextStyles.headline3.copyWith(
-                                color: AppColors.white,
-                                fontWeight: FontWeight.bold,
+                            color: AppColors.primaryDarker,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.black.withOpacity(0.1),
+                                blurRadius: 10,
+                                offset: const Offset(0, 5),
                               ),
-                            ),
+                            ],
+                          ),
+                          child: SvgPicture.asset(
+                            AppAssets.snapdiLogo,
+                            height: 120,
+                            width: 120,
                           ),
                         ),
                       ],

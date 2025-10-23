@@ -188,15 +188,28 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
               'Địa chỉ: ${response.data!.locationAddress}\n'
               'Giá: ${response.data!.price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')} VND'
             ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context); // Close dialog
-                  Navigator.pop(context); // Go back to previous screen
-                },
-                child: const Text('OK'),
-              ),
-            ],
+                actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context); // Close dialog
+                    // After closing the dialog, navigate to BookingConfirmScreen with real values
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => BookingConfirmScreen(
+                          snapper: snapper,
+                          location: widget.location,
+                          date: widget.date,
+                          time: widget.time,
+                          bookingId: response.data!.bookingId,
+                          amount: response.data!.price.toDouble(),
+                        ),
+                      ),
+                    );
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
           ),
         );
       } else {
@@ -644,19 +657,8 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                   child: InkWell(
                     onTap: _isCreatingBooking ? null : () {
                       _createBooking(snapper);
-                      // Navigate to booking confirm screen
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => BookingConfirmScreen(
-                            snapper: snapper,
-                            location: widget.location,
-                            date: widget.date,
-                            time: widget.time,
-                            // Truyền các thông tin booking khác
-                          ),
-                        ),
-                      );
+                      // Start booking creation; navigation to BookingConfirmScreen
+                      // will happen from the booking success dialog handler.
                     },
                     borderRadius: BorderRadius.circular(20),
                     child: Row(

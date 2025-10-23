@@ -66,10 +66,17 @@ app.*.map.json
 .AppleDouble
 .LSOverride
 
+macos/Flutter/GeneratedPluginRegistrant.swift
+macos/Flutter/ephemeral/
+
 # Windows
 Thumbs.db
 ehthumbs.db
 Desktop.ini
+
+windows/flutter/generated_plugin_registrant.cc
+windows/flutter/generated_plugin_registrant.h
+windows/flutter/generated_plugins.cmake
 
 # Test coverage
 /test/coverage/

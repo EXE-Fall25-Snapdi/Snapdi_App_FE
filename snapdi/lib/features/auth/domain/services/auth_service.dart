@@ -50,6 +50,7 @@ abstract class AuthService {
   );
   Future<bool> isLoggedIn();
   Future<String?> getAccessToken();
+  Future<Either<Failure, LoginResponse>> refreshToken();
   Future<bool> logout();
   Future<AuthTokens?> getCurrentSession();
 }
@@ -183,6 +184,37 @@ class AuthServiceImpl implements AuthService {
       return await _tokenStorage.getAccessToken();
     } catch (e) {
       return null;
+    }
+  }
+
+  @override
+  Future<Either<Failure, LoginResponse>> refreshToken() async {
+    try {
+      // Get the current refresh token
+      final currentRefreshToken = await _tokenStorage.getRefreshToken();
+      if (currentRefreshToken == null) {
+        return const Left(
+          ServerFailure('No refresh token available'),
+        );
+      }
+
+      final response = await _apiService.post(
+        '/api/Auth/refresh-token',
+        data: {
+          'refreshToken': currentRefreshToken,
+        },
+      );
+
+      final loginResponse = LoginResponse.fromJson(response.data);
+
+      // Store the new tokens
+      await storeAuthTokens(loginResponse);
+
+      return Right(loginResponse);
+    } catch (e) {
+      return Left(
+        ServerFailure(e.toString()),
+      );
     }
   }
 

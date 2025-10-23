@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
 import 'dart:async';
@@ -9,6 +10,7 @@ import '../../data/services/booking_service.dart';
 import '../../data/models/find_snappers_request.dart';
 import '../../data/models/booking_request.dart';
 import 'booking_confirm_screen.dart';
+import 'snappers_map_screen.dart';
 
 class FindingSnappersScreen extends StatefulWidget {
   final String? location;
@@ -48,6 +50,11 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
   final SnapperService _snapperService = SnapperService();
   final BookingService _bookingService = BookingService();
   bool _isCreatingBooking = false;
+  
+  // Store search center and radius for map display
+  double? _searchCenterLatitude;
+  double? _searchCenterLongitude;
+  double _radiusInKm = 100.0;
 
   @override
   void initState() {
@@ -74,6 +81,30 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
     });
 
     try {
+      // Get user's current location
+      double? userLatitude;
+      double? userLongitude;
+      
+      try {
+        // Check location permission
+        LocationPermission permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied) {
+          permission = await Geolocator.requestPermission();
+        }
+        
+        if (permission != LocationPermission.denied && 
+            permission != LocationPermission.deniedForever) {
+          final position = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.high,
+          );
+          userLatitude = position.latitude;
+          userLongitude = position.longitude;
+        }
+      } catch (e) {
+        print('FindingSnappersScreen: Could not get location - $e');
+        // Continue without location - API might use workLocation instead
+      }
+
       final request = FindSnappersRequest(
         workLocation: widget.city ?? '',
         photoTypeIds: widget.photoTypeIds ?? [],
@@ -85,6 +116,9 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
         pageSize: 50,
         sortBy: 'rating',
         sortDirection: 'desc',
+        latitude: userLatitude,
+        longitude: userLongitude,
+        radiusInKm: 100,
       );
 
       final response = await _snapperService.findSnappers(request);
@@ -93,6 +127,23 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
         if (response.success && response.data != null) {
           setState(() {
             _isSearching = false;
+            
+            // Use user's current location as search center
+            if (userLatitude != null && userLongitude != null) {
+              _searchCenterLatitude = userLatitude;
+              _searchCenterLongitude = userLongitude;
+              print('Using user location as search center: $_searchCenterLatitude, $_searchCenterLongitude');
+            } else if (response.data!.searchCenter != null) {
+              // Fallback to API search center if available
+              _searchCenterLatitude = response.data!.searchCenter!.latitude;
+              _searchCenterLongitude = response.data!.searchCenter!.longitude;
+              print('Using API search center: $_searchCenterLatitude, $_searchCenterLongitude');
+            }
+            
+            if (response.data!.radiusInKm != null) {
+              _radiusInKm = response.data!.radiusInKm!;
+            }
+            
             _foundSnappers.addAll(
               response.data!.snappers.map((snapper) => SnapperProfile(
                     userId: snapper.userId,
@@ -103,8 +154,29 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                     isOnline: snapper.isAvailable,
                     avatarUrl: snapper.avatarUrl,
                     photoPrice: snapper.photoPrice,
+                    latitude: snapper.currentLocation?.latitude,
+                    longitude: snapper.currentLocation?.longitude,
                   )),
             );
+            
+            // If still no search center, calculate from snappers' locations
+            if (_searchCenterLatitude == null || _searchCenterLongitude == null) {
+              final snappersWithLocation = _foundSnappers.where(
+                (s) => s.latitude != null && s.longitude != null
+              ).toList();
+              
+              if (snappersWithLocation.isNotEmpty) {
+                double sumLat = 0;
+                double sumLng = 0;
+                for (var snapper in snappersWithLocation) {
+                  sumLat += snapper.latitude!;
+                  sumLng += snapper.longitude!;
+                }
+                _searchCenterLatitude = sumLat / snappersWithLocation.length;
+                _searchCenterLongitude = sumLng / snappersWithLocation.length;
+                print('Calculated center from snappers: $_searchCenterLatitude, $_searchCenterLongitude');
+              }
+            }
           });
         } else {
           setState(() {
@@ -326,48 +398,84 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                         ),
                       ),
                       const SizedBox(height: 12),
-                      // Search area
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 12,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
+                      // Search area - Navigate to map
+                      Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () {
+                            print('Map button tapped!');
+                            print('Found snappers: ${_foundSnappers.length}');
+                            print('Search center: $_searchCenterLatitude, $_searchCenterLongitude');
+                            print('Is searching: $_isSearching');
+                            
+                            // Only navigate if we have search results and location data
+                            if (_foundSnappers.isNotEmpty && 
+                                _searchCenterLatitude != null && 
+                                _searchCenterLongitude != null) {
+                              print('Navigating to map...');
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => SnappersMapScreen(
+                                    snappers: _foundSnappers,
+                                    centerLatitude: _searchCenterLatitude!,
+                                    centerLongitude: _searchCenterLongitude!,
+                                    radiusInKm: _radiusInKm,
+                                  ),
+                                ),
+                              );
+                            } else if (_foundSnappers.isEmpty) {
+                              print('No snappers found - showing error');
+                              _showErrorDialog('Không có Snapper nào để hiển thị trên bản đồ');
+                            } else if (_searchCenterLatitude == null || _searchCenterLongitude == null) {
+                              print('No location data - showing error');
+                              _showErrorDialog('Không có dữ liệu vị trí để hiển thị bản đồ');
+                            }
+                          },
                           borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          children: [
-                            SvgPicture.asset(
-                              AppAssets.searchIcon,
-                              width: 20,
-                              height: 20,
-                            ),
-                            const SizedBox(width: 10),
-                            const Expanded(
-                              child: Text(
-                                'Tìm Snaper trong khu vực',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.black87,
+                          child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              SvgPicture.asset(
+                                AppAssets.searchIcon,
+                                width: 20,
+                                height: 20,
+                              ),
+                              const SizedBox(width: 10),
+                              const Expanded(
+                                child: Text(
+                                  'Xem các Snappers tìm được trên map',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.black87,
+                                  ),
                                 ),
                               ),
-                            ),
-                            Container(                              
-                              child: SvgPicture.asset(
-                                AppAssets.camera_altIcon,
-                                width: 24,
-                                height: 24,
+                              Container(                              
+                                child: Icon(
+                                  Icons.map_outlined,
+                                  color: AppColors.primary,
+                                  size: 24,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                        ),
                         ),
                       ),
                     ],
@@ -753,6 +861,8 @@ class SnapperProfile {
   final bool isOnline;
   final String? avatarUrl;
   final double photoPrice;
+  final double? latitude;
+  final double? longitude;
 
   SnapperProfile({
     required this.userId,
@@ -763,5 +873,7 @@ class SnapperProfile {
     required this.isOnline,
     this.avatarUrl,
     required this.photoPrice,
+    this.latitude,
+    this.longitude,
   });
 }

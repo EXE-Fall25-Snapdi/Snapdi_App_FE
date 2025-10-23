@@ -36,6 +36,8 @@ class FindSnappersData {
   final bool hasPreviousPage;
   final int availableCount;
   final String? summary;
+  final SearchCenter? searchCenter;
+  final double? radiusInKm;
 
   FindSnappersData({
     required this.snappers,
@@ -47,6 +49,8 @@ class FindSnappersData {
     required this.hasPreviousPage,
     required this.availableCount,
     this.summary,
+    this.searchCenter,
+    this.radiusInKm,
   });
 
   factory FindSnappersData.fromJson(Map<String, dynamic> json) {
@@ -63,11 +67,32 @@ class FindSnappersData {
       hasPreviousPage: json['hasPreviousPage'] ?? false,
       availableCount: json['availableCount'] ?? 0,
       summary: json['summary'],
+      searchCenter: json['searchCenter'] != null 
+          ? SearchCenter.fromJson(json['searchCenter']) 
+          : null,
+      radiusInKm: json['radiusInKm']?.toDouble(),
     );
   }
   
   // Compatibility getter for old code
   List<SnapperInfo> get items => snappers;
+}
+
+class SearchCenter {
+  final double latitude;
+  final double longitude;
+
+  SearchCenter({
+    required this.latitude,
+    required this.longitude,
+  });
+
+  factory SearchCenter.fromJson(Map<String, dynamic> json) {
+    return SearchCenter(
+      latitude: (json['latitude'] ?? 0).toDouble(),
+      longitude: (json['longitude'] ?? 0).toDouble(),
+    );
+  }
 }
 
 class PhotoType {
@@ -126,6 +151,8 @@ class SnapperInfo {
   final List<StyleInfo> styles;
   final int portfolioCount;
   final List<String> portfolioUrls;
+  final CurrentLocation? currentLocation;
+  final double? distanceInKm;
 
   SnapperInfo({
     required this.userId,
@@ -149,6 +176,8 @@ class SnapperInfo {
     required this.styles,
     required this.portfolioCount,
     required this.portfolioUrls,
+    this.currentLocation,
+    this.distanceInKm,
   });
 
   factory SnapperInfo.fromJson(Map<String, dynamic> json) {
@@ -183,6 +212,10 @@ class SnapperInfo {
               ?.map((url) => url.toString())
               .toList() ??
           [],
+      currentLocation: json['currentLocation'] != null
+          ? CurrentLocation.fromJson(json['currentLocation'])
+          : null,
+      distanceInKm: json['distanceInKm']?.toDouble(),
     );
   }
   
@@ -191,4 +224,21 @@ class SnapperInfo {
   String get level => levelPhotographer;
   double get rating => avgRating;
   int get reviewCount => 0; // Not in API response, default to 0
+}
+
+class CurrentLocation {
+  final double latitude;
+  final double longitude;
+
+  CurrentLocation({
+    required this.latitude,
+    required this.longitude,
+  });
+
+  factory CurrentLocation.fromJson(Map<String, dynamic> json) {
+    return CurrentLocation(
+      latitude: (json['latitude'] ?? 0).toDouble(),
+      longitude: (json['longitude'] ?? 0).toDouble(),
+    );
+  }
 }

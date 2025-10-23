@@ -10,6 +10,9 @@ class FindSnappersRequest {
   final int pageSize;
   final String sortBy;
   final String sortDirection;
+  final double? latitude;
+  final double? longitude;
+  final int? radiusInKm;
 
   FindSnappersRequest({
     required this.workLocation,
@@ -23,6 +26,9 @@ class FindSnappersRequest {
     this.pageSize = 50,
     this.sortBy = 'name',
     this.sortDirection = 'desc',
+    this.latitude,
+    this.longitude,
+    this.radiusInKm = 100,
   });
 
   Map<String, dynamic> toJson() {
@@ -38,6 +44,9 @@ class FindSnappersRequest {
       'pageSize': pageSize,
       'sortBy': sortBy,
       'sortDirection': sortDirection,
+      if (latitude != null) 'latitude': latitude,
+      if (longitude != null) 'longitude': longitude,
+      if (radiusInKm != null) 'radiusInKm': radiusInKm,
     };
   }
 }

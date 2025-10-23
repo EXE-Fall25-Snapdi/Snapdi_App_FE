@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:geolocator/geolocator.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/providers/user_info_provider.dart';
+import '../../../../core/storage/token_storage.dart';
+import '../../../../core/network/api_service.dart';
 import '../../data/models/booking_response.dart';
+import '../../../photographer/data/services/photographer_service.dart';
+import '../../../auth/domain/services/auth_service.dart';
 import 'booking_requests_screen.dart';
 
 /// Photographer's Snap screen showing booking requests and upcoming sessions
@@ -17,15 +22,27 @@ class PhotographerSnapScreen extends StatefulWidget {
 class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
   final TextEditingController _searchController = TextEditingController();
   final UserInfoProvider _userInfoProvider = UserInfoProvider.instance;
+  late final PhotographerService _photographerService;
+  late final AuthService _authService;
   
   String _userName = 'Amigo';
   int _pendingRequestsCount = 1;
   List<BookingData> _upcomingBookings = [];
   bool _isLoading = true;
+  bool _isAvailable = true;
+  bool _isUpdatingStatus = false;
 
   @override
   void initState() {
     super.initState();
+    // Initialize services
+    final apiService = ApiService();
+    final tokenStorage = TokenStorage.instance;
+    _authService = AuthServiceImpl(
+      apiService: apiService,
+      tokenStorage: tokenStorage,
+    );
+    _photographerService = PhotographerService(authService: _authService);
     _loadData();
   }
 
@@ -147,6 +164,184 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
     }
   }
 
+  Future<void> _updateStatus() async {
+    setState(() => _isUpdatingStatus = true);
+
+    try {
+      // Get current location
+      Position? position;
+      try {
+        LocationPermission permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied) {
+          permission = await Geolocator.requestPermission();
+        }
+
+        if (permission == LocationPermission.whileInUse ||
+            permission == LocationPermission.always) {
+          position = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.high,
+          );
+        }
+      } catch (e) {
+        // Location fetch failed, continue without location
+      }
+
+      // Get photographer ID
+      final userId = await _userInfoProvider.getUserId();
+      if (userId == null) {
+        throw Exception('User ID not found');
+      }
+
+      // Update status
+      final success = await _photographerService.updateStatus(
+        photographerId: userId,
+        isAvailable: _isAvailable,
+        latitude: position?.latitude,
+        longitude: position?.longitude,
+      );
+
+      setState(() => _isUpdatingStatus = false);
+
+      if (!mounted) return;
+
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _isAvailable
+                  ? 'Trạng thái: Sẵn sàng nhận việc'
+                  : 'Trạng thái: Không khả dụng',
+              style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
+            ),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Không thể cập nhật trạng thái',
+              style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
+            ),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() => _isUpdatingStatus = false);
+      
+      if (!mounted) return;
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Lỗi: ${e.toString()}',
+            style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
+          ),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  void _showStatusDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Cập nhật trạng thái', style: AppTextStyles.headline4),
+        content: StatefulBuilder(
+          builder: (context, setDialogState) {
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Chọn trạng thái của bạn:',
+                  style: AppTextStyles.bodyMedium,
+                ),
+                const SizedBox(height: 16),
+                SwitchListTile(
+                  title: Text(
+                    _isAvailable ? 'Sẵn sàng nhận việc' : 'Không khả dụng',
+                    style: AppTextStyles.bodyLarge.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  subtitle: Text(
+                    _isAvailable
+                        ? 'Bạn sẽ nhận được yêu cầu chụp mới'
+                        : 'Bạn sẽ không nhận yêu cầu chụp mới',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  value: _isAvailable,
+                  activeColor: AppColors.primary,
+                  onChanged: (value) {
+                    setState(() => _isAvailable = value);
+                    setDialogState(() {});
+                  },
+                ),
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.location_on,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'Vị trí hiện tại sẽ được cập nhật tự động',
+                          style: AppTextStyles.bodySmall.copyWith(
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(
+              'Hủy',
+              style: AppTextStyles.buttonMedium.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _updateStatus();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+            ),
+            child: Text(
+              'Cập nhật',
+              style: AppTextStyles.buttonMedium.copyWith(color: Colors.white),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -167,29 +362,73 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
                 // Header Section
                 _buildHeader(),
                 
-                // Greeting
+                // Greeting and Status Button
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  child: Align(
-                    alignment: Alignment.centerLeft,
-                    child: RichText(
-                      text: TextSpan(
-                        style: AppTextStyles.headline2.copyWith(
-                          color: Colors.white,
-                          fontSize: 32,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      RichText(
+                        text: TextSpan(
+                          style: AppTextStyles.headline2.copyWith(
+                            color: Colors.white,
+                            fontSize: 32,
+                          ),
+                          children: [
+                            const TextSpan(
+                              text: 'Hola, ',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            TextSpan(
+                              text: _userName,
+                              style: const TextStyle(fontWeight: FontWeight.w300),
+                            ),
+                          ],
                         ),
-                        children: [
-                          const TextSpan(
-                            text: 'Hola, ',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          TextSpan(
-                            text: _userName,
-                            style: const TextStyle(fontWeight: FontWeight.w300),
-                          ),
-                        ],
                       ),
-                    ),
+                      const SizedBox(height: 12),
+                      
+                      // Status Update Button
+                      ElevatedButton.icon(
+                        onPressed: _isUpdatingStatus ? null : _showStatusDialog,
+                        icon: _isUpdatingStatus
+                            ? const SizedBox(
+                                width: 16,
+                                height: 16,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                ),
+                              )
+                            : Icon(
+                                _isAvailable ? Icons.check_circle : Icons.cancel,
+                                size: 20,
+                              ),
+                        label: Text(
+                          _isUpdatingStatus
+                              ? 'Đang cập nhật...'
+                              : (_isAvailable
+                                  ? 'Sẵn sàng - Cập nhật trạng thái'
+                                  : 'Không khả dụng - Cập nhật trạng thái'),
+                          style: AppTextStyles.buttonMedium.copyWith(
+                            color: Colors.white,
+                            fontSize: 13,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _isAvailable
+                              ? Colors.green
+                              : AppColors.textSecondary,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
 

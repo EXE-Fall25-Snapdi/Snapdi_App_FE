@@ -3,7 +3,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
-import 'choose_location_screen.dart';
+import 'choose_location_screen_with_map.dart';
+import 'booking_detail_screen.dart';
 
 class SnapScreen extends StatefulWidget {
   const SnapScreen({super.key});
@@ -71,32 +72,43 @@ class _SnapScreenState extends State<SnapScreen> {
                       ),
                       const Spacer(),
                       // Map icon
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Color(0xFFAACBC4),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          children: [
-                            SvgPicture.asset(
-                              AppAssets.mapIcon,
-                              width: 16,
-                              height: 16,
+                      GestureDetector(
+                        onTap: () {
+                          // Navigate to location screen with map
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ChooseLocationScreenWithMap(),
                             ),
-                            const SizedBox(width: 4),
-                            const Text(
-                              'Bản đồ',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Color(0xFFAACBC4),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            children: [
+                              SvgPicture.asset(
+                                AppAssets.mapIcon,
+                                width: 16,
+                                height: 16,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 4),
+                              const Text(
+                                'Bản đồ',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -369,11 +381,11 @@ class _SnapScreenState extends State<SnapScreen> {
                   Expanded(
                     child: GestureDetector(
                       onTap: () {
-                        // Navigate to choose location screen
+                        // Navigate to choose location screen with map
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const ChooseLocationScreen(),
+                            builder: (context) => const ChooseLocationScreenWithMap(),
                           ),
                         );
                       },
@@ -407,7 +419,14 @@ class _SnapScreenState extends State<SnapScreen> {
                       color: Colors.transparent,
                       child: InkWell(
                         onTap: () {
-                          // TODO: Handle snap search
+                          // Navigate to booking detail screen
+                          // Pass null for selectedLocation to use user's location
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const BookingDetailScreen(),
+                            ),
+                          );
                         },
                         borderRadius: BorderRadius.circular(16),
                         child: Padding(
@@ -449,10 +468,14 @@ class _SnapScreenState extends State<SnapScreen> {
   Widget _buildLocationItem(String title, String address) {
     return InkWell(
       onTap: () {
-        // Navigate to choose location screen
+        // Navigate directly to booking detail screen with location pre-filled
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const ChooseLocationScreen()),
+          MaterialPageRoute(
+            builder: (context) => BookingDetailScreen(
+              selectedLocation: '$title, $address',
+            ),
+          ),
         );
       },
       child: Row(

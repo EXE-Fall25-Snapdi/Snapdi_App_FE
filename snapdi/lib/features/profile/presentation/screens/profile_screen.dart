@@ -573,7 +573,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (confirm == true && mounted) {
       await _tokenStorage.clearAll();
       if (mounted) {
-        context.go('/');
+        context.go('/welcome');
       }
     }
   }

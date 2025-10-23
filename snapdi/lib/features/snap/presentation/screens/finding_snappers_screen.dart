@@ -4,13 +4,37 @@ import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
 import 'dart:async';
 import '../../../profile/presentation/widgets/cloudinary_image.dart';
+import '../../data/services/snapper_service.dart';
+import '../../data/services/booking_service.dart';
+import '../../data/models/find_snappers_request.dart';
+import '../../data/models/booking_request.dart';
+import 'booking_confirm_screen.dart';
 
 class FindingSnappersScreen extends StatefulWidget {
   final String? location;
   final DateTime? date;
   final TimeOfDay? time;
+  final String? city;
+  final List<int>? styleIds;
+  final List<int>? photoTypeIds;
+  final int? minBudget;
+  final int? maxBudget;
+  final int? customerId;
+  final String? locationAddress;
 
-  const FindingSnappersScreen({super.key, this.location, this.date, this.time});
+  const FindingSnappersScreen({
+    super.key,
+    this.location,
+    this.date,
+    this.time,
+    this.city,
+    this.styleIds,
+    this.photoTypeIds,
+    this.minBudget,
+    this.maxBudget,
+    this.customerId,
+    this.locationAddress,
+  });
 
   @override
   State<FindingSnappersScreen> createState() => _FindingSnappersScreenState();
@@ -21,6 +45,9 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
   late AnimationController _animationController;
   bool _isSearching = true;
   final List<SnapperProfile> _foundSnappers = [];
+  final SnapperService _snapperService = SnapperService();
+  final BookingService _bookingService = BookingService();
+  bool _isCreatingBooking = false;
 
   @override
   void initState() {
@@ -30,16 +57,8 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
       duration: const Duration(seconds: 2),
     );
 
-    // Simulate finding snappers after 3 seconds
-    Timer(const Duration(seconds: 3), () {
-      if (mounted) {
-        setState(() {
-          _isSearching = false;
-          _foundSnappers.addAll(_getMockSnappers());
-        });
-        _animationController.stop();
-      }
-    });
+    // Find snappers using the API
+    _findSnappers();
   }
 
   @override
@@ -48,33 +67,151 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
     super.dispose();
   }
 
-  List<SnapperProfile> _getMockSnappers() {
-    return [
-      SnapperProfile(
-        name: 'Nguyễn Tuấn Kiệt',
-        subtitle: 'Snapper Chuyên Nghiệp',
-        rating: 5.0,
-        reviewCount: 25,
-        isOnline: true,
-        avatarUrl: null,
+  Future<void> _findSnappers() async {
+    setState(() {
+      _isSearching = true;
+      _foundSnappers.clear();
+    });
+
+    try {
+      final request = FindSnappersRequest(
+        workLocation: widget.city ?? '',
+        photoTypeIds: widget.photoTypeIds ?? [],
+        styleIds: widget.styleIds ?? [],
+        isAvailable: true,
+        minPrice: widget.minBudget,
+        maxPrice: widget.maxBudget,
+        page: 1,
+        pageSize: 50,
+        sortBy: 'rating',
+        sortDirection: 'desc',
+      );
+
+      final response = await _snapperService.findSnappers(request);
+
+      if (mounted) {
+        if (response.success && response.data != null) {
+          setState(() {
+            _isSearching = false;
+            _foundSnappers.addAll(
+              response.data!.snappers.map((snapper) => SnapperProfile(
+                    userId: snapper.userId,
+                    name: snapper.name,
+                    subtitle: snapper.levelPhotographer,
+                    rating: snapper.avgRating,
+                    reviewCount: 0, // Not in API
+                    isOnline: snapper.isAvailable,
+                    avatarUrl: snapper.avatarUrl,
+                    photoPrice: snapper.photoPrice,
+                  )),
+            );
+          });
+        } else {
+          setState(() {
+            _isSearching = false;
+          });
+          if (mounted) {
+            _showErrorDialog('Không tìm thấy Snapper nào phù hợp');
+          }
+        }
+        _animationController.stop();
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isSearching = false;
+        });
+        _animationController.stop();
+        _showErrorDialog('Lỗi khi tìm kiếm Snapper: $e');
+      }
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Thông báo'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
       ),
-      SnapperProfile(
-        name: 'Lưu Hoàng Phú',
-        subtitle: 'Snapper Nghiệp Dư',
-        rating: 5.0,
-        reviewCount: 20,
-        isOnline: true,
-        avatarUrl: null,
-      ),
-      SnapperProfile(
-        name: 'Phạm Hoàng Duy',
-        subtitle: 'Snapper Trung Cấp',
-        rating: 5.0,
-        reviewCount: 10,
-        isOnline: true,
-        avatarUrl: null,
-      ),
-    ];
+    );
+  }
+
+  Future<void> _createBooking(SnapperProfile snapper) async {
+    if (widget.customerId == null || widget.date == null || widget.time == null) {
+      _showErrorDialog('Thiếu thông tin đặt chỗ');
+      return;
+    }
+
+    setState(() {
+      _isCreatingBooking = true;
+    });
+
+    try {
+      // Combine date and time into ISO 8601 format
+      final scheduleDateTime = DateTime(
+        widget.date!.year,
+        widget.date!.month,
+        widget.date!.day,
+        widget.time!.hour,
+        widget.time!.minute,
+      );
+
+      final bookingRequest = BookingRequest(
+        customerId: widget.customerId!,
+        photographerId: snapper.userId,
+        scheduleAt: scheduleDateTime.toIso8601String(),
+        locationAddress: widget.locationAddress ?? widget.location ?? '',
+        price: snapper.photoPrice.toInt(),
+        note: null, // Can be extended to accept user notes in the future
+      );
+
+      final response = await _bookingService.createBooking(bookingRequest);
+
+      if (!mounted) return;
+
+      if (response.success && response.data != null) {
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Thành công'),
+            content: Text(
+              'Đã đặt chụp với ${response.data!.photographer.name} thành công!\n\n'
+              'Mã đặt chỗ: #${response.data!.bookingId}\n'
+              'Trạng thái: ${response.data!.status.statusName}\n'
+              'Địa chỉ: ${response.data!.locationAddress}\n'
+              'Giá: ${response.data!.price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')} VND'
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context); // Close dialog
+                  Navigator.pop(context); // Go back to previous screen
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+      } else {
+        _showErrorDialog(response.message ?? 'Không thể tạo đặt chỗ');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      _showErrorDialog('Lỗi: ${e.toString()}');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isCreatingBooking = false;
+        });
+      }
+    }
   }
 
   @override
@@ -108,7 +245,7 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                         height: 40,
                         decoration: BoxDecoration(
                           color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(36),
                         ),
                         child: IconButton(
                           icon: const Icon(
@@ -127,7 +264,7 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                         height: 40,
                         decoration: BoxDecoration(
                           color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(36),
                         ),
                         child: IconButton(
                           icon: const Icon(
@@ -136,40 +273,8 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                             size: 20,
                           ),
                           onPressed: () {
-                            setState(() {
-                              _isSearching = true;
-                              _foundSnappers.clear();
-                            });
                             _animationController.repeat();
-                            Timer(const Duration(seconds: 3), () {
-                              if (mounted) {
-                                setState(() {
-                                  _isSearching = false;
-                                  _foundSnappers.addAll(_getMockSnappers());
-                                });
-                                _animationController.stop();
-                              }
-                            });
-                          },
-                          padding: EdgeInsets.zero,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        width: 40,
-                        height: 40,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: IconButton(
-                          icon: const Icon(
-                            Icons.add,
-                            color: Colors.black,
-                            size: 20,
-                          ),
-                          onPressed: () {
-                            // TODO: Add filter options
+                            _findSnappers();
                           },
                           padding: EdgeInsets.zero,
                         ),
@@ -194,7 +299,7 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
+                              color: Colors.black.withOpacity(0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -232,7 +337,7 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                           borderRadius: BorderRadius.circular(12),
                           boxShadow: [
                             BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
+                              color: Colors.black.withOpacity(0.3),
                               blurRadius: 8,
                               offset: const Offset(0, 2),
                             ),
@@ -255,16 +360,11 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                                 ),
                               ),
                             ),
-                            Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
+                            Container(                              
                               child: SvgPicture.asset(
-                                AppAssets.cameraIcon,
-                                width: 16,
-                                height: 16,
+                                AppAssets.camera_altIcon,
+                                width: 24,
+                                height: 24,
                               ),
                             ),
                           ],
@@ -277,11 +377,12 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                 const SizedBox(height: 24),
 
                 // Main content area
-                Expanded(
-                  child: _isSearching
-                      ? _buildSearchingView()
-                      : _buildResultsView(),
-                ),
+                _isSearching
+                    ? Expanded(child: _buildSearchingView())
+                    : const Spacer(),
+                
+                // Results view positioned at bottom
+                if (!_isSearching) _buildResultsView(),
               ],
             ),
           ),
@@ -330,6 +431,13 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
               bottom: 10.0 + MediaQuery.of(context).padding.bottom,
             ),
             decoration: const BoxDecoration(
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black12,
+                  blurRadius: 10,
+                  offset: Offset(0, -2),
+                ),
+              ],
               color: Colors.white,
               borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(32),
@@ -365,6 +473,13 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
   Widget _buildResultsView() {
     return Container(
       decoration: const BoxDecoration(
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black12,
+            blurRadius: 10,
+            offset: Offset(0, -2),
+          ),
+        ],
         color: Colors.white,
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(32),
@@ -372,6 +487,7 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
         ),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 24),
           // Results count
@@ -392,16 +508,17 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
           ),
           const SizedBox(height: 24),
           // Snappers list
-          Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: _foundSnappers.length,
-              separatorBuilder: (context, index) => const SizedBox(height: 16),
-              itemBuilder: (context, index) {
-                return _buildSnapperCard(_foundSnappers[index]);
-              },
-            ),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+            itemCount: _foundSnappers.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 16),
+            itemBuilder: (context, index) {
+              return _buildSnapperCard(_foundSnappers[index]);
+            },
           ),
+          const SizedBox(height: 50),
         ],
       ),
     );
@@ -411,11 +528,11 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFF5F5F5),
+        color: AppColors.greyLight,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(0.2),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -477,13 +594,13 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   snapper.subtitle,
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                 ),
                 const SizedBox(height: 8),
                 // Rating
@@ -525,12 +642,19 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onTap: () {
-                      // TODO: Navigate to snapper profile or booking
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text('Đặt chụp với ${snapper.name}'),
-                          backgroundColor: AppColors.primary,
+                    onTap: _isCreatingBooking ? null : () {
+                      _createBooking(snapper);
+                      // Navigate to booking confirm screen
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BookingConfirmScreen(
+                            snapper: snapper,
+                            location: widget.location,
+                            date: widget.date,
+                            time: widget.time,
+                            // Truyền các thông tin booking khác
+                          ),
                         ),
                       );
                     },
@@ -538,11 +662,21 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        SvgPicture.asset(
-                          AppAssets.cameraIcon,
-                          width: 16,
-                          height: 16,
-                        ),
+                        if (_isCreatingBooking)
+                          const SizedBox(
+                            width: 12,
+                            height: 12,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                            ),
+                          )
+                        else
+                          SvgPicture.asset(
+                            AppAssets.cameraIcon,
+                            width: 16,
+                            height: 16,
+                          ),
                         const SizedBox(width: 4),
                         const Text(
                           'Snap',
@@ -611,19 +745,23 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
 }
 
 class SnapperProfile {
+  final int userId;
   final String name;
   final String subtitle;
   final double rating;
   final int reviewCount;
   final bool isOnline;
   final String? avatarUrl;
+  final double photoPrice;
 
   SnapperProfile({
+    required this.userId,
     required this.name,
     required this.subtitle,
     required this.rating,
     required this.reviewCount,
     required this.isOnline,
     this.avatarUrl,
+    required this.photoPrice,
   });
 }

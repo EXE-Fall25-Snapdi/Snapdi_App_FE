@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
+import '../../../../core/providers/user_info_provider.dart';
 import '../widgets/feature_button.dart';
 import '../widgets/promotional_card.dart';
 
@@ -14,11 +15,27 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
+  String _userName = 'Per';
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserName();
+  }
+
+  Future<void> _loadUserName() async {
+    final userName = await UserInfoProvider.instance.getUserName();
+    if (userName != null && mounted) {
+      setState(() {
+        _userName = userName;
+      });
+    }
   }
 
   @override
@@ -170,11 +187,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
                                   ),
-                                  children: const [
-                                    TextSpan(text: 'Xin chào, '),
+                                  children: [
+                                    const TextSpan(text: 'Xin chào, '),
                                     TextSpan(
-                                      text: 'Per',
-                                      style: TextStyle(
+                                      text: _userName,
+                                      style: const TextStyle(
                                         color: AppColors.primary,
                                       ),
                                     ),

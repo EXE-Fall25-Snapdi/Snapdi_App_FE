@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_theme.dart';
@@ -78,7 +79,8 @@ class _SnapScreenState extends State<SnapScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const ChooseLocationScreenWithMap(),
+                              builder: (context) =>
+                                  const ChooseLocationScreenWithMap(),
                             ),
                           );
                         },
@@ -185,6 +187,7 @@ class _SnapScreenState extends State<SnapScreen> {
                 // Main content area
                 Expanded(
                   child: Container(
+                    padding: const EdgeInsets.only(top: 20),
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.only(
@@ -385,7 +388,8 @@ class _SnapScreenState extends State<SnapScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const ChooseLocationScreenWithMap(),
+                            builder: (context) =>
+                                const ChooseLocationScreenWithMap(),
                           ),
                         );
                       },
@@ -472,9 +476,8 @@ class _SnapScreenState extends State<SnapScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => BookingDetailScreen(
-              selectedLocation: '$title, $address',
-            ),
+            builder: (context) =>
+                BookingDetailScreen(selectedLocation: '$title, $address'),
           ),
         );
       },

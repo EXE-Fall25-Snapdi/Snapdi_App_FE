@@ -94,16 +94,18 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
           setState(() {
             _isSearching = false;
             _foundSnappers.addAll(
-              response.data!.snappers.map((snapper) => SnapperProfile(
-                    userId: snapper.userId,
-                    name: snapper.name,
-                    subtitle: snapper.levelPhotographer,
-                    rating: snapper.avgRating,
-                    reviewCount: 0, // Not in API
-                    isOnline: snapper.isAvailable,
-                    avatarUrl: snapper.avatarUrl,
-                    photoPrice: snapper.photoPrice,
-                  )),
+              response.data!.snappers.map(
+                (snapper) => SnapperProfile(
+                  userId: snapper.userId,
+                  name: snapper.name,
+                  subtitle: snapper.levelPhotographer,
+                  rating: snapper.avgRating,
+                  reviewCount: 0, // Not in API
+                  isOnline: snapper.isAvailable,
+                  avatarUrl: snapper.avatarUrl,
+                  photoPrice: snapper.photoPrice,
+                ),
+              ),
             );
           });
         } else {
@@ -144,7 +146,9 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
   }
 
   Future<void> _createBooking(SnapperProfile snapper) async {
-    if (widget.customerId == null || widget.date == null || widget.time == null) {
+    if (widget.customerId == null ||
+        widget.date == null ||
+        widget.time == null) {
       _showErrorDialog('Thiếu thông tin đặt chỗ');
       return;
     }
@@ -186,7 +190,7 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
               'Mã đặt chỗ: #${response.data!.bookingId}\n'
               'Trạng thái: ${response.data!.status.statusName}\n'
               'Địa chỉ: ${response.data!.locationAddress}\n'
-              'Giá: ${response.data!.price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')} VND'
+              'Giá: ${response.data!.price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')} VND',
             ),
             actions: [
               TextButton(
@@ -360,9 +364,9 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                                 ),
                               ),
                             ),
-                            Container(                              
+                            Container(
                               child: SvgPicture.asset(
-                                AppAssets.camera_altIcon,
+                                AppAssets.cameraAltIcon,
                                 width: 24,
                                 height: 24,
                               ),
@@ -380,7 +384,7 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                 _isSearching
                     ? Expanded(child: _buildSearchingView())
                     : const Spacer(),
-                
+
                 // Results view positioned at bottom
                 if (!_isSearching) _buildResultsView(),
               ],
@@ -600,7 +604,10 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                 const SizedBox(height: 4),
                 Text(
                   snapper.subtitle,
-                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 // Rating
@@ -642,22 +649,24 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
-                    onTap: _isCreatingBooking ? null : () {
-                      _createBooking(snapper);
-                      // Navigate to booking confirm screen
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => BookingConfirmScreen(
-                            snapper: snapper,
-                            location: widget.location,
-                            date: widget.date,
-                            time: widget.time,
-                            // Truyền các thông tin booking khác
-                          ),
-                        ),
-                      );
-                    },
+                    onTap: _isCreatingBooking
+                        ? null
+                        : () {
+                            _createBooking(snapper);
+                            // Navigate to booking confirm screen
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => BookingConfirmScreen(
+                                  snapper: snapper,
+                                  location: widget.location,
+                                  date: widget.date,
+                                  time: widget.time,
+                                  // Truyền các thông tin booking khác
+                                ),
+                              ),
+                            );
+                          },
                     borderRadius: BorderRadius.circular(20),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -668,7 +677,9 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                             height: 12,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.primary,
+                              ),
                             ),
                           )
                         else

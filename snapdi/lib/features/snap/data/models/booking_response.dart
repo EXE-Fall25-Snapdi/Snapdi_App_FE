@@ -25,10 +25,7 @@ class BookingStatus {
   final int statusId;
   final String statusName;
 
-  BookingStatus({
-    required this.statusId,
-    required this.statusName,
-  });
+  BookingStatus({required this.statusId, required this.statusName});
 
   factory BookingStatus.fromJson(Map<String, dynamic> json) {
     return BookingStatus(
@@ -78,19 +75,13 @@ class BookingResponse {
   final String? message;
   final BookingData? data;
 
-  BookingResponse({
-    required this.success,
-    this.message,
-    this.data,
-  });
+  BookingResponse({required this.success, this.message, this.data});
 
   factory BookingResponse.fromJson(Map<String, dynamic> json) {
     return BookingResponse(
       success: json['bookingId'] != null, // If bookingId exists, it's success
       message: json['message'],
-      data: json['bookingId'] != null 
-          ? BookingData.fromJson(json)
-          : null,
+      data: json['bookingId'] != null ? BookingData.fromJson(json) : null,
     );
   }
 }

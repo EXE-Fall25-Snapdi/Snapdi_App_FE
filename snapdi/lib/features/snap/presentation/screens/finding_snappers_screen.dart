@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
 import 'dart:async';
 import '../../../profile/presentation/widgets/cloudinary_image.dart';
+import '../../../chat/data/services/chat_api_service.dart';
 import '../../data/services/snapper_service.dart';
 import '../../data/services/booking_service.dart';
 import '../../data/models/find_snappers_request.dart';
@@ -49,7 +51,9 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
   final List<SnapperProfile> _foundSnappers = [];
   final SnapperService _snapperService = SnapperService();
   final BookingService _bookingService = BookingService();
+  final ChatApiServiceImpl _chatApiService = ChatApiServiceImpl();
   bool _isCreatingBooking = false;
+  bool _isCreatingConversation = false;
   
   // Store search center and radius for map display
   double? _searchCenterLatitude;
@@ -197,6 +201,40 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
         _showErrorDialog('Lỗi khi tìm kiếm Snapper: $e');
       }
     }
+  }
+
+  Future<void> _openChatWithPhotographer(SnapperProfile snapper) async {
+    if (_isCreatingConversation) return;
+
+    setState(() {
+      _isCreatingConversation = true;
+    });
+
+    final result = await _chatApiService.createOrGetConversationWithUser(
+      snapper.userId,
+    );
+
+    setState(() {
+      _isCreatingConversation = false;
+    });
+
+    result.fold(
+      (failure) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Không thể mở chat: ${failure.message}')),
+          );
+        }
+      },
+      (conversationId) {
+        if (mounted) {
+          context.push(
+            '/chat/$conversationId',
+            extra: snapper.name,
+          );
+        }
+      },
+    );
   }
 
   void _showErrorDialog(String message) {
@@ -826,7 +864,8 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                         color: Colors.black87,
                       ),
                       onPressed: () {
-                        // TODO: Open chat
+                        // Open chat with photographer
+                        _openChatWithPhotographer(snapper);
                       },
                       padding: EdgeInsets.zero,
                     ),
@@ -846,7 +885,8 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                         color: Colors.black87,
                       ),
                       onPressed: () {
-                        // TODO: Show snapper info
+                        // Navigate to photographer profile
+                        context.push('/photographer-profile/${snapper.userId}');
                       },
                       padding: EdgeInsets.zero,
                     ),

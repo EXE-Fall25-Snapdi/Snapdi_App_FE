@@ -80,6 +80,20 @@ class _MyBookingScreenState extends State<MyBookingScreen> {
       _currentPage = resp.currentPage;
       _hasMore = resp.hasNextPage || (_currentPage < resp.totalPages);
     });
+
+    //  Tự động load trang kế tiếp nếu danh sách quá ngắn (chưa thể cuộn)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        if (_scrollController.hasClients &&
+            _scrollController.position.maxScrollExtent <= 0 &&
+            _hasMore) {
+          debugPrint(' Danh sách quá ngắn, tự load trang ${_currentPage + 1}');
+          _loadBookings(page: _currentPage + 1);
+        }
+      } catch (e) {
+        debugPrint(' Lỗi khi auto-load trang tiếp theo: $e');
+      }
+    });
   }
 
   void _onScroll() {

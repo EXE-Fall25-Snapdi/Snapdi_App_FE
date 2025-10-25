@@ -1,9 +1,11 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/storage/token_storage.dart';
+import '../../../auth/data/models/user.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   final Widget child;
@@ -17,12 +19,13 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   final _tokenStorage = TokenStorage.instance;
   String? _userId;
+  int? _roleId;
   int _currentIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _loadUserId();
+    _loadUserInfo();
   }
 
   @override
@@ -31,11 +34,30 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     _updateCurrentIndex();
   }
 
-  Future<void> _loadUserId() async {
-    final userId = await _tokenStorage.getUserId();
-    setState(() {
-      _userId = userId?.toString();
-    });
+  Future<void> _loadUserInfo() async {
+    try {
+      final userId = await _tokenStorage.getUserId();
+      final userInfoJson = await _tokenStorage.getUserInfo();
+      
+      if (userInfoJson != null) {
+        final userMap = jsonDecode(userInfoJson);
+        final user = User.fromJson(userMap);
+        setState(() {
+          _userId = userId?.toString();
+          _roleId = user.roleId;
+        });
+      } else {
+        setState(() {
+          _userId = userId?.toString();
+        });
+      }
+    } catch (e) {
+      print('Error loading user info: $e');
+      final userId = await _tokenStorage.getUserId();
+      setState(() {
+        _userId = userId?.toString();
+      });
+    }
   }
 
   void _updateCurrentIndex() {
@@ -71,7 +93,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         break;
       case 4:
         if (_userId != null) {
-          context.go('/profile/$_userId');
+          // If photographer (roleId == 3), navigate to photographer profile
+          // Otherwise, navigate to regular profile (settings)
+          if (_roleId == 3) {
+            context.go('/photographer-profile/$_userId');
+          } else {
+            context.go('/profile/$_userId');
+          }
         }
         break;
     }

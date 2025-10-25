@@ -6,8 +6,10 @@ import 'package:snapdi/features/auth/presentation/screens/photographer_sign_up_s
 import 'package:snapdi/features/auth/presentation/screens/welcome_screen.dart';
 import 'package:snapdi/features/auth/presentation/screens/splash_screen.dart';
 import 'package:snapdi/features/profile/presentation/screens/profile_screen.dart';
+import 'package:snapdi/features/profile/presentation/screens/photographer_profile_screen.dart';
 import 'package:snapdi/features/profile/presentation/screens/manage_portfolio_screen.dart';
 import 'package:snapdi/features/profile/presentation/screens/account_settings_screen.dart';
+import 'package:snapdi/features/chat/presentation/screens/chat_screen.dart';
 import 'package:snapdi/features/shared/presentation/screens/main_navigation_screen.dart';
 import 'package:snapdi/features/home/presentation/screens/home_screen.dart';
 import 'package:snapdi/features/booking/presentation/screens/my_booking_screen.dart';
@@ -132,6 +134,32 @@ final GoRouter router = GoRouter(
       path: '/account-settings',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const AccountSettingsScreen(),
+    ),
+
+    // --- Photographer Profile Route (without navigation bar) ---
+    GoRoute(
+      path: '/photographer-profile/:userId',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) {
+        final userIdStr = state.pathParameters['userId'];
+        final userId = userIdStr != null ? int.tryParse(userIdStr) : null;
+        return PhotographerProfileScreen(userId: userId ?? 0);
+      },
+    ),
+
+    // --- Chat Route (without navigation bar) ---
+    GoRoute(
+      path: '/chat/:conversationId',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) {
+        final conversationIdStr = state.pathParameters['conversationId'];
+        final conversationId = conversationIdStr != null ? int.tryParse(conversationIdStr) : null;
+        final otherUserName = state.extra as String?;
+        return ChatScreen(
+          conversationId: conversationId ?? 0,
+          otherUserName: otherUserName,
+        );
+      },
     ),
   ],
   errorBuilder: (context, state) =>

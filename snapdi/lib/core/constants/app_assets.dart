@@ -86,7 +86,7 @@ class AppAssets {
   static const String starIcon = '$_iconsPath/star.svg';
   static const String filledStarIcon = '$_iconsPath/filled_star.svg';
   static const String halfStarIcon = '$_iconsPath/half_filled_star.svg';
-  static const String camera_altIcon = '$_iconsPath/camera_icon.svg';
+  static const String cameraAltIcon = '$_iconsPath/camera_icon.svg';
 
   // Account Type Icons
   static const String snapperAccountIcon = '$_iconsPath/snaper_acc_icon.svg';
@@ -199,7 +199,7 @@ class AppAssets {
     starIcon,
     filledStarIcon,
     halfStarIcon,
-    camera_altIcon,
+    cameraAltIcon,
     snapperAccountIcon,
     userAccountIcon,
     // weddingIcon,

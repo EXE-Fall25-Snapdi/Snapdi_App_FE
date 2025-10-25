@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
 import 'dart:async';
 import '../../../profile/presentation/widgets/cloudinary_image.dart';
+import '../../../chat/data/services/chat_api_service.dart';
 import '../../data/services/snapper_service.dart';
 import '../../data/services/booking_service.dart';
 import '../../data/models/find_snappers_request.dart';
@@ -49,7 +51,9 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
   final List<SnapperProfile> _foundSnappers = [];
   final SnapperService _snapperService = SnapperService();
   final BookingService _bookingService = BookingService();
+  final ChatApiServiceImpl _chatApiService = ChatApiServiceImpl();
   bool _isCreatingBooking = false;
+  bool _isCreatingConversation = false;
   
   // Store search center and radius for map display
   double? _searchCenterLatitude;
@@ -199,6 +203,40 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
     }
   }
 
+  Future<void> _openChatWithPhotographer(SnapperProfile snapper) async {
+    if (_isCreatingConversation) return;
+
+    setState(() {
+      _isCreatingConversation = true;
+    });
+
+    final result = await _chatApiService.createOrGetConversationWithUser(
+      snapper.userId,
+    );
+
+    setState(() {
+      _isCreatingConversation = false;
+    });
+
+    result.fold(
+      (failure) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Không thể mở chat: ${failure.message}')),
+          );
+        }
+      },
+      (conversationId) {
+        if (mounted) {
+          context.push(
+            '/chat/$conversationId',
+            extra: snapper.name,
+          );
+        }
+      },
+    );
+  }
+
   void _showErrorDialog(String message) {
     showDialog(
       context: context,
@@ -216,7 +254,9 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
   }
 
   Future<void> _createBooking(SnapperProfile snapper) async {
-    if (widget.customerId == null || widget.date == null || widget.time == null) {
+    if (widget.customerId == null ||
+        widget.date == null ||
+        widget.time == null) {
       _showErrorDialog('Thiếu thông tin đặt chỗ');
       return;
     }
@@ -258,7 +298,7 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
               'Mã đặt chỗ: #${response.data!.bookingId}\n'
               'Trạng thái: ${response.data!.status.statusName}\n'
               'Địa chỉ: ${response.data!.locationAddress}\n'
-              'Giá: ${response.data!.price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')} VND'
+              'Giá: ${response.data!.price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')} VND',
             ),
                 actions: [
                 TextButton(
@@ -501,7 +541,7 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                 _isSearching
                     ? Expanded(child: _buildSearchingView())
                     : const Spacer(),
-                
+
                 // Results view positioned at bottom
                 if (!_isSearching) _buildResultsView(),
               ],
@@ -721,7 +761,10 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                 const SizedBox(height: 4),
                 Text(
                   snapper.subtitle,
-                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 // Rating
@@ -778,7 +821,9 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                             height: 12,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                AppColors.primary,
+                              ),
                             ),
                           )
                         else
@@ -819,7 +864,8 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                         color: Colors.black87,
                       ),
                       onPressed: () {
-                        // TODO: Open chat
+                        // Open chat with photographer
+                        _openChatWithPhotographer(snapper);
                       },
                       padding: EdgeInsets.zero,
                     ),
@@ -839,7 +885,8 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                         color: Colors.black87,
                       ),
                       onPressed: () {
-                        // TODO: Show snapper info
+                        // Navigate to photographer profile
+                        context.push('/photographer-profile/${snapper.userId}');
                       },
                       padding: EdgeInsets.zero,
                     ),

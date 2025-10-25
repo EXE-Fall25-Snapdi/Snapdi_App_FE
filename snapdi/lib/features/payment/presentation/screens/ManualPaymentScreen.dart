@@ -24,7 +24,7 @@ class ManualPaymentScreen extends StatefulWidget {
 class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
   final TextEditingController transactionCodeController = TextEditingController();
   bool isLoading = false;
-  String? uploadedImageUrl;
+  String? uploadedImagePath;
   final PaymentService _paymentService = PaymentService();
 
   // Thông tin ngân hàng
@@ -282,7 +282,7 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
                   Container(
                     decoration: BoxDecoration(
                       border: Border.all(
-                        color: uploadedImageUrl != null
+                        color: uploadedImagePath != null
                             ? const Color(0xFF00BFA5)
                             : Colors.grey[300]!,
                       ),
@@ -300,7 +300,7 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
                             ),
                           );
                           if (result != null) {
-                            setState(() => uploadedImageUrl = result);
+                            setState(() => uploadedImagePath = result);
                           }
                         },
                         child: Padding(
@@ -310,18 +310,18 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
                               Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: uploadedImageUrl != null
-                                      ? const Color(0xFF00BFA5).withOpacity(0.1)
-                                      : Colors.grey[100],
+                  color: uploadedImagePath != null
+                    ? const Color(0xFF00BFA5).withOpacity(0.1)
+                    : Colors.grey[100],
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Icon(
-                                  uploadedImageUrl != null
-                                      ? Icons.check_circle
-                                      : Icons.cloud_upload_outlined,
-                                  color: uploadedImageUrl != null
-                                      ? const Color(0xFF00BFA5)
-                                      : Colors.grey[600],
+                  uploadedImagePath != null
+                    ? Icons.check_circle
+                    : Icons.cloud_upload_outlined,
+                  color: uploadedImagePath != null
+                    ? const Color(0xFF00BFA5)
+                    : Colors.grey[600],
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -329,28 +329,28 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      uploadedImageUrl != null
-                                          ? 'Đã tải lên hóa đơn'
-                                          : 'Tải lên hóa đơn chuyển khoản',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w500,
-                                        color: uploadedImageUrl != null
-                                            ? const Color(0xFF00BFA5)
-                                            : Colors.black,
-                                      ),
-                                    ),
-                                    if (uploadedImageUrl != null)
-                                      Text(
-                                        uploadedImageUrl!.split('/').last,
-                                        style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.grey,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
+                                          Text(
+                                            uploadedImagePath != null
+                                                ? 'Đã chọn hóa đơn'
+                                                : 'Tải lên hóa đơn chuyển khoản',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w500,
+                                              color: uploadedImagePath != null
+                                                  ? const Color(0xFF00BFA5)
+                                                  : Colors.black,
+                                            ),
+                                          ),
+                                          if (uploadedImagePath != null)
+                                            Text(
+                                              uploadedImagePath!.split('/').last,
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
                                   ],
                                 ),
                               ),
@@ -460,7 +460,7 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
   }
 
   Future<void> _submitPayment() async {
-    if (uploadedImageUrl == null || transactionCodeController.text.isEmpty) {
+  if (uploadedImagePath == null || transactionCodeController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Row(
@@ -486,18 +486,17 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
       bookingId: widget.bookingId,
       amount: widget.amount,
       transactionReference: transactionCodeController.text,
-      proofImageUrl: uploadedImageUrl!,
+      proofImageUrl: uploadedImagePath!,
     );
 
     try {
-      final result = await _paymentService.confirmManualPayment(request);
-      
+      final status = await _paymentService.confirmManualPayment(request);
       if (!mounted) return;
-      
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
-          builder: (_) => const PaymentStatusScreen(status: 'pending'),
+          builder: (_) => PaymentStatusScreen(status: status),
         ),
       );
     } catch (e) {

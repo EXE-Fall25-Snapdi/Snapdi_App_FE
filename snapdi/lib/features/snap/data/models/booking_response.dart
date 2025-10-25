@@ -21,14 +21,57 @@ class BookingUser {
   }
 }
 
+/// Photographer-specific model returned inside booking response
+class BookingPhotographer {
+  final int userId;
+  final String name;
+  final String email;
+  final String phone;
+  final double? avgRating;
+  final bool? isAvailable;
+  final String? levelPhotographer;
+  final int? photoPrice;
+  final String? avatarUrl;
+
+  BookingPhotographer({
+    required this.userId,
+    required this.name,
+    required this.email,
+    required this.phone,
+    this.avgRating,
+    this.isAvailable,
+    this.levelPhotographer,
+    this.photoPrice,
+    this.avatarUrl,
+  });
+
+  factory BookingPhotographer.fromJson(Map<String, dynamic> json) {
+    return BookingPhotographer(
+      userId: json['userId'] ?? 0,
+      name: json['name'] ?? '',
+      email: json['email'] ?? '',
+      phone: json['phone'] ?? '',
+      avgRating: json['avgRating'] != null
+          ? (json['avgRating'] as num).toDouble()
+          : null,
+      isAvailable: json['isAvailable'],
+      levelPhotographer: json['levelPhotographer'],
+      photoPrice: json['photoPrice'],
+      avatarUrl:
+          (json['avatarUrl'] ??
+                  json['avatar'] ??
+                  json['image'] ??
+                  json['photoUrl'])
+              as String?,
+    );
+  }
+}
+
 class BookingStatus {
   final int statusId;
   final String statusName;
 
-  BookingStatus({
-    required this.statusId,
-    required this.statusName,
-  });
+  BookingStatus({required this.statusId, required this.statusName});
 
   factory BookingStatus.fromJson(Map<String, dynamic> json) {
     return BookingStatus(
@@ -41,7 +84,7 @@ class BookingStatus {
 class BookingData {
   final int bookingId;
   final BookingUser customer;
-  final BookingUser photographer;
+  final BookingPhotographer photographer;
   final String scheduleAt;
   final String locationAddress;
   final BookingStatus status;
@@ -63,7 +106,7 @@ class BookingData {
     return BookingData(
       bookingId: json['bookingId'] ?? 0,
       customer: BookingUser.fromJson(json['customer'] ?? {}),
-      photographer: BookingUser.fromJson(json['photographer'] ?? {}),
+      photographer: BookingPhotographer.fromJson(json['photographer'] ?? {}),
       scheduleAt: json['scheduleAt'] ?? '',
       locationAddress: json['locationAddress'] ?? '',
       status: BookingStatus.fromJson(json['status'] ?? {}),
@@ -78,19 +121,13 @@ class BookingResponse {
   final String? message;
   final BookingData? data;
 
-  BookingResponse({
-    required this.success,
-    this.message,
-    this.data,
-  });
+  BookingResponse({required this.success, this.message, this.data});
 
   factory BookingResponse.fromJson(Map<String, dynamic> json) {
     return BookingResponse(
       success: json['bookingId'] != null, // If bookingId exists, it's success
       message: json['message'],
-      data: json['bookingId'] != null 
-          ? BookingData.fromJson(json)
-          : null,
+      data: json['bookingId'] != null ? BookingData.fromJson(json) : null,
     );
   }
 }

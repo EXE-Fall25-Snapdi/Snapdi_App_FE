@@ -10,7 +10,9 @@ import 'package:snapdi/features/profile/presentation/screens/manage_portfolio_sc
 import 'package:snapdi/features/profile/presentation/screens/account_settings_screen.dart';
 import 'package:snapdi/features/shared/presentation/screens/main_navigation_screen.dart';
 import 'package:snapdi/features/home/presentation/screens/home_screen.dart';
+import 'package:snapdi/features/booking/presentation/screens/my_booking_screen.dart';
 import 'package:snapdi/features/snap/presentation/screens/snap_screen.dart';
+import 'package:snapdi/features/snap/presentation/screens/booking_status_screen.dart';
 import 'package:snapdi/core/constants/app_theme.dart';
 
 // Global key for navigation
@@ -23,9 +25,12 @@ final GoRouter router = GoRouter(
   routes: [
     // --- Splash Screen (checks auth and redirects) ---
     GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
-    
+
     // --- Auth Routes (without navigation bar) ---
-    GoRoute(path: '/welcome', builder: (context, state) => const WelcomeScreen()),
+    GoRoute(
+      path: '/welcome',
+      builder: (context, state) => const WelcomeScreen(),
+    ),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(
       path: '/signup',
@@ -58,6 +63,13 @@ final GoRouter router = GoRouter(
           ),
         ),
         GoRoute(
+          path: '/bookings',
+          pageBuilder: (context, state) => NoTransitionPage(
+            key: state.pageKey,
+            child: const MyBookingScreen(),
+          ),
+        ),
+        GoRoute(
           path: '/history',
           pageBuilder: (context, state) => NoTransitionPage(
             key: state.pageKey,
@@ -77,6 +89,17 @@ final GoRouter router = GoRouter(
             );
           },
         ),
+        GoRoute(
+          path: '/booking/:id/status',
+          pageBuilder: (context, state) {
+            final idStr = state.pathParameters['id'];
+            final id = idStr != null ? int.tryParse(idStr) : null;
+            return NoTransitionPage(
+              key: state.pageKey,
+              child: BookingStatusScreen(bookingId: id),
+            );
+          },
+        ),
       ],
     ),
 
@@ -86,6 +109,16 @@ final GoRouter router = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const SnapScreen(),
     ),
+
+    // Provide a top-level route for /bookings so it's resolvable from any context.
+    GoRoute(
+      path: '/bookings',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const MyBookingScreen(),
+    ),
+
+    // Booking status route (booking detail / status tracker)
+    // (moved under ShellRoute so it shows inside the main navigation shell)
 
     // --- Portfolio Management Route (without navigation bar) ---
     GoRoute(

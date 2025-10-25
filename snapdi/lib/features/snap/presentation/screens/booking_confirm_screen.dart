@@ -7,6 +7,8 @@ class BookingConfirmScreen extends StatelessWidget {
   final String? location;
   final DateTime? date;
   final TimeOfDay? time;
+  final int bookingId;
+  final double amount;
 
   const BookingConfirmScreen({
     Key? key,
@@ -14,13 +16,15 @@ class BookingConfirmScreen extends StatelessWidget {
     this.location,
     this.date,
     this.time,
+    required this.bookingId,
+    required this.amount,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    // Giả sử tính tổng tiền
-    final double totalAmount = 500000; // VND
-    final int bookingId = 12345; // ID booking sau khi tạo
+  // Use values passed from the booking response
+  final double totalAmount = amount;
+  // bookingId is provided via constructor
 
     return Scaffold(
       appBar: AppBar(title: const Text('Xác nhận đặt chụp')),

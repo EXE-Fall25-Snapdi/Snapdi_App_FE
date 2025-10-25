@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_theme.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/providers/user_info_provider.dart';
 import '../widgets/feature_button.dart';
@@ -269,10 +270,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           const SizedBox(width: 12),
                           FeatureButton(
                             iconPath: AppAssets.bookIcon,
-                            label: 'Book',
+                            label: 'My Bookings',
                             backgroundColor: const Color(0xFFCAE0DB),
                             onTap: () {
-                              // TODO: Navigate to booking
+                              context.go('/bookings');
                             },
                           ),
                           const SizedBox(width: 12),

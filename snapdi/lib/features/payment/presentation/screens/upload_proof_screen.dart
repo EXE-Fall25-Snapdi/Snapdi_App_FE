@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../domain/services/payment_service.dart';
 
 class UploadProofScreen extends StatefulWidget {
   const UploadProofScreen({super.key});
@@ -13,9 +12,7 @@ class UploadProofScreen extends StatefulWidget {
 
 class _UploadProofScreenState extends State<UploadProofScreen> {
   File? selectedImage;
-  bool isUploading = false;
   final ImagePicker _picker = ImagePicker();
-  final PaymentService _paymentService = PaymentService();
 
   Future<void> pickImageFromGallery() async {
     final picked = await _picker.pickImage(
@@ -37,44 +34,11 @@ class _UploadProofScreenState extends State<UploadProofScreen> {
     }
   }
 
-  Future<void> uploadToBackend() async {
+  Future<void> confirmAndReturn() async {
     if (selectedImage == null) return;
-    
-    setState(() => isUploading = true);
 
-    try {
-      // Gọi API upload từ PaymentService
-      final imageUrl = await _paymentService.uploadProofImage(selectedImage!);
-      
-      if (!mounted) return;
-      
-      // Trả URL về màn hình trước (ManualPaymentScreen)
-      Navigator.pop(context, imageUrl);
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Row(
-            children: [
-              Icon(Icons.check_circle, color: Colors.white),
-              SizedBox(width: 12),
-              Text('Upload thành công!'),
-            ],
-          ),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      _showError('Lỗi upload: ${e.toString()}');
-    } finally {
-      if (mounted) {
-        setState(() => isUploading = false);
-      }
-    }
+    // Just return the local file path so the caller can include the file in the final multipart request
+    Navigator.pop(context, selectedImage!.path);
   }
 
   void _showError(String message) {
@@ -278,21 +242,10 @@ class _UploadProofScreenState extends State<UploadProofScreen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton.icon(
-                  onPressed: (isUploading || selectedImage == null)
-                      ? null
-                      : uploadToBackend, // ← Gọi hàm upload
-                  icon: isUploading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Icon(Icons.cloud_upload),
-                  label: Text(
-                    isUploading ? 'Đang tải lên...' : 'Xác nhận',
+                  onPressed: selectedImage == null ? null : confirmAndReturn,
+                  icon: const Icon(Icons.check),
+                  label: const Text(
+                    'Hoàn tất',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,

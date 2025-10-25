@@ -4,8 +4,10 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
+import '../../../../core/providers/user_info_provider.dart';
 import 'choose_location_screen_with_map.dart';
 import 'booking_detail_screen.dart';
+import 'photographer_snap_screen.dart';
 
 class SnapScreen extends StatefulWidget {
   const SnapScreen({super.key});
@@ -16,6 +18,31 @@ class SnapScreen extends StatefulWidget {
 
 class _SnapScreenState extends State<SnapScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final UserInfoProvider _userInfoProvider = UserInfoProvider.instance;
+  bool _isPhotographer = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkUserRole();
+  }
+
+  Future<void> _checkUserRole() async {
+    try {
+      final roleName = await _userInfoProvider.getRoleName();
+      setState(() {
+        _isPhotographer = roleName?.toLowerCase() == 'photographer' || 
+                         roleName?.toLowerCase() == 'snapper';
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isPhotographer = false;
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -25,6 +52,32 @@ class _SnapScreenState extends State<SnapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Show loading indicator while checking role
+    if (_isLoading) {
+      return Scaffold(
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(AppAssets.backgroundGradient, fit: BoxFit.cover),
+            ),
+            const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Show photographer screen if user is a photographer
+    if (_isPhotographer) {
+      return const PhotographerSnapScreen();
+    }
+
+    // Show customer snap screen
+    return _buildCustomerSnapScreen();
+  }
+
+  Widget _buildCustomerSnapScreen() {
     return Scaffold(
       body: Stack(
         children: [

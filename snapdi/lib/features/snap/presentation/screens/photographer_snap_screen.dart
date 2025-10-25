@@ -24,7 +24,7 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
   final UserInfoProvider _userInfoProvider = UserInfoProvider.instance;
   late final PhotographerService _photographerService;
   late final AuthService _authService;
-  
+
   String _userName = 'Amigo';
   int _pendingRequestsCount = 1;
   List<BookingData> _upcomingBookings = [];
@@ -54,14 +54,14 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
 
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
-    
+
     try {
       // Get user name
       final userName = await _userInfoProvider.getUserName();
       if (userName != null) {
         setState(() => _userName = userName.split(' ').first);
       }
-      
+
       // TODO: Load photographer's bookings from API
       // For now, using mock data based on the design
       setState(() {
@@ -74,7 +74,7 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
               email: 'customer1@example.com',
               phone: '0901234567',
             ),
-            photographer: BookingUser(
+            photographer: BookingPhotographer(
               userId: 201,
               name: 'Photographer',
               email: 'photographer@example.com',
@@ -94,7 +94,7 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
               email: 'customer2@example.com',
               phone: '0902345678',
             ),
-            photographer: BookingUser(
+            photographer: BookingPhotographer(
               userId: 201,
               name: 'Photographer',
               email: 'photographer@example.com',
@@ -114,7 +114,7 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
               email: 'customer3@example.com',
               phone: '0903456789',
             ),
-            photographer: BookingUser(
+            photographer: BookingPhotographer(
               userId: 201,
               name: 'Photographer',
               email: 'photographer@example.com',
@@ -151,7 +151,7 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
       final now = DateTime.now();
       final today = DateTime(now.year, now.month, now.day);
       final bookingDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
-      
+
       if (bookingDate == today) {
         return 'hôm nay';
       } else if (bookingDate == today.add(const Duration(days: 1))) {
@@ -231,9 +231,9 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
       }
     } catch (e) {
       setState(() => _isUpdatingStatus = false);
-      
+
       if (!mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -329,9 +329,7 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
               Navigator.pop(context);
               _updateStatus();
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
             child: Text(
               'Cập nhật',
               style: AppTextStyles.buttonMedium.copyWith(color: Colors.white),
@@ -349,10 +347,7 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
         children: [
           // Background gradient
           Positioned.fill(
-            child: Image.asset(
-              AppAssets.backgroundGradient,
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset(AppAssets.backgroundGradient, fit: BoxFit.cover),
           ),
 
           // Content
@@ -361,10 +356,13 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
               children: [
                 // Header Section
                 _buildHeader(),
-                
+
                 // Greeting and Status Button
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 16,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -381,13 +379,15 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
                             ),
                             TextSpan(
                               text: _userName,
-                              style: const TextStyle(fontWeight: FontWeight.w300),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w300,
+                              ),
                             ),
                           ],
                         ),
                       ),
                       const SizedBox(height: 12),
-                      
+
                       // Status Update Button
                       ElevatedButton.icon(
                         onPressed: _isUpdatingStatus ? null : _showStatusDialog,
@@ -397,19 +397,23 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
                                 height: 16,
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.white,
+                                  ),
                                 ),
                               )
                             : Icon(
-                                _isAvailable ? Icons.check_circle : Icons.cancel,
+                                _isAvailable
+                                    ? Icons.check_circle
+                                    : Icons.cancel,
                                 size: 20,
                               ),
                         label: Text(
                           _isUpdatingStatus
                               ? 'Đang cập nhật...'
                               : (_isAvailable
-                                  ? 'Sẵn sàng - Cập nhật trạng thái'
-                                  : 'Không khả dụng - Cập nhật trạng thái'),
+                                    ? 'Sẵn sàng - Cập nhật trạng thái'
+                                    : 'Không khả dụng - Cập nhật trạng thái'),
                           style: AppTextStyles.buttonMedium.copyWith(
                             color: Colors.white,
                             fontSize: 13,
@@ -436,9 +440,7 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
                 Expanded(
                   child: _isLoading
                       ? const Center(
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                          ),
+                          child: CircularProgressIndicator(color: Colors.white),
                         )
                       : SingleChildScrollView(
                           padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -446,12 +448,12 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               const SizedBox(height: 8),
-                              
+
                               // Photo Requests Card
                               _buildPhotoRequestsCard(),
-                              
+
                               const SizedBox(height: 32),
-                              
+
                               // Upcoming Sessions Section
                               Text(
                                 'Lịch Chụp Sắp Tới',
@@ -461,15 +463,17 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
                                   fontSize: 20,
                                 ),
                               ),
-                              
+
                               const SizedBox(height: 16),
-                              
+
                               // Upcoming Bookings List
-                              ..._upcomingBookings.map((booking) => 
-                                _buildBookingCard(booking)
-                              ).toList(),
-                              
-                              const SizedBox(height: 100), // Space for bottom nav
+                              ..._upcomingBookings
+                                  .map((booking) => _buildBookingCard(booking))
+                                  .toList(),
+
+                              const SizedBox(
+                                height: 100,
+                              ), // Space for bottom nav
                             ],
                           ),
                         ),
@@ -515,9 +519,9 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
               ),
             ),
           ),
-          
+
           const SizedBox(width: 12),
-          
+
           // Menu and Profile Icons
           Container(
             height: 45,
@@ -534,18 +538,24 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
                     // TODO: Open menu
                   },
                 ),
-                
+
                 Container(
                   width: 1,
                   height: 25,
                   color: AppColors.textSecondary.withOpacity(0.3),
                 ),
-                
+
                 // Profile Icon
                 IconButton(
                   icon: const Icon(Icons.person, color: AppColors.primary),
-                  onPressed: () {
-                    context.go('/profile');
+                  onPressed: () async {
+                    final id = await _userInfoProvider.getUserId();
+                    if (id != null) {
+                      context.go('/profile/$id');
+                    } else {
+                      // fallback to home if id not available
+                      context.go('/home');
+                    }
                   },
                 ),
               ],
@@ -604,7 +614,7 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
                 ],
               ),
             ),
-            
+
             // Calendar Icon
             Container(
               width: 60,
@@ -622,7 +632,7 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
                       size: 28,
                     ),
                   ),
-                  
+
                   // Notification Badge
                   if (_pendingRequestsCount > 0)
                     Positioned(
@@ -681,15 +691,11 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
               color: AppColors.primary,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(
-              Icons.location_on,
-              color: Colors.white,
-              size: 28,
-            ),
+            child: const Icon(Icons.location_on, color: Colors.white, size: 28),
           ),
-          
+
           const SizedBox(width: 16),
-          
+
           // Booking Details
           Expanded(
             child: Column(

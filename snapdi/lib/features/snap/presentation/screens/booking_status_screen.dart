@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:signalr_core/signalr_core.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 import 'package:signalr_core/signalr_core.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_theme.dart';
@@ -60,17 +61,11 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
           )
           .build();
 
-      if (_hubConnection != null) {
-        await _hubConnection!.start();
-        debugPrint("✅ Connected to BookingHub");
-      }
+      await _hubConnection?.start();
       debugPrint("✅ Connected to BookingHub");
 
-      // Join the user's group (e.g. "customer-5")
-      if (_hubConnection != null) {
-        await _hubConnection!.invoke('JoinCustomerGroup', args: [userId]);
-        debugPrint("📡 Joined group: customer-$userId");
-      }
+      await _hubConnection?.invoke('JoinCustomerGroup', args: [userId]);
+      debugPrint("📡 Joined group: customer-$userId");
 
       // Listen for booking status updates
       _hubConnection?.on('bookingStatusUpdated', (args) {
@@ -84,24 +79,15 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
             setState(() {
               _currentStep = _mapStatusToStep(statusId);
               if (_booking != null) {
-                _booking = BookingData(
-                  bookingId: _booking!.bookingId,
-                  customer: _booking!.customer,
-                  photographer: _booking!.photographer,
-                  scheduleAt: _booking!.scheduleAt,
-                  locationAddress: _booking!.locationAddress,
-                  status: BookingStatus(
-                    statusId: statusId,
-                    statusName: _mapStatusName(statusId),
-                  ),
-                  price: _booking!.price,
-                  note: _booking!.note,
+                _booking = _booking!.copyWithStatus(
+                  statusId: statusId,
+                  statusName: _mapStatusName(statusId),
                 );
               }
             });
           }
         } catch (e) {
-          debugPrint('Error parsing SignalR args: $e');
+          debugPrint('❌ Error parsing SignalR args: $e');
         }
       });
     } catch (e) {
@@ -128,37 +114,29 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
   }
 
   int _mapStatusToStep(int statusId) {
-    // Map backend status IDs to the step index in the UI.
-    // Status mapping (from backend):
-    // 1 - Pending
-    // 2 - Processing
-    // 3 - Confirmed
-    // 4 - Completed
-    // 5 - Cancelled
     switch (statusId) {
       case 2:
-        return 1; // Processing -> step 1
+        return 1; // Confirmed
       case 3:
-        return 2; // Confirmed -> step 2
+        return 2; // Paid
       case 4:
-        return 3; // Completed -> step 3
+        return 3; // Completed
       case 5:
-        return -1; // Cancelled -> no steps completed
+        return -1; // Cancelled
       case 1:
       default:
-        return 0; // Pending -> step 0
+        return 0; // Pending
     }
   }
 
   String _mapStatusName(int statusId) {
-    // Return status display name based on backend id (align with provided table)
     switch (statusId) {
       case 1:
         return 'Pending';
       case 2:
-        return 'Processing';
-      case 3:
         return 'Confirmed';
+      case 3:
+        return 'Paid';
       case 4:
         return 'Completed';
       case 5:
@@ -169,6 +147,13 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
   }
 
   Widget _buildSteps() {
+    const stepIcons = [
+      'assets/icons/status_1.svg',
+      'assets/icons/status_2.svg',
+      'assets/icons/status_3.svg',
+      'assets/icons/status_4.svg',
+    ];
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16.0),
       padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 12.0),
@@ -185,34 +170,29 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
       ),
       child: Column(
         children: [
+          // 4 vòng tròn status
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: List.generate(4, (index) {
-              final completed = index <= _currentStep;
+              final completed = index <= _currentStep && _currentStep >= 0;
+              final color = completed ? AppColors.primary : AppColors.greyLight;
+
               return Column(
                 children: [
                   AnimatedContainer(
-                    duration: const Duration(milliseconds: 400),
-                    width: index == 2 ? 56 : 44,
-                    height: index == 2 ? 56 : 44,
+                    duration: const Duration(milliseconds: 300),
+                    width: 56,
+                    height: 56,
                     decoration: BoxDecoration(
-                      color: completed
-                          ? AppColors.primary
-                          : AppColors.greyLight,
+                      color: color,
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 2),
                     ),
                     child: Center(
-                      child: Icon(
-                        index == 0
-                            ? Icons.book
-                            : (index == 1
-                                  ? Icons.check
-                                  : (index == 2
-                                        ? Icons.camera_alt
-                                        : Icons.done_all)),
-                        color: Colors.black,
-                        size: index == 2 ? 28 : 20,
+                      child: SvgPicture.asset(
+                        stepIcons[index],
+                        width: 28,
+                        height: 28,
                       ),
                     ),
                   ),
@@ -222,18 +202,17 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
             }),
           ),
           const SizedBox(height: 12),
+          // 3 thanh nối giữa các bước
           Row(
             children: List.generate(3, (index) {
-              final leftCompleted = index <= (_currentStep - 1);
+              final active = index < _currentStep && _currentStep > 0;
               return Expanded(
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 400),
+                  duration: const Duration(milliseconds: 300),
                   height: 6,
                   margin: const EdgeInsets.symmetric(horizontal: 6),
                   decoration: BoxDecoration(
-                    color: leftCompleted
-                        ? AppColors.primary
-                        : AppColors.greyLight,
+                    color: active ? AppColors.primary : AppColors.greyLight,
                     borderRadius: BorderRadius.circular(3),
                   ),
                 ),
@@ -246,10 +225,10 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
   }
 
   Widget _buildStatusMessage() {
-    final statusText =
-        _booking?.status.statusName ?? 'Khách hàng đang chuẩn bị...';
-    final statusId = _booking?.status.statusId ?? 0;
+    final status = _booking?.status;
+    final statusId = status?.statusId ?? 0;
     final isCancelled = statusId == 5;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
       padding: const EdgeInsets.all(14.0),
@@ -273,7 +252,7 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              statusText,
+              status?.statusName ?? 'Đang xử lý...',
               style: AppTextStyles.bodyMedium.copyWith(
                 fontWeight: FontWeight.w600,
                 color: isCancelled ? Colors.red.shade700 : null,
@@ -287,8 +266,9 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
 
   Widget _buildSnapperCard() {
     final photographer = _booking?.photographer;
-    final name = photographer?.name ?? 'Snapper';
+    final name = photographer?.name ?? 'Photographer';
     final phone = photographer?.phone ?? '';
+    final avatar = photographer?.avatarUrl;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -308,48 +288,41 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipOval(
-            child: Image.asset(
-              AppAssets.userPlaceholder,
+            child: SizedBox(
               width: 64,
               height: 64,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                // If the asset is missing, fall back to a simple colored circle with icon
-                return Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.person, color: Colors.white),
-                );
-              },
+              child: avatar != null && avatar.isNotEmpty
+                  ? Image.network(
+                      avatar,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          _fallbackAvatar(),
+                    )
+                  : _fallbackAvatar(),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
-            // 👈 bọc phần thông tin trong Expanded để co giãn
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   name,
                   style: AppTextStyles.headline4.copyWith(fontSize: 16),
-                  overflow: TextOverflow.ellipsis, // 👈 tránh text quá dài
                 ),
                 const SizedBox(height: 6),
                 Text(phone, style: AppTextStyles.bodySmall),
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    ...List.generate(
-                      5,
-                      (i) =>
-                          Icon(Icons.star, size: 14, color: AppColors.primary),
-                    ),
+                    ..._buildRatingStars(photographer?.avgRating ?? 0),
                     const SizedBox(width: 8),
-                    Text('5.0', style: AppTextStyles.bodySmall),
+                    Text(
+                      (photographer?.avgRating != null)
+                          ? photographer!.avgRating!.toStringAsFixed(1)
+                          : '-',
+                      style: AppTextStyles.bodySmall,
+                    ),
                   ],
                 ),
               ],
@@ -374,6 +347,13 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
     );
   }
 
+  Widget _fallbackAvatar() {
+    return Container(
+      color: AppColors.primaryLight,
+      child: const Icon(Icons.person, color: Colors.white),
+    );
+  }
+
   Widget _buildActionButton(IconData icon, VoidCallback onPressed) {
     return Container(
       width: 42,
@@ -384,6 +364,26 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
       ),
       child: IconButton(icon: Icon(icon, size: 18), onPressed: onPressed),
     );
+  }
+
+  List<Widget> _buildRatingStars(double rating) {
+    final stars = <Widget>[];
+    double remaining = rating;
+    for (int i = 0; i < 5; i++) {
+      if (remaining >= 1) {
+        stars.add(const Icon(Icons.star, size: 14, color: AppColors.primary));
+      } else if (remaining >= 0.5) {
+        stars.add(
+          const Icon(Icons.star_half, size: 14, color: AppColors.primary),
+        );
+      } else {
+        stars.add(
+          const Icon(Icons.star_border, size: 14, color: AppColors.primary),
+        );
+      }
+      remaining -= 1;
+    }
+    return stars;
   }
 
   @override
@@ -434,6 +434,24 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+extension on BookingData {
+  BookingData copyWithStatus({
+    required int statusId,
+    required String statusName,
+  }) {
+    return BookingData(
+      bookingId: bookingId,
+      customer: customer,
+      photographer: photographer,
+      scheduleAt: scheduleAt,
+      locationAddress: locationAddress,
+      status: BookingStatus(statusId: statusId, statusName: statusName),
+      price: price,
+      note: note,
     );
   }
 }

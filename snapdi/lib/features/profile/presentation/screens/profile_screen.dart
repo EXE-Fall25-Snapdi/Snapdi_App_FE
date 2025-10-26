@@ -160,6 +160,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
+          // LỚP 3: Nút quay lại
+          Positioned(
+            top: statusBarHeight,
+            left: AppDimensions.paddingSmall,
+            child: IconButton(
+              icon: const Icon(
+                Icons.arrow_back_ios_new,
+                color: AppColors.white,
+              ),
+              onPressed: () => context.pop(),
+              tooltip: 'Quay lại',
+            ),
+          ),
         ],
       ),
     );

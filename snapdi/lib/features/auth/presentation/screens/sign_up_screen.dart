@@ -180,10 +180,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               MaterialPageRoute(
                 builder: (context) => VerifyCodeScreen(
                   email: _emailController.text.trim(),
-                  onVerificationSuccess: () {
-                    // After successful verification, navigate to login screen
-                    Navigator.of(context).popUntil((route) => route.isFirst);
-                  },
+                  password: _passwordController.text.trim(),
                 ),
               ),
             );

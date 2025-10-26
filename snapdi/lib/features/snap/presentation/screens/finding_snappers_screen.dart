@@ -249,39 +249,18 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
       if (!mounted) return;
 
       if (response.success && response.data != null) {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Thành công'),
-            content: Text(
-              'Đã đặt chụp với ${response.data!.photographer.name} thành công!\n\n'
-              'Mã đặt chỗ: #${response.data!.bookingId}\n'
-              'Trạng thái: ${response.data!.status.statusName}\n'
-              'Địa chỉ: ${response.data!.locationAddress}\n'
-              'Giá: ${response.data!.price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')} VND'
+        // Điều hướng thẳng tới trang xác nhận (KHÔNG hiện dialog ở đây)
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BookingConfirmScreen(
+              snapper: snapper,
+              location: widget.location,
+              date: widget.date,
+              time: widget.time,
+              bookingId: response.data!.bookingId,
+              amount: response.data!.price.toDouble(),
             ),
-                actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context); // Close dialog
-                    // After closing the dialog, navigate to BookingConfirmScreen with real values
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => BookingConfirmScreen(
-                          snapper: snapper,
-                          location: widget.location,
-                          date: widget.date,
-                          time: widget.time,
-                          bookingId: response.data!.bookingId,
-                          amount: response.data!.price.toDouble(),
-                        ),
-                      ),
-                    );
-                  },
-                  child: const Text('OK'),
-                ),
-              ],
           ),
         );
       } else {

@@ -111,7 +111,7 @@ class AppAssets {
 
   // static const String snapdiLogoWhite = '$_logosPath/snapdi_logo_white.png';
   static const String snapdiLogo = '$_logosPath/logo.svg';
-  static const String snapdiLogoIcon = '$_logosPath/snapdi_icon.png';
+  static const String snapdiLogoWithText = '$_logosPath/snapdi_logo_with_text.svg';
 
   // Social Media Logos
   // static const String googleLogo = '$_logosPath/google_logo.png';
@@ -213,8 +213,7 @@ class AppAssets {
   /// Get all logo assets
   static List<String> get allLogos => [
     snapdiLogo,
-    // snapdiLogoWhite,
-    snapdiLogoIcon,
+    snapdiLogoWithText,
     // googleLogo,
     // facebookLogo,
     // instagramLogo,

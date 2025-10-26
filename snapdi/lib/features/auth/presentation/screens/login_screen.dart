@@ -30,20 +30,20 @@ class _LoginScreenState extends State<LoginScreen> {
 
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Please enter your email';
+      return 'Vui lòng nhập email';
     }
     if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-      return 'Please enter a valid email';
+      return 'Vui lòng nhập email hợp lệ';
     }
     return null;
   }
 
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Please enter your password';
+      return 'Vui lòng nhập mật khẩu';
     }
     if (value.length < 6) {
-      return 'Password must be at least 6 characters';
+      return 'Mật khẩu phải có ít nhất 6 ký tự';
     }
     return null;
   }
@@ -67,7 +67,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
       result.fold(
         (failure) {
-          // Handle login failure
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -81,14 +80,11 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         },
         (loginResponse) async {
-          // Handle login success
-          // Store authentication tokens securely using AuthService
           await _authService.storeAuthTokens(loginResponse);
 
-            if (mounted) {
-              context.go('/home');
-            }
-          
+          if (mounted) {
+            context.go('/home');
+          }
         },
       );
     }
@@ -98,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          '$platform login - Coming soon!',
+          '$platform - Sắp ra mắt!',
           style: AppTextStyles.bodyMedium.copyWith(color: AppColors.white),
         ),
         backgroundColor: AppColors.primary,
@@ -118,35 +114,32 @@ class _LoginScreenState extends State<LoginScreen> {
             child: Image.asset(AppAssets.backgroundGradient, fit: BoxFit.cover),
           ),
 
-          // Content on top of background
           SafeArea(
             child: Column(
               children: [
-                // Top section with logo (includes status bar height)
                 SizedBox(
                   height: 200 + MediaQuery.of(context).padding.top,
                   child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // Logo placeholder
                         Container(
                           padding: const EdgeInsets.all(36),
                           decoration: BoxDecoration(
-                            color: AppColors.primaryDarker,
+                            // color: AppColors.primaryDarker,
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: AppColors.black.withOpacity(0.1),
+                                color: AppColors.black.withOpacity(0.03),
                                 blurRadius: 10,
                                 offset: const Offset(0, 5),
                               ),
                             ],
                           ),
                           child: SvgPicture.asset(
-                            AppAssets.snapdiLogo,
-                            height: 120,
-                            width: 120,
+                            AppAssets.snapdiLogoWithText,
+                            height: 150,
+                            width: 150,
                           ),
                         ),
                       ],
@@ -154,7 +147,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
 
-                // Bottom section with form
                 Expanded(
                   child: Container(
                     decoration: const BoxDecoration(
@@ -170,8 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           AppDimensions.paddingLarge,
                           AppDimensions.paddingLarge,
                           AppDimensions.paddingLarge,
-                          AppDimensions.paddingLarge +
-                              20, // Extra bottom padding
+                          AppDimensions.paddingLarge + 20,
                         ),
                         child: Form(
                           key: _formKey,
@@ -197,7 +188,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                               // Password field
                               CustomInputField(
-                                hintText: 'Passwords',
+                                hintText: 'Mật khẩu',
                                 prefixIcon: Icons.lock_outline,
                                 isPassword: true,
                                 controller: _passwordController,
@@ -211,11 +202,10 @@ class _LoginScreenState extends State<LoginScreen> {
                                 alignment: Alignment.centerRight,
                                 child: TextButton(
                                   onPressed: () {
-                                    // TODO: Implement forgot password
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(
                                         content: Text(
-                                          'Forgot password - Coming soon!',
+                                          'Quên mật khẩu - Sắp ra mắt!',
                                           style: AppTextStyles.bodyMedium
                                               .copyWith(color: AppColors.white),
                                         ),
@@ -224,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     );
                                   },
                                   child: Text(
-                                    'Forget passwords?',
+                                    'Quên mật khẩu?',
                                     style: AppTextStyles.bodySmall.copyWith(
                                       color: AppColors.primary,
                                     ),
@@ -259,7 +249,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                           ),
                                         )
                                       : Text(
-                                          'Login',
+                                          'Đăng nhập',
                                           style: AppTextStyles.buttonLarge,
                                         ),
                                 ),
@@ -269,7 +259,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                               // "Or log in with" text
                               Text(
-                                'Or log in with',
+                                'Hoặc đăng nhập với',
                                 style: AppTextStyles.bodyMedium.copyWith(
                                   color: AppColors.textSecondary,
                                 ),
@@ -285,20 +275,19 @@ class _LoginScreenState extends State<LoginScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   _SocialLoginButton(
-                                    icon: Icons
-                                        .g_mobiledata, // Google placeholder
+                                    icon: Icons.g_mobiledata,
                                     onPressed: () =>
                                         _handleSocialLogin('Google'),
                                   ),
                                   const SizedBox(width: 20),
                                   _SocialLoginButton(
-                                    icon: Icons.facebook, // Facebook
+                                    icon: Icons.facebook,
                                     onPressed: () =>
                                         _handleSocialLogin('Facebook'),
                                   ),
                                   const SizedBox(width: 20),
                                   _SocialLoginButton(
-                                    icon: Icons.code, // GitHub placeholder
+                                    icon: Icons.code,
                                     onPressed: () =>
                                         _handleSocialLogin('GitHub'),
                                   ),
@@ -312,7 +301,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   Text(
-                                    "Don't have an account? ",
+                                    'Chưa có tài khoản? ',
                                     style: AppTextStyles.bodyMedium.copyWith(
                                       color: AppColors.textSecondary,
                                     ),
@@ -328,7 +317,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                       );
                                     },
                                     child: Text(
-                                      'Sign up',
+                                      'Đăng ký',
                                       style: AppTextStyles.bodyMedium.copyWith(
                                         color: AppColors.primary,
                                         fontWeight: FontWeight.w600,

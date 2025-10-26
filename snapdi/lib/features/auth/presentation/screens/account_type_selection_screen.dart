@@ -73,7 +73,7 @@ class _AccountTypeSelectionScreenState
 
                 // Title
                 Text(
-                  'Select your account type',
+                  'Chọn loại tài khoản của bạn',
                   style: AppTextStyles.headline3.copyWith(
                     color: AppColors.primaryDark,
                     fontWeight: FontWeight.w600,
@@ -130,7 +130,7 @@ class _AccountTypeSelectionScreenState
                       ),
                     ),
                     child: Text(
-                      'Next',
+                      'Tiếp tục',
                       style: AppTextStyles.buttonLarge.copyWith(
                         color: AppColors.black,
                         fontWeight: FontWeight.w600,

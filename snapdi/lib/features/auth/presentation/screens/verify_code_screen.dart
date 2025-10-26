@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import 'dart:async';
 import '../../../../core/constants/app_theme.dart';
 import '../../domain/services/auth_service.dart';
 import 'portfolio_upload_screen.dart';
+import '../../../../core/constants/app_assets.dart';
 
 class VerifyCodeScreen extends StatefulWidget {
   final String email;
@@ -273,7 +275,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                 Row(
                   children: [
                     IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
+                      onPressed: () => context.go('/login'),
                       icon: Icon(Icons.arrow_back, color: AppColors.white),
                     ),
                     const SizedBox(width: 8),
@@ -294,16 +296,10 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          color: AppColors.white.withOpacity(0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.email_outlined,
-                          size: 50,
-                          color: AppColors.white,
+                        child: SvgPicture.asset(
+                          AppAssets.snapdiLogoWithText,
+                          width: 150,
+                          height: 150,
                         ),
                       ),
 

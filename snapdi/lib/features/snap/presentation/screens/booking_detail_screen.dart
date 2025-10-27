@@ -80,7 +80,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         setState(() {
           _photoTypes = photoTypes;
           _styles = styles;
-          _selectedCategory = 'Tất cả';
+          // Don't set default values - force user to select
+          _selectedCategory = null; // Changed from 'Tất cả'
           _selectedCategoryId = null;
           _selectedStyle = 'Tất cả';
           _selectedStyleId = null;
@@ -95,6 +96,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       }
     }
   }
+
 
   @override
   void dispose() {
@@ -305,7 +307,13 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       return;
     }
 
-    // Parse budget values - this extracts the numeric value from formatted string
+    // Validate photo type is selected
+    if (_selectedCategory == null || _selectedCategoryId == null) {
+      _showErrorDialog('Vui lòng chọn thể loại chụp ảnh');
+      return;
+    }
+
+    // Parse budget values
     int? minBudget;
     int? maxBudget;
 
@@ -350,8 +358,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           ? _userLocationController.text
           : _bookingLocationController.text;
 
-      print('Navigating to FindingSnappersScreen with minBudget: $minBudget, maxBudget: $maxBudget');    
-
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -361,13 +367,12 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             time: _selectedTime,
             city: activeLocation.isEmpty ? '' : activeLocation,
             styleIds: _selectedStyleId != null ? [_selectedStyleId!] : [],
-            photoTypeIds: _selectedCategoryId != null
-                ? [_selectedCategoryId!]
-                : [],
-            minBudget: minBudget, // Numeric value: 500000
-            maxBudget: maxBudget, // Numeric value: 1000000
+            photoTypeIds: [_selectedCategoryId!], // Always has value now
+            minBudget: minBudget,
+            maxBudget: maxBudget,
             customerId: userId,
             locationAddress: activeLocation,
+            note: _notesController.text,
           ),
         ),
       );
@@ -382,6 +387,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       }
     }
   }
+
 
   void _showErrorDialog(String message) {
     showDialog(
@@ -641,6 +647,16 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                                         fontSize: 16,
                                         fontWeight: FontWeight.w600,
                                         color: Colors.black87,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    // Required indicator
+                                    const Text(
+                                      '*',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.red,
+                                        fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                   ],
@@ -1064,32 +1080,34 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           icon: Icon(Icons.expand_more, color: AppColors.primary),
           dropdownColor: Colors.white,
           borderRadius: BorderRadius.circular(12),
+          hint: Text(
+            'Chọn thể loại',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey.shade700,
+            ),
+          ),
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: Colors.black87,
           ),
-          items: [
-            const DropdownMenuItem<String>(
-              value: 'Tất cả',
-              child: Text('Tất cả'),
-            ),
-            ..._photoTypes.map((PhotoType photoType) {
-              return DropdownMenuItem<String>(
-                value: photoType.photoTypeName,
-                child: Text(photoType.photoTypeName),
-              );
-            }).toList(),
-          ],
+          items: _photoTypes.map((PhotoType photoType) {
+            return DropdownMenuItem<String>(
+              value: photoType.photoTypeName,
+              child: Text(photoType.photoTypeName),
+            );
+          }).toList(),
           onChanged: (value) {
             setState(() {
               _selectedCategory = value;
-              if (value == 'Tất cả') {
-                _selectedCategoryId = null;
-              } else {
+              if (value != null) {
                 _selectedCategoryId = _photoTypes
                     .firstWhere((pt) => pt.photoTypeName == value)
                     .photoTypeId;
+              } else {
+                _selectedCategoryId = null;
               }
             });
           },
@@ -1097,6 +1115,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       ),
     );
   }
+
 
   Widget _buildStyleDropdown() {
     return Container(

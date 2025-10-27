@@ -82,14 +82,14 @@ class _SplashScreenState extends State<SplashScreen> {
                 Text(
                   'Đặt Nhiếp Ảnh Gia Của Bạn',
                   style: AppTextStyles.bodyLarge.copyWith(
-                    color: AppColors.white.withOpacity(0.9),
+                    color: AppColors.primary.withOpacity(0.9),
                   ),
                 ),
                 const SizedBox(height: 64),
 
                 // Loading Indicator
                 CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryDark),
                 ),
               ],
             ),

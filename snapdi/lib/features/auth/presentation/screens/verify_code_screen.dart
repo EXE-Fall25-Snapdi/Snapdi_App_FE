@@ -4,15 +4,16 @@ import 'package:go_router/go_router.dart';
 import 'dart:async';
 import '../../../../core/constants/app_theme.dart';
 import '../../domain/services/auth_service.dart';
+import 'portfolio_upload_screen.dart';
 
 class VerifyCodeScreen extends StatefulWidget {
   final String email;
-  final VoidCallback? onVerificationSuccess;
+  final String password;
 
   const VerifyCodeScreen({
     super.key,
     required this.email,
-    this.onVerificationSuccess,
+    required this.password,
   });
 
   @override
@@ -36,7 +37,6 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
   @override
   void initState() {
     super.initState();
-    // Auto-focus first field
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _focusNodes[0].requestFocus();
     });
@@ -64,14 +64,11 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
 
   void _onCodeChanged(String value, int index) {
     if (value.length == 1 && index < 5) {
-      // Move to next field
       _focusNodes[index + 1].requestFocus();
     } else if (value.isEmpty && index > 0) {
-      // Move to previous field
       _focusNodes[index - 1].requestFocus();
     }
 
-    // Auto-verify when code is complete
     if (_isCodeComplete && !_isLoading) {
       _verifyCode();
     }
@@ -95,27 +92,72 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
     });
 
     try {
-      final result = await _authService.verifyEmailCode(
+      // Verify email code
+      final verifyResult = await _authService.verifyEmailCode(
         email: widget.email,
         code: _verificationCode,
       );
 
-      result.fold(
-        (failure) {
+      await verifyResult.fold(
+        (failure) async {
           if (mounted) {
             _showErrorSnackBar(failure.message);
             _clearCode();
           }
         },
-        (response) {
+        (response) async {
+          // Email verified successfully, now auto-login
           if (mounted) {
-            _showSuccessDialog();
+            _showSuccessSnackBar('Xác thực email thành công!');
           }
+
+          // Auto-login
+          final loginResult = await _authService.login(
+            emailOrPhone: widget.email,
+            password: widget.password,
+          );
+
+          await loginResult.fold(
+            (failure) async {
+              if (mounted) {
+                _showErrorSnackBar(
+                  'Xác thực thành công nhưng đăng nhập thất bại. Vui lòng đăng nhập thủ công.',
+                );
+                // Navigate back to login screen
+                Navigator.of(context).popUntil((route) => route.isFirst);
+              }
+            },
+            (loginResponse) async {
+              // Store auth tokens
+              await _authService.storeAuthTokens(loginResponse);
+
+              if (mounted) {
+                // Navigate based on user role
+                final userRole = loginResponse.user.roleId;
+
+                if (userRole == 2) {
+                  // Customer role - navigate to home
+                  context.go('/home');
+                } else if (userRole == 3) {
+                  // Photographer role - navigate to portfolio upload
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          PortfolioUploadScreen(email: widget.email),
+                    ),
+                  );
+                } else {
+                  // Unknown role - default to home
+                  context.go('/home');
+                }
+              }
+            },
+          );
         },
       );
     } catch (e) {
       if (mounted) {
-        _showErrorSnackBar("Verification failed. Please try again.");
+        _showErrorSnackBar("Xác thực thất bại. Vui lòng thử lại.");
         _clearCode();
       }
     } finally {
@@ -148,7 +190,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
         (response) {
           if (mounted) {
             _showSuccessSnackBar(
-              "Verification code sent! Please check your email.",
+              "Mã xác thực đã được gửi! Vui lòng kiểm tra email.",
             );
             _startResendCooldown();
           }
@@ -156,7 +198,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
       );
     } catch (e) {
       if (mounted) {
-        _showErrorSnackBar("Failed to resend code. Please try again.");
+        _showErrorSnackBar("Không thể gửi lại mã. Vui lòng thử lại.");
       }
     } finally {
       if (mounted) {
@@ -169,7 +211,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
 
   void _startResendCooldown() {
     setState(() {
-      _resendCooldown = 60; // 60 seconds cooldown
+      _resendCooldown = 60;
     });
 
     _cooldownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -181,59 +223,6 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
         timer.cancel();
       }
     });
-  }
-
-  void _showSuccessDialog() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          title: Row(
-            children: [
-              Icon(Icons.check_circle, color: AppColors.success, size: 28),
-              const SizedBox(width: 12),
-              Text(
-                'Verified!',
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.success,
-                ),
-              ),
-            ],
-          ),
-          content: Text(
-            'Your email has been successfully verified. You can now access all features of your account.',
-            style: AppTextStyles.bodyMedium.copyWith(
-              color: AppColors.textPrimary,
-            ),
-          ),
-          actions: [
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Close dialog
-                if (widget.onVerificationSuccess != null) {
-                  widget.onVerificationSuccess!();
-                } else {
-                  // Navigate to main app after successful verification
-                  context.go('/home');
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.success,
-                foregroundColor: AppColors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: const Text('Continue'),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   void _showSuccessSnackBar(String message) {
@@ -289,7 +278,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Verify Email',
+                      'Xác thực Email',
                       style: AppTextStyles.headline4.copyWith(
                         color: AppColors.white,
                         fontWeight: FontWeight.bold,
@@ -300,12 +289,10 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
 
                 const SizedBox(height: 40),
 
-                // Main content
                 Expanded(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Email verification icon
                       Container(
                         width: 100,
                         height: 100,
@@ -322,9 +309,8 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
 
                       const SizedBox(height: 32),
 
-                      // Title
                       Text(
-                        'Check Your Email',
+                        'Kiểm tra Email của bạn',
                         style: AppTextStyles.headline3.copyWith(
                           color: AppColors.white,
                           fontWeight: FontWeight.bold,
@@ -334,9 +320,8 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
 
                       const SizedBox(height: 16),
 
-                      // Description
                       Text(
-                        'We\'ve sent a 6-digit verification code to',
+                        'Chúng tôi đã gửi mã xác thực gồm 6 chữ số đến',
                         style: AppTextStyles.bodyLarge.copyWith(
                           color: AppColors.white.withOpacity(0.9),
                         ),
@@ -345,7 +330,6 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
 
                       const SizedBox(height: 8),
 
-                      // Email
                       Text(
                         widget.email,
                         style: AppTextStyles.bodyLarge.copyWith(
@@ -398,7 +382,6 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                               onChanged: (value) =>
                                   _onCodeChanged(value, index),
                               onTap: () {
-                                // Clear field on tap for better UX
                                 _controllers[index].clear();
                               },
                             ),
@@ -408,7 +391,6 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
 
                       const SizedBox(height: 32),
 
-                      // Loading indicator or verify button
                       if (_isLoading)
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -425,7 +407,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                             ),
                             const SizedBox(width: 16),
                             Text(
-                              'Verifying...',
+                              'Đang xác thực...',
                               style: AppTextStyles.bodyLarge.copyWith(
                                 color: AppColors.white,
                               ),
@@ -446,7 +428,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                               ),
                             ),
                             child: Text(
-                              'Verify Code',
+                              'Xác thực mã',
                               style: AppTextStyles.buttonLarge.copyWith(
                                 color: AppColors.white,
                               ),
@@ -460,7 +442,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                       Column(
                         children: [
                           Text(
-                            'Didn\'t receive the code?',
+                            'Không nhận được mã?',
                             style: AppTextStyles.bodyMedium.copyWith(
                               color: AppColors.white.withOpacity(0.8),
                             ),
@@ -468,7 +450,7 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                           const SizedBox(height: 8),
                           if (_resendCooldown > 0)
                             Text(
-                              'Resend in ${_resendCooldown}s',
+                              'Gửi lại sau ${_resendCooldown}s',
                               style: AppTextStyles.bodyMedium.copyWith(
                                 color: AppColors.white.withOpacity(0.6),
                               ),
@@ -493,14 +475,14 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                                         ),
                                         const SizedBox(width: 8),
                                         Text(
-                                          'Sending...',
+                                          'Đang gửi...',
                                           style: AppTextStyles.bodyMedium
                                               .copyWith(color: AppColors.white),
                                         ),
                                       ],
                                     )
                                   : Text(
-                                      'Resend Code',
+                                      'Gửi lại mã',
                                       style: AppTextStyles.bodyMedium.copyWith(
                                         color: AppColors.white,
                                         fontWeight: FontWeight.w600,

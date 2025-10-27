@@ -76,7 +76,7 @@ class WelcomeScreen extends StatelessWidget {
                 child: OutlinedButton(
                   onPressed: () {
                     // Use go_router for navigation
-                    context.push('/signup');
+                    context.push('/photographer-signup');
                   },
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: AppColors.primary),

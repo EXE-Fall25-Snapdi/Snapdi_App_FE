@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:snapdi/features/auth/presentation/screens/account_type_selection_screen.dart';
 import 'package:snapdi/features/auth/presentation/screens/login_screen.dart';
-import 'package:snapdi/features/auth/presentation/screens/photographer_sign_up_screen.dart';
+import 'package:snapdi/features/auth/presentation/screens/sign_up_screen.dart';
+import 'package:snapdi/features/auth/presentation/screens/PhotographerSignUpStage1Screen.dart';
 import 'package:snapdi/features/auth/presentation/screens/welcome_screen.dart';
 import 'package:snapdi/features/auth/presentation/screens/splash_screen.dart';
 import 'package:snapdi/features/profile/presentation/screens/profile_screen.dart';
@@ -36,11 +37,14 @@ final GoRouter router = GoRouter(
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(
       path: '/signup',
-      builder: (context, state) => const PhotographerSignUpScreen(
-        // Passing a default value as it was in the original WelcomeScreen code
-        accountType: AccountType.snapper,
+      builder: (context, state) => const SignUpScreen(
+        accountType: AccountType.user,
       ),
     ),
+    GoRoute(path: '/photographer-signup', builder: (context, state) => const PhotographerSignUpStage1Screen(
+      accountType: AccountType.snapper,
+    ),),
+    GoRoute(path: '/select-account-type', builder: (context, state) => const AccountTypeSelectionScreen()),
 
     // --- Main App Routes (with navigation bar) ---
     ShellRoute(

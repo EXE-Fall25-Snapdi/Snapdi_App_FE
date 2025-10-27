@@ -3,7 +3,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
 import 'sign_up_screen.dart';
-import 'photographer_sign_up_screen.dart';
+// import 'photographer_sign_up_screen.dart';
+import 'PhotographerSignUpStage1Screen.dart';
 
 enum AccountType { user, snapper }
 
@@ -31,7 +32,7 @@ class _AccountTypeSelectionScreenState
         context,
         MaterialPageRoute(
           builder: (context) => _selectedAccountType == AccountType.snapper
-              ? PhotographerSignUpScreen(accountType: _selectedAccountType!)
+              ? PhotographerSignUpStage1Screen(accountType: _selectedAccountType!)
               : SignUpScreen(accountType: _selectedAccountType!),
         ),
       );

@@ -160,6 +160,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
+          // LỚP 3: Nút quay lại
+          Positioned(
+            top: statusBarHeight,
+            left: AppDimensions.paddingSmall,
+            child: IconButton(
+              icon: const Icon(
+                Icons.arrow_back_ios_new,
+                color: AppColors.white,
+              ),
+              onPressed: () => context.pop(),
+              tooltip: 'Quay lại',
+            ),
+          ),
         ],
       ),
     );
@@ -558,7 +571,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => context.go('/login'),
             child: Text(
               'Đăng xuất',
               style: AppTextStyles.buttonMedium.copyWith(

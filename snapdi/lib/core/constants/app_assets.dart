@@ -86,7 +86,9 @@ class AppAssets {
   static const String starIcon = '$_iconsPath/star.svg';
   static const String filledStarIcon = '$_iconsPath/filled_star.svg';
   static const String halfStarIcon = '$_iconsPath/half_filled_star.svg';
-  static const String camera_altIcon = '$_iconsPath/camera_icon.svg';
+  static const String cameraAltIcon = '$_iconsPath/camera_icon.svg';
+  static const String messageIcon = '$_iconsPath/message_icon.svg';
+  static const String profileActionIcon = '$_iconsPath/profile_icon.svg';
 
   // Account Type Icons
   static const String snapperAccountIcon = '$_iconsPath/snaper_acc_icon.svg';
@@ -111,7 +113,7 @@ class AppAssets {
 
   // static const String snapdiLogoWhite = '$_logosPath/snapdi_logo_white.png';
   static const String snapdiLogo = '$_logosPath/logo.svg';
-  static const String snapdiLogoIcon = '$_logosPath/snapdi_icon.png';
+  static const String snapdiLogoWithText = '$_logosPath/snapdi_logo_with_text.svg';
 
   // Social Media Logos
   // static const String googleLogo = '$_logosPath/google_logo.png';
@@ -199,7 +201,9 @@ class AppAssets {
     starIcon,
     filledStarIcon,
     halfStarIcon,
-    camera_altIcon,
+    cameraAltIcon,
+    messageIcon,
+    profileActionIcon,
     snapperAccountIcon,
     userAccountIcon,
     // weddingIcon,
@@ -213,8 +217,7 @@ class AppAssets {
   /// Get all logo assets
   static List<String> get allLogos => [
     snapdiLogo,
-    // snapdiLogoWhite,
-    snapdiLogoIcon,
+    snapdiLogoWithText,
     // googleLogo,
     // facebookLogo,
     // instagramLogo,

@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:snapdi/features/auth/presentation/screens/account_type_selection_screen.dart';
 import 'package:snapdi/features/auth/presentation/screens/login_screen.dart';
-import 'package:snapdi/features/auth/presentation/screens/photographer_sign_up_screen.dart';
+import 'package:snapdi/features/auth/presentation/screens/sign_up_screen.dart';
+import 'package:snapdi/features/auth/presentation/screens/PhotographerSignUpStage1Screen.dart';
 import 'package:snapdi/features/auth/presentation/screens/welcome_screen.dart';
 import 'package:snapdi/features/auth/presentation/screens/splash_screen.dart';
 import 'package:snapdi/features/profile/presentation/screens/profile_screen.dart';
+import 'package:snapdi/features/profile/presentation/screens/photographer_profile_screen.dart';
 import 'package:snapdi/features/profile/presentation/screens/manage_portfolio_screen.dart';
 import 'package:snapdi/features/profile/presentation/screens/account_settings_screen.dart';
+import 'package:snapdi/features/chat/presentation/screens/chat_screen.dart';
 import 'package:snapdi/features/shared/presentation/screens/main_navigation_screen.dart';
 import 'package:snapdi/features/home/presentation/screens/home_screen.dart';
 import 'package:snapdi/features/booking/presentation/screens/my_booking_screen.dart';
@@ -34,11 +37,14 @@ final GoRouter router = GoRouter(
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(
       path: '/signup',
-      builder: (context, state) => const PhotographerSignUpScreen(
-        // Passing a default value as it was in the original WelcomeScreen code
-        accountType: AccountType.snapper,
+      builder: (context, state) => const SignUpScreen(
+        accountType: AccountType.user,
       ),
     ),
+    GoRoute(path: '/photographer-signup', builder: (context, state) => const PhotographerSignUpStage1Screen(
+      accountType: AccountType.snapper,
+    ),),
+    GoRoute(path: '/select-account-type', builder: (context, state) => const AccountTypeSelectionScreen()),
 
     // --- Main App Routes (with navigation bar) ---
     ShellRoute(
@@ -132,6 +138,32 @@ final GoRouter router = GoRouter(
       path: '/account-settings',
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) => const AccountSettingsScreen(),
+    ),
+
+    // --- Photographer Profile Route (without navigation bar) ---
+    GoRoute(
+      path: '/photographer-profile/:userId',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) {
+        final userIdStr = state.pathParameters['userId'];
+        final userId = userIdStr != null ? int.tryParse(userIdStr) : null;
+        return PhotographerProfileScreen(userId: userId ?? 0);
+      },
+    ),
+
+    // --- Chat Route (without navigation bar) ---
+    GoRoute(
+      path: '/chat/:conversationId',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) {
+        final conversationIdStr = state.pathParameters['conversationId'];
+        final conversationId = conversationIdStr != null ? int.tryParse(conversationIdStr) : null;
+        final otherUserName = state.extra as String?;
+        return ChatScreen(
+          conversationId: conversationId ?? 0,
+          otherUserName: otherUserName,
+        );
+      },
     ),
   ],
   errorBuilder: (context, state) =>

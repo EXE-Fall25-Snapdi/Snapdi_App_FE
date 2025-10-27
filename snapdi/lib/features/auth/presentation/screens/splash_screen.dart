@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:snapdi/core/constants/app_assets.dart';
 import 'package:snapdi/core/storage/token_storage.dart';
 import 'package:snapdi/core/constants/app_theme.dart';
 
@@ -51,45 +53,48 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primary,
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // App Logo/Icon
-            Icon(
-              Icons.camera_alt_rounded,
-              size: 100,
-              color: AppColors.white,
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // Background Image
+          Positioned.fill(
+            child: Image.asset(
+              AppAssets
+                  .backgroundWhite, // or use your preferred background asset
+              fit: BoxFit.cover,
             ),
-            const SizedBox(height: AppDimensions.paddingLarge),
-            
-            // App Name
-            Text(
-              'Snapdi',
-              style: AppTextStyles.headline1.copyWith(
-                color: AppColors.white,
-                fontSize: 48,
-                fontWeight: FontWeight.bold,
-              ),
+          ),
+
+          // Content overlay
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // App Logo/Icon
+                SvgPicture.asset(
+                  AppAssets.snapdiLogoWithText,
+                  height: 100,
+                  width: 100,
+                ),
+                const SizedBox(height: AppDimensions.paddingLarge),
+
+                // Tagline
+                Text(
+                  'Đặt Nhiếp Ảnh Gia Của Bạn',
+                  style: AppTextStyles.bodyLarge.copyWith(
+                    color: AppColors.primary.withOpacity(0.9),
+                  ),
+                ),
+                const SizedBox(height: 64),
+
+                // Loading Indicator
+                CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primaryDark),
+                ),
+              ],
             ),
-            const SizedBox(height: AppDimensions.paddingSmall),
-            
-            // Tagline
-            Text(
-              'Book Your Photographer',
-              style: AppTextStyles.bodyLarge.copyWith(
-                color: AppColors.white.withOpacity(0.9),
-              ),
-            ),
-            const SizedBox(height: 64),
-            
-            // Loading Indicator
-            CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(AppColors.white),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

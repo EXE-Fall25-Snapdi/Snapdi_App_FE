@@ -4,6 +4,7 @@ import 'dart:io';
 import '../../../../core/constants/app_theme.dart';
 import '../../domain/services/user_service.dart';
 import '../../domain/services/cloudinary_service.dart';
+import '../../domain/services/profile_service.dart';
 import '../../data/models/user_profile.dart';
 import '../../data/models/update_user_request.dart';
 import '../widgets/cloudinary_image.dart';
@@ -18,6 +19,7 @@ class AccountSettingsScreen extends StatefulWidget {
 class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
   final _userService = UserServiceImpl();
   final _cloudinaryService = CloudinaryServiceImpl();
+  final _profileService = ProfileServiceImpl();
   final _imagePicker = ImagePicker();
   final _formKey = GlobalKey<FormState>();
 
@@ -25,11 +27,14 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
   final _phoneController = TextEditingController();
   final _addressController = TextEditingController();
   final _cityController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _workLocationController = TextEditingController();
 
   UserProfile? _userProfile;
   bool _isLoading = true;
   bool _isSaving = false;
   File? _selectedImage;
+  bool _isPhotographer = false;
 
   @override
   void initState() {
@@ -43,6 +48,8 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
     _phoneController.dispose();
     _addressController.dispose();
     _cityController.dispose();
+    _descriptionController.dispose();
+    _workLocationController.dispose();
     super.dispose();
   }
 
@@ -69,6 +76,16 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
           _phoneController.text = profile.phone;
           _addressController.text = profile.locationAddress ?? '';
           _cityController.text = profile.locationCity ?? '';
+          _isPhotographer = profile.roleId == 3; // 3 is PHOTOGRAPHER role
+
+          // Load photographer fields if available
+          if (profile.photographerProfile != null) {
+            _descriptionController.text =
+                profile.photographerProfile!.description ?? '';
+            _workLocationController.text =
+                profile.photographerProfile!.workLocation ?? '';
+          }
+
           _isLoading = false;
         });
       },
@@ -153,6 +170,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
       }
     }
 
+    // Update user profile
     final request = UpdateUserRequest(
       name: _nameController.text.trim(),
       phone: _phoneController.text.trim(),
@@ -169,6 +187,7 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
 
     if (!mounted) return;
 
+    bool userUpdateSuccess = false;
     result.fold(
       (failure) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -180,20 +199,66 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
         setState(() => _isSaving = false);
       },
       (updatedProfile) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Profile updated successfully!'),
-            backgroundColor: AppColors.success,
-          ),
-        );
+        userUpdateSuccess = true;
         setState(() {
           _userProfile = updatedProfile;
           _selectedImage = null;
-          _isSaving = false;
         });
-        Navigator.pop(context, true); // Return true to indicate success
       },
     );
+
+    // If user update failed, don't continue
+    if (!userUpdateSuccess) return;
+
+    // If photographer, also update photographer profile
+    if (_isPhotographer) {
+      final photographerResult = await _profileService
+          .updatePhotographerProfile(
+            _userProfile!.userId,
+            _descriptionController.text.trim().isEmpty
+                ? null
+                : _descriptionController.text.trim(),
+            _workLocationController.text.trim().isEmpty
+                ? null
+                : _workLocationController.text.trim(),
+          );
+
+      if (!mounted) return;
+
+      photographerResult.fold(
+        (failure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'User updated but failed to update photographer profile: ${failure.message}',
+              ),
+              backgroundColor: AppColors.warning,
+            ),
+          );
+          setState(() => _isSaving = false);
+        },
+        (success) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile updated successfully!'),
+              backgroundColor: AppColors.success,
+            ),
+          );
+          setState(() => _isSaving = false);
+          Navigator.pop(context, true); // Return true to indicate success
+        },
+      );
+    } else {
+      // Not a photographer, just show success for user update
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Profile updated successfully!'),
+          backgroundColor: AppColors.success,
+        ),
+      );
+      setState(() => _isSaving = false);
+      Navigator.pop(context, true); // Return true to indicate success
+    }
   }
 
   @override
@@ -471,6 +536,48 @@ class _AccountSettingsScreenState extends State<AccountSettingsScreen> {
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
           ),
         ),
+
+        // Photographer-specific fields
+        if (_isPhotographer) ...[
+          const SizedBox(height: 24),
+          Text(
+            'Thông tin Photographer',
+            style: AppTextStyles.headline4.copyWith(
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          // Description
+          TextFormField(
+            controller: _descriptionController,
+            decoration: InputDecoration(
+              labelText: 'Mô tả',
+              prefixIcon: const Icon(Icons.description_outlined),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              hintText: 'Giới thiệu ngắn gọn về bản thân',
+            ),
+            maxLines: 2,
+            maxLength: 50,
+          ),
+          const SizedBox(height: 16),
+
+          // Work Location
+          TextFormField(
+            controller: _workLocationController,
+            decoration: InputDecoration(
+              labelText: 'Địa điểm làm việc',
+              prefixIcon: const Icon(Icons.work_outline),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              hintText: 'Ví dụ: TP. Hồ Chí Minh, Hà Nội',
+            ),
+            maxLength: 255,
+          ),
+        ],
       ],
     );
   }

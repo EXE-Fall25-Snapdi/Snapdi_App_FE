@@ -272,12 +272,16 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (photographer.photographerProfile?.description != null)
-                Text(
-                  photographer.photographerProfile?.description ??
-                      'Chưa có mô tả',
-                  style: AppTextStyles.bodyMedium,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                SizedBox(
+                  width: 200, // Giới hạn chiều rộng để tự động xuống dòng
+                  child: Text(
+                    photographer.photographerProfile?.description ??
+                        'Chưa có mô tả',
+                    style: AppTextStyles.bodyMedium,
+                    maxLines: 3, // Tối đa 3 dòng
+                    overflow: TextOverflow.ellipsis, // Hiển thị ... nếu quá dài
+                    softWrap: true, // Tự động xuống dòng
+                  ),
                 ),
               const SizedBox(height: 4),
               Row(
@@ -411,4 +415,3 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen> {
     );
   }
 }
-

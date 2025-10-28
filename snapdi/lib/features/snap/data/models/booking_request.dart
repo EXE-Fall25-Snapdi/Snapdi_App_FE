@@ -5,6 +5,8 @@ class BookingRequest {
   final String locationAddress;
   final int price;
   final String? note;
+  final int? photoTypeId;
+  final int? time;
 
   BookingRequest({
     required this.customerId,
@@ -13,6 +15,8 @@ class BookingRequest {
     required this.locationAddress,
     required this.price,
     this.note,
+    this.photoTypeId,
+    this.time,
   });
 
   Map<String, dynamic> toJson() {
@@ -23,6 +27,8 @@ class BookingRequest {
       'locationAddress': locationAddress,
       'price': price,
       if (note != null) 'note': note,
+      if (photoTypeId != null) 'photoTypeId': photoTypeId,
+      if (time != null) 'time': time,
     };
   }
 }

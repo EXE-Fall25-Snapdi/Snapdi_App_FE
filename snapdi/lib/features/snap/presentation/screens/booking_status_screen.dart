@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:signalr_core/signalr_core.dart';
 import 'package:url_launcher/url_launcher.dart';
-
+import 'package:signalr_core/signalr_core.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/environment.dart';
@@ -11,9 +11,14 @@ import '../../data/services/booking_service.dart';
 import '../../data/models/booking_response.dart';
 
 class BookingStatusScreen extends StatefulWidget {
-  final int? bookingId;
+  final int bookingId;
+  final String initialStatus; // 'Paid' or 'Cancelled'
 
-  const BookingStatusScreen({super.key, this.bookingId});
+  const BookingStatusScreen({
+    super.key,
+    required this.bookingId,
+    required this.initialStatus,
+  });
 
   @override
   State<BookingStatusScreen> createState() => _BookingStatusScreenState();
@@ -27,10 +32,12 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
   bool _isLoading = true;
   BookingData? _booking;
   int _currentStep = 0;
+  late String _status;
 
   @override
   void initState() {
     super.initState();
+    _status = widget.initialStatus;
     _initPage();
   }
 
@@ -387,37 +394,45 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isPaid = _status == 'Paid';
+
     return Scaffold(
-      backgroundColor: const Color(0xFFE8F5F2),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: Image.asset(AppAssets.backgroundFound, fit: BoxFit.cover),
-          ),
-          SafeArea(
-            child: Column(
-              children: [
-                const SizedBox(height: 8),
-                Expanded(
-                  child: _isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : _booking == null
-                      ? const Center(child: Text('Không tìm thấy đơn đặt lịch'))
-                      : ListView(
-                          padding: const EdgeInsets.only(bottom: 24, top: 8),
-                          children: [
-                            _buildSteps(),
-                            _buildStatusMessage(),
-                            const SizedBox(height: 12),
-                            _buildSnapperCard(),
-                            const SizedBox(height: 12),
-                          ],
-                        ),
-                ),
-              ],
+      appBar: AppBar(
+        title: const Text('Trạng thái đặt chỗ'),
+        backgroundColor: isPaid ? Colors.green : Colors.red,
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              isPaid ? Icons.check_circle : Icons.cancel,
+              size: 80,
+              color: isPaid ? Colors.green : Colors.red,
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            Text(
+              isPaid ? 'Thanh toán thành công' : 'Đơn đặt chỗ đã hủy',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: isPaid ? Colors.green : Colors.red,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Booking ID: ${widget.bookingId}',
+              style: const TextStyle(fontSize: 14, color: Colors.grey),
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Quay lại'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -437,6 +452,8 @@ extension on BookingData {
       status: BookingStatus(statusId: statusId, statusName: statusName),
       price: price,
       note: note,
+      photoTypeId: photoTypeId,
+      time: time,
     );
   }
 }

@@ -17,6 +17,8 @@ import 'package:snapdi/features/booking/presentation/screens/my_booking_screen.d
 import 'package:snapdi/features/snap/presentation/screens/snap_screen.dart';
 import 'package:snapdi/features/snap/presentation/screens/booking_status_screen.dart';
 import 'package:snapdi/core/constants/app_theme.dart';
+import 'package:snapdi/features/snap/presentation/screens/photographer_welcome_screen.dart';
+import 'package:snapdi/features/snap/presentation/screens/photographer_snap_screen.dart';
 
 // Global key for navigation
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
@@ -37,14 +39,19 @@ final GoRouter router = GoRouter(
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(
       path: '/signup',
-      builder: (context, state) => const SignUpScreen(
-        accountType: AccountType.user,
+      builder: (context, state) =>
+          const SignUpScreen(accountType: AccountType.user),
+    ),
+    GoRoute(
+      path: '/photographer-signup',
+      builder: (context, state) => const PhotographerSignUpStage1Screen(
+        accountType: AccountType.snapper,
       ),
     ),
-    GoRoute(path: '/photographer-signup', builder: (context, state) => const PhotographerSignUpStage1Screen(
-      accountType: AccountType.snapper,
-    ),),
-    GoRoute(path: '/select-account-type', builder: (context, state) => const AccountTypeSelectionScreen()),
+    GoRoute(
+      path: '/select-account-type',
+      builder: (context, state) => const AccountTypeSelectionScreen(),
+    ),
 
     // --- Main App Routes (with navigation bar) ---
     ShellRoute(
@@ -57,6 +64,20 @@ final GoRouter router = GoRouter(
           path: '/home',
           pageBuilder: (context, state) =>
               NoTransitionPage(key: state.pageKey, child: const HomeScreen()),
+        ),
+        GoRoute(
+          path: '/photographer-welcome',
+          pageBuilder: (context, state) => NoTransitionPage(
+            key: state.pageKey,
+            child: const PhotographerWelcomeScreen(),
+          ),
+        ),
+        GoRoute(
+          path: '/photographer-snap',
+          pageBuilder: (context, state) => NoTransitionPage(
+            key: state.pageKey,
+            child: const PhotographerSnapScreen(),
+          ),
         ),
         GoRoute(
           path: '/explore',
@@ -98,11 +119,18 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: '/booking/:id/status',
           pageBuilder: (context, state) {
-            final idStr = state.pathParameters['id'];
-            final id = idStr != null ? int.tryParse(idStr) : null;
+            final id = int.tryParse(state.pathParameters['id'] ?? '');
+            if (id == null) {
+              return NoTransitionPage(
+                key: state.pageKey,
+                child: const Scaffold(
+                  body: Center(child: Text('Invalid booking id')),
+                ),
+              );
+            }
             return NoTransitionPage(
               key: state.pageKey,
-              child: BookingStatusScreen(bookingId: id),
+              child: BookingStatusScreen(bookingId: id, initialStatus: 'Paid'),
             );
           },
         ),
@@ -157,7 +185,9 @@ final GoRouter router = GoRouter(
       parentNavigatorKey: _rootNavigatorKey,
       builder: (context, state) {
         final conversationIdStr = state.pathParameters['conversationId'];
-        final conversationId = conversationIdStr != null ? int.tryParse(conversationIdStr) : null;
+        final conversationId = conversationIdStr != null
+            ? int.tryParse(conversationIdStr)
+            : null;
         final otherUserName = state.extra as String?;
         return ChatScreen(
           conversationId: conversationId ?? 0,

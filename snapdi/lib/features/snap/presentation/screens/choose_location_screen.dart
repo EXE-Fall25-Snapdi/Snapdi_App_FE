@@ -221,7 +221,7 @@ class _ChooseLocationScreenState extends State<ChooseLocationScreen> {
 
                               child: IconButton(
                                 icon: SvgPicture.asset(
-                                  AppAssets.camera_altIcon,
+                                  AppAssets.cameraAltIcon,
                                   width: 20,
                                   height: 20,
                                 ),
@@ -291,7 +291,7 @@ class _ChooseLocationScreenState extends State<ChooseLocationScreen> {
                   ),
                   decoration: BoxDecoration(
                     color: Color(0xFFAACBC4),
-                    
+
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withOpacity(0.5),
@@ -307,7 +307,6 @@ class _ChooseLocationScreenState extends State<ChooseLocationScreen> {
                         AppAssets.mapIcon,
                         width: 24,
                         height: 24,
-                        
                       ),
                       const SizedBox(width: 12),
                       const Text(

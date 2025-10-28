@@ -6,6 +6,7 @@ class TokenStorage {
   static const String _refreshTokenKey = 'refresh_token';
   static const String _userIdKey = 'user_id';
   static const String _isLoggedInKey = 'is_logged_in';
+  static const String _userInfoKey = 'user_info';
 
   static TokenStorage? _instance;
 
@@ -34,6 +35,7 @@ class TokenStorage {
     required String accessToken,
     required String refreshToken,
     int? userId,
+    String? userInfo,
   }) async {
     try {
       await Future.wait([
@@ -42,6 +44,8 @@ class TokenStorage {
         _secureStorage.write(key: _isLoggedInKey, value: 'true'),
         if (userId != null)
           _secureStorage.write(key: _userIdKey, value: userId.toString()),
+        if (userInfo != null)
+          _secureStorage.write(key: _userInfoKey, value: userInfo),
       ]);
 
       return true;
@@ -78,6 +82,15 @@ class TokenStorage {
     }
   }
 
+  /// Retrieve the stored user info JSON string
+  Future<String?> getUserInfo() async {
+    try {
+      return await _secureStorage.read(key: _userInfoKey);
+    } catch (e) {
+      return null;
+    }
+  }
+
   /// Check if user is currently logged in
   Future<bool> isLoggedIn() async {
     try {
@@ -106,6 +119,7 @@ class TokenStorage {
         _secureStorage.delete(key: _refreshTokenKey),
         _secureStorage.delete(key: _userIdKey),
         _secureStorage.delete(key: _isLoggedInKey),
+        _secureStorage.delete(key: _userInfoKey),
       ]);
 
       return true;

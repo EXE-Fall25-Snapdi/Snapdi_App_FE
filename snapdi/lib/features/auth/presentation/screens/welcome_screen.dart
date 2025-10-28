@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:snapdi/features/auth/presentation/screens/account_type_selection_screen.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
-import 'login_screen.dart';
-import 'photographer_sign_up_screen.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -20,13 +19,13 @@ class WelcomeScreen extends StatelessWidget {
               const Spacer(flex: 2),
 
               // Logo Section
-              Image.asset(AppAssets.snapdiLogoIcon),
+              SvgPicture.asset(AppAssets.snapdiLogo, height: 100, width: 100),
 
               const SizedBox(height: AppDimensions.marginXLarge),
 
               // Welcome Text
               Text(
-                'Welcome to Snapdi',
+                'Chào mừng đến với Snapdi',
                 style: AppTextStyles.headline1,
                 textAlign: TextAlign.center,
               ),
@@ -35,7 +34,7 @@ class WelcomeScreen extends StatelessWidget {
 
               // Description
               Text(
-                'Find and book professional photographers for your special moments. From weddings to portraits, we connect you with talented photographers in your area.',
+                'Tìm và đặt chụp ảnh chuyên nghiệp cho những khoảnh khắc đặc biệt của bạn. Từ đám cưới đến chân dung, chúng tôi kết nối bạn với các nhiếp ảnh gia tài năng trong khu vực của bạn.',
                 style: AppTextStyles.bodyLarge.copyWith(
                   color: AppColors.textSecondary,
                   height: 1.5,
@@ -50,12 +49,7 @@ class WelcomeScreen extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const LoginScreen(),
-                      ),
-                    );
+                    context.push('/login');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
@@ -69,7 +63,7 @@ class WelcomeScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  child: Text('Get Started', style: AppTextStyles.buttonLarge),
+                  child: Text('Bắt đầu', style: AppTextStyles.buttonLarge),
                 ),
               ),
 
@@ -80,14 +74,7 @@ class WelcomeScreen extends StatelessWidget {
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const PhotographerSignUpScreen(
-                          accountType: AccountType.snapper,
-                        ),
-                      ),
-                    );
+                    context.push('/photographer-signup');
                   },
                   style: OutlinedButton.styleFrom(
                     side: BorderSide(color: AppColors.primary),
@@ -101,7 +88,7 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    'Register as Photographer',
+                    'Đăng ký là Nhiếp ảnh gia',
                     style: AppTextStyles.buttonLarge.copyWith(
                       color: AppColors.primary,
                     ),

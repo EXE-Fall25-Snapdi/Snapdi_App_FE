@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:snapdi/features/shared/presentation/screens/main_navigation_screen.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
-import 'choose_location_screen.dart';
+import '../../../../core/providers/user_info_provider.dart';
+import 'choose_location_screen_with_map.dart';
+import 'booking_detail_screen.dart';
+import 'photographer_snap_screen.dart';
 
 class SnapScreen extends StatefulWidget {
   const SnapScreen({super.key});
@@ -14,6 +18,31 @@ class SnapScreen extends StatefulWidget {
 
 class _SnapScreenState extends State<SnapScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final UserInfoProvider _userInfoProvider = UserInfoProvider.instance;
+  bool _isPhotographer = false;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkUserRole();
+  }
+
+  Future<void> _checkUserRole() async {
+    try {
+      final roleName = await _userInfoProvider.getRoleName();
+      setState(() {
+        _isPhotographer = roleName?.toLowerCase() == 'photographer' || 
+                         roleName?.toLowerCase() == 'snapper';
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isPhotographer = false;
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -23,6 +52,32 @@ class _SnapScreenState extends State<SnapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Show loading indicator while checking role
+    if (_isLoading) {
+      return Scaffold(
+        body: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(AppAssets.backgroundGradient, fit: BoxFit.cover),
+            ),
+            const Center(
+              child: CircularProgressIndicator(color: Colors.white),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Show photographer screen if user is a photographer
+    if (_isPhotographer) {
+      return const PhotographerSnapScreen();
+    }
+
+    // Show customer snap screen
+    return _buildCustomerSnapScreen();
+  }
+
+  Widget _buildCustomerSnapScreen() {
     return Scaffold(
       body: Stack(
         children: [
@@ -55,13 +110,7 @@ class _SnapScreenState extends State<SnapScreen> {
                             size: 20,
                           ),
                           onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const MainNavigationScreen(),
-                              ),
-                            );
+                            context.go('/home');
                           },
                           padding: EdgeInsets.zero,
                         ),
@@ -77,32 +126,44 @@ class _SnapScreenState extends State<SnapScreen> {
                       ),
                       const Spacer(),
                       // Map icon
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Color(0xFFAACBC4),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
-                          children: [
-                            SvgPicture.asset(
-                              AppAssets.mapIcon,
-                              width: 16,
-                              height: 16,
+                      GestureDetector(
+                        onTap: () {
+                          // Navigate to location screen with map
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const ChooseLocationScreenWithMap(),
                             ),
-                            const SizedBox(width: 4),
-                            const Text(
-                              'Bản đồ',
-                              style: TextStyle(
-                                color: Colors.black,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w500,
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Color(0xFFAACBC4),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Row(
+                            children: [
+                              SvgPicture.asset(
+                                AppAssets.mapIcon,
+                                width: 16,
+                                height: 16,
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 4),
+                              const Text(
+                                'Bản đồ',
+                                style: TextStyle(
+                                  color: Colors.black,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ],
@@ -179,6 +240,7 @@ class _SnapScreenState extends State<SnapScreen> {
                 // Main content area
                 Expanded(
                   child: Container(
+                    padding: const EdgeInsets.only(top: 20),
                     decoration: const BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.only(
@@ -375,11 +437,12 @@ class _SnapScreenState extends State<SnapScreen> {
                   Expanded(
                     child: GestureDetector(
                       onTap: () {
-                        // Navigate to choose location screen
+                        // Navigate to choose location screen with map
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const ChooseLocationScreen(),
+                            builder: (context) =>
+                                const ChooseLocationScreenWithMap(),
                           ),
                         );
                       },
@@ -413,7 +476,14 @@ class _SnapScreenState extends State<SnapScreen> {
                       color: Colors.transparent,
                       child: InkWell(
                         onTap: () {
-                          // TODO: Handle snap search
+                          // Navigate to booking detail screen
+                          // Pass null for selectedLocation to use user's location
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const BookingDetailScreen(),
+                            ),
+                          );
                         },
                         borderRadius: BorderRadius.circular(16),
                         child: Padding(
@@ -455,10 +525,13 @@ class _SnapScreenState extends State<SnapScreen> {
   Widget _buildLocationItem(String title, String address) {
     return InkWell(
       onTap: () {
-        // Navigate to choose location screen
+        // Navigate directly to booking detail screen with location pre-filled
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => const ChooseLocationScreen()),
+          MaterialPageRoute(
+            builder: (context) =>
+                BookingDetailScreen(selectedLocation: '$title, $address'),
+          ),
         );
       },
       child: Row(

@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 
 class DateTimeUtils {
@@ -46,24 +47,24 @@ class DateTimeUtils {
 
     if (difference.inDays > 365) {
       final years = (difference.inDays / 365).floor();
-      return years == 1 ? '1 year ago' : '$years years ago';
+      return years == 1 ? '1 năm trước' : '$years năm trước';
     } else if (difference.inDays > 30) {
       final months = (difference.inDays / 30).floor();
-      return months == 1 ? '1 month ago' : '$months months ago';
+      return months == 1 ? '1 tháng trước' : '$months tháng trước';
     } else if (difference.inDays > 0) {
       return difference.inDays == 1
-          ? '1 day ago'
-          : '${difference.inDays} days ago';
+          ? '1 ngày trước'
+          : '${difference.inDays} ngày trước';
     } else if (difference.inHours > 0) {
       return difference.inHours == 1
-          ? '1 hour ago'
-          : '${difference.inHours} hours ago';
+          ? '1 giờ trước'
+          : '${difference.inHours} giờ trước';
     } else if (difference.inMinutes > 0) {
       return difference.inMinutes == 1
-          ? '1 minute ago'
-          : '${difference.inMinutes} minutes ago';
+          ? '1 phút trước'
+          : '${difference.inMinutes} phút trước';
     } else {
-      return 'Just now';
+      return 'Vừa xong';
     }
   }
 
@@ -168,13 +169,61 @@ class StringUtils {
     return text.replaceAll(RegExp(r'\s+'), '');
   }
 
-  /// Format currency
+  /// Format currency with custom symbol
   static String formatCurrency(
     double amount, {
     String symbol = '\$',
     int decimals = 2,
   }) {
     return '$symbol${amount.toStringAsFixed(decimals)}';
+  }
+
+  /// Format price for VND (Vietnamese Dong) with comma separators
+  /// Example: 500000 -> "500,000"
+  static String formatVND(double amount, {bool showSymbol = false}) {
+    final formatter = NumberFormat('#,###', 'en_US');
+    final formatted = formatter.format(amount);
+    return showSymbol ? '$formatted VNĐ' : formatted;
+  }
+
+  /// Format price for VND from int
+  /// Example: 500000 -> "500,000 VNĐ"
+  static String formatVNDFromInt(int amount, {bool showSymbol = true}) {
+    return formatVND(amount.toDouble(), showSymbol: showSymbol);
+  }
+
+  /// Parse formatted VND string back to double
+  /// Example: "500,000" -> 500000.0
+  /// Example: "500,000 VNĐ" -> 500000.0
+  static double parseVND(String formattedAmount) {
+    // Remove all non-digit characters (commas, spaces, currency symbols)
+    final cleaned = formattedAmount.replaceAll(RegExp(r'[^\d]'), '');
+    return double.tryParse(cleaned) ?? 0;
+  }
+
+  /// Parse formatted VND string back to int
+  /// Example: "500,000" -> 500000
+  static int parseVNDToInt(String formattedAmount) {
+    return parseVND(formattedAmount).toInt();
+  }
+
+  /// Format price with abbreviated notation (K, M, B)
+  /// Example: 1500000 -> "1.5M"
+  static String formatPriceAbbreviated(double amount) {
+    if (amount >= 1000000000) {
+      return '${(amount / 1000000000).toStringAsFixed(1)}B';
+    } else if (amount >= 1000000) {
+      return '${(amount / 1000000).toStringAsFixed(1)}M';
+    } else if (amount >= 1000) {
+      return '${(amount / 1000).toStringAsFixed(1)}K';
+    }
+    return amount.toStringAsFixed(0);
+  }
+
+  /// Format price range for VND
+  /// Example: formatPriceRange(500000, 1000000) -> "500,000 - 1,000,000 VNĐ"
+  static String formatPriceRange(double minPrice, double maxPrice) {
+    return '${formatVND(minPrice)} - ${formatVND(maxPrice, showSymbol: true)}';
   }
 
   /// Truncate text with ellipsis
@@ -192,5 +241,44 @@ class StringUtils {
       length,
       (index) => chars[(random + index) % chars.length],
     ).join();
+  }
+}
+
+/// Currency Input Formatter for VND
+/// Formats numbers with comma separators as user types
+/// Example: User types "500000" -> displays "500,000"
+/// The actual value stored remains 500000 (use parseVND to extract)
+class CurrencyInputFormatter extends TextInputFormatter {
+  final NumberFormat _formatter = NumberFormat('#,###', 'en_US');
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    // If empty, return as is
+    if (newValue.text.isEmpty) {
+      return newValue;
+    }
+
+    // Remove all non-digit characters to get the actual value
+    String digitsOnly = newValue.text.replaceAll(RegExp(r'[^\d]'), '');
+
+    // If no digits, return empty
+    if (digitsOnly.isEmpty) {
+      return newValue.copyWith(text: '');
+    }
+
+    // Parse the numeric value
+    int value = int.parse(digitsOnly);
+
+    // Format with commas
+    String formatted = _formatter.format(value);
+
+    // Return formatted text with cursor at the end
+    return TextEditingValue(
+      text: formatted,
+      selection: TextSelection.collapsed(offset: formatted.length),
+    );
   }
 }

@@ -1,4 +1,6 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'photographer_photo_type.dart';
+import 'current_location.dart';
 
 part 'photographer_sign_up_request.g.dart';
 
@@ -37,6 +39,18 @@ class PhotographerSignUpRequest {
   @JsonKey(name: 'avatarUrl', includeIfNull: false)
   final String? avatarUrl;
 
+  @JsonKey(name: 'currentLocation', includeIfNull: false)
+  final CurrentLocation? currentLocation;
+
+  @JsonKey(name: 'workLocation', includeIfNull: false)
+  final String? workLocation;
+
+  @JsonKey(name: 'photographerPhotoTypes', includeIfNull: false)
+  final List<PhotographerPhotoType>? photographerPhotoTypes;
+
+  @JsonKey(name: 'photographerStyleIds', includeIfNull: false)
+  final List<int>? photographerStyleIds;
+
   const PhotographerSignUpRequest({
     required this.name,
     required this.email,
@@ -49,6 +63,10 @@ class PhotographerSignUpRequest {
     this.description,
     this.isAvailable,
     this.avatarUrl,
+    this.currentLocation,
+    this.workLocation,
+    this.photographerPhotoTypes,
+    this.photographerStyleIds,
   });
 
   /// Factory constructor for creating a new PhotographerSignUpRequest instance from a map
@@ -77,7 +95,11 @@ class PhotographerSignUpRequest {
         other.equipmentDescription == equipmentDescription &&
         other.description == description &&
         other.isAvailable == isAvailable &&
-        other.avatarUrl == avatarUrl;
+        other.avatarUrl == avatarUrl &&
+        other.currentLocation == currentLocation &&
+        other.workLocation == workLocation &&
+        other.photographerPhotoTypes == photographerPhotoTypes &&
+        other.photographerStyleIds == photographerStyleIds;
   }
 
   @override
@@ -93,5 +115,9 @@ class PhotographerSignUpRequest {
     description,
     isAvailable,
     avatarUrl,
+    currentLocation,
+    workLocation,
+    photographerPhotoTypes,
+    photographerStyleIds,
   );
 }

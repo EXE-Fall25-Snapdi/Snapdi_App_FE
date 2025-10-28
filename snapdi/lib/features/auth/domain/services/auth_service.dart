@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:dartz/dartz.dart';
+import 'dart:convert';
 import '../../../../core/error/failures.dart';
 import '../../../../core/network/api_service.dart';
 import '../../../../core/storage/token_storage.dart';
@@ -12,6 +13,8 @@ import '../../data/models/photographer_sign_up_response.dart';
 import '../../data/models/send_verification_code_request.dart';
 import '../../data/models/verify_email_code_request.dart';
 import '../../data/models/verification_response.dart';
+import '../../data/models/photo_type.dart';
+import '../../data/models/style.dart';
 
 abstract class AuthService {
   Future<Either<Failure, LoginResponse>> login({
@@ -49,8 +52,19 @@ abstract class AuthService {
   );
   Future<bool> isLoggedIn();
   Future<String?> getAccessToken();
+  Future<Either<Failure, LoginResponse>> refreshToken();
   Future<bool> logout();
   Future<AuthTokens?> getCurrentSession();
+
+  // Photo Types and Styles
+  Future<Either<Failure, List<PhotoType>>> getPhotoTypes();
+  Future<Either<Failure, List<Style>>> getStyles();
+
+  // User Profile
+  Future<Either<Failure, void>> updateAvatar({
+    required int userId,
+    required String avatarUrl,
+  });
 }
 
 class AuthServiceImpl implements AuthService {
@@ -136,10 +150,13 @@ class AuthServiceImpl implements AuthService {
   @override
   Future<bool> storeAuthTokens(LoginResponse loginResponse) async {
     try {
+      final userJson = jsonEncode(loginResponse.user.toJson());
+
       return await _tokenStorage.storeTokens(
         accessToken: loginResponse.token,
         refreshToken: loginResponse.refreshToken,
         userId: loginResponse.user.userId,
+        userInfo: userJson,
       );
     } catch (e) {
       return false;
@@ -178,6 +195,29 @@ class AuthServiceImpl implements AuthService {
       return await _tokenStorage.getAccessToken();
     } catch (e) {
       return null;
+    }
+  }
+
+  @override
+  Future<Either<Failure, LoginResponse>> refreshToken() async {
+    try {
+      final currentRefreshToken = await _tokenStorage.getRefreshToken();
+      if (currentRefreshToken == null) {
+        return const Left(ServerFailure('No refresh token available'));
+      }
+
+      final response = await _apiService.post(
+        '/api/Auth/refresh-token',
+        data: {'refreshToken': currentRefreshToken},
+      );
+
+      final loginResponse = LoginResponse.fromJson(response.data);
+
+      await storeAuthTokens(loginResponse);
+
+      return Right(loginResponse);
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -389,6 +429,89 @@ class AuthServiceImpl implements AuthService {
     }
   }
 
+  @override
+  Future<Either<Failure, List<PhotoType>>> getPhotoTypes() async {
+    try {
+      final response = await _apiService.get('/api/PhotoTypes');
+
+      final List<dynamic> data = response.data;
+      final photoTypes = data
+          .map((item) => PhotoType.fromJson(item as Map<String, dynamic>))
+          .toList();
+
+      return Right(photoTypes);
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return Left(
+        ServerFailure('Unexpected error loading photo types: ${e.toString()}'),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<Style>>> getStyles() async {
+    try {
+      final response = await _apiService.get('/api/Styles');
+
+      final List<dynamic> data = response.data;
+      final styles = data
+          .map((item) => Style.fromJson(item as Map<String, dynamic>))
+          .toList();
+
+      return Right(styles);
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return Left(
+        ServerFailure('Unexpected error loading styles: ${e.toString()}'),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, void>> updateAvatar({
+    required int userId,
+    required String avatarUrl,
+  }) async {
+    try {
+      // Get the access token
+      final token = await _tokenStorage.getAccessToken();
+      if (token == null || token.isEmpty) {
+        return Left(AuthenticationFailure('No access token available'));
+      }
+
+      final response = await _apiService.put(
+        '/api/Users/$userId/avatar',
+        data: jsonEncode(avatarUrl),
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return const Right(null);
+      } else {
+        return Left(
+          ServerFailure(
+            'Failed to update avatar with status: ${response.statusCode}',
+          ),
+        );
+      }
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return Left(
+        ServerFailure('Unexpected error updating avatar: ${e.toString()}'),
+      );
+    }
+  }
+
+
+
   Failure _handleDioError(DioException error) {
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
@@ -401,7 +524,6 @@ class AuthServiceImpl implements AuthService {
       case DioExceptionType.badResponse:
         final statusCode = error.response?.statusCode;
 
-        // Safely extract error message from response
         String errorMessage = 'Server error occurred';
         final responseData = error.response?.data;
 
@@ -422,7 +544,7 @@ class AuthServiceImpl implements AuthService {
           case 403:
             return AuthenticationFailure(errorMessage);
           case 404:
-            return ServerFailure('Login endpoint not found');
+            return ServerFailure('Endpoint not found');
           case 500:
           default:
             return ServerFailure(errorMessage);
@@ -432,7 +554,6 @@ class AuthServiceImpl implements AuthService {
         return NetworkFailure('Request was cancelled');
 
       case DioExceptionType.connectionError:
-        // Check if it's a timeout error based on the message
         if (error.message?.contains('timeout') == true) {
           return NetworkFailure(
             'Connection timeout. Please check if the server is running or try again later.',
@@ -446,7 +567,6 @@ class AuthServiceImpl implements AuthService {
         return NetworkFailure('SSL certificate error');
 
       case DioExceptionType.unknown:
-        // Check if it's a timeout error
         if (error.message?.contains('timeout') == true ||
             error.message?.contains('took longer') == true) {
           return NetworkFailure(

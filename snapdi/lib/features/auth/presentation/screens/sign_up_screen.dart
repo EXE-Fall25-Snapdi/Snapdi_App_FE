@@ -43,54 +43,53 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
   String? _validateName(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Please enter your name';
+      return 'Vui lòng nhập họ tên';
     }
     if (value.length < 2) {
-      return 'Name must be at least 2 characters';
+      return 'Họ tên phải có ít nhất 2 ký tự';
     }
     return null;
   }
 
   String? _validateEmail(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Please enter your email';
+      return 'Vui lòng nhập email';
     }
     if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-      return 'Please enter a valid email';
+      return 'Vui lòng nhập email hợp lệ';
     }
     return null;
   }
 
   String? _validatePhone(String? value) {
     if (value != null && value.isNotEmpty) {
-      // Remove all non-digit characters for validation
       String phoneDigits = value.replaceAll(RegExp(r'[^0-9]'), '');
       if (phoneDigits.length < 10) {
-        return 'Phone number must be at least 10 digits';
+        return 'Số điện thoại phải có ít nhất 10 chữ số';
       }
       if (phoneDigits.length > 15) {
-        return 'Phone number must not exceed 15 digits';
+        return 'Số điện thoại không được vượt quá 15 chữ số';
       }
     }
-    return null; // Phone is optional
+    return null;
   }
 
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Please enter your password';
+      return 'Vui lòng nhập mật khẩu';
     }
     if (value.length < 6) {
-      return 'Password must be at least 6 characters';
+      return 'Mật khẩu phải có ít nhất 6 ký tự';
     }
     return null;
   }
 
   String? _validateConfirmPassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Please confirm your password';
+      return 'Vui lòng xác nhận mật khẩu';
     }
     if (value != _passwordController.text) {
-      return 'Passwords do not match';
+      return 'Mật khẩu không khớp';
     }
     return null;
   }
@@ -100,7 +99,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Please agree to terms and conditions',
+            'Vui lòng đồng ý với điều khoản và chính sách',
             style: AppTextStyles.bodyMedium.copyWith(color: AppColors.white),
           ),
           backgroundColor: AppColors.error,
@@ -122,7 +121,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
             : null,
         password: _passwordController.text,
         roleId: _roleId,
-        // Optional fields can be null for basic sign up
         locationAddress: null,
         locationCity: null,
         avatarUrl: null,
@@ -147,7 +145,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             } else if (failure is ServerFailure) {
               errorMessage = failure.message;
             } else {
-              errorMessage = 'Registration failed. Please try again.';
+              errorMessage = 'Đăng ký thất bại. Vui lòng thử lại.';
             }
 
             ScaffoldMessenger.of(context).showSnackBar(
@@ -166,7 +164,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                  'Account created successfully! Please check your email for verification code.',
+                  'Tạo tài khoản thành công! Vui lòng kiểm tra email để lấy mã xác thực.',
                   style: AppTextStyles.bodyMedium.copyWith(
                     color: AppColors.white,
                   ),
@@ -175,15 +173,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
               ),
             );
 
-            // Navigate to verify code screen for email verification
             Navigator.of(context).pushReplacement(
               MaterialPageRoute(
                 builder: (context) => VerifyCodeScreen(
                   email: _emailController.text.trim(),
-                  onVerificationSuccess: () {
-                    // After successful verification, navigate to login screen
-                    Navigator.of(context).popUntil((route) => route.isFirst);
-                  },
+                  password: _passwordController.text.trim(),
                 ),
               ),
             );
@@ -197,7 +191,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          '$platform sign up - Coming soon!',
+          '$platform - Sắp ra mắt!',
           style: AppTextStyles.bodyMedium.copyWith(color: AppColors.white),
         ),
         backgroundColor: AppColors.primary,
@@ -213,10 +207,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFE8F5F3), // Light mint/teal at top
-              Color(0xFFF0F9F7), // Very light teal at bottom
-            ],
+            colors: [Color(0xFFE8F5F3), Color(0xFFF0F9F7)],
           ),
         ),
         child: SafeArea(
@@ -232,7 +223,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                     // Title
                     Text(
-                      'Create your account',
+                      'Tạo tài khoản của bạn',
                       style: AppTextStyles.headline3.copyWith(
                         color: AppColors.textPrimary,
                         fontWeight: FontWeight.w600,
@@ -244,7 +235,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                     // Name field
                     CustomInputField(
-                      hintText: 'Name',
+                      hintText: 'Họ tên',
                       prefixIcon: Icons.person_outline,
                       keyboardType: TextInputType.name,
                       controller: _nameController,
@@ -266,7 +257,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                     // Phone field (optional)
                     CustomInputField(
-                      hintText: 'Phone Number (Optional)',
+                      hintText: 'Số điện thoại (Tùy chọn)',
                       prefixIcon: Icons.phone_outlined,
                       keyboardType: TextInputType.phone,
                       controller: _phoneController,
@@ -277,7 +268,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                     // Password field
                     CustomInputField(
-                      hintText: 'Passwords',
+                      hintText: 'Mật khẩu',
                       prefixIcon: Icons.lock_outline,
                       isPassword: true,
                       controller: _passwordController,
@@ -288,7 +279,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                     // Confirm Password field
                     CustomInputField(
-                      hintText: 'Confirm Passwords',
+                      hintText: 'Xác nhận mật khẩu',
                       prefixIcon: Icons.lock_outline,
                       isPassword: true,
                       controller: _confirmPasswordController,
@@ -325,17 +316,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                     color: AppColors.textSecondary,
                                   ),
                                   children: [
-                                    const TextSpan(text: 'I agree with '),
+                                    const TextSpan(text: 'Tôi đồng ý với '),
                                     TextSpan(
-                                      text: 'terms conditions',
+                                      text: 'điều khoản dịch vụ',
                                       style: TextStyle(
                                         color: AppColors.primary,
                                         decoration: TextDecoration.underline,
                                       ),
                                     ),
-                                    const TextSpan(text: ' and '),
+                                    const TextSpan(text: ' và '),
                                     TextSpan(
-                                      text: 'privacy policy',
+                                      text: 'chính sách bảo mật',
                                       style: TextStyle(
                                         color: AppColors.primary,
                                         decoration: TextDecoration.underline,
@@ -375,7 +366,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                                   ),
                                 ),
                               )
-                            : Text('Sign up', style: AppTextStyles.buttonLarge),
+                            : Text('Đăng ký', style: AppTextStyles.buttonLarge),
                       ),
                     ),
 
@@ -383,7 +374,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                     // "Or sign up with" text
                     Text(
-                      'Or sign up with',
+                      'Hoặc đăng ký với',
                       style: AppTextStyles.bodyMedium.copyWith(
                         color: AppColors.textSecondary,
                       ),
@@ -397,17 +388,17 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         _SocialSignUpButton(
-                          icon: Icons.g_mobiledata, // Google placeholder
+                          icon: Icons.g_mobiledata,
                           onPressed: () => _handleSocialSignUp('Google'),
                         ),
                         const SizedBox(width: 20),
                         _SocialSignUpButton(
-                          icon: Icons.facebook, // Facebook
+                          icon: Icons.facebook,
                           onPressed: () => _handleSocialSignUp('Facebook'),
                         ),
                         const SizedBox(width: 20),
                         _SocialSignUpButton(
-                          icon: Icons.code, // GitHub placeholder
+                          icon: Icons.code,
                           onPressed: () => _handleSocialSignUp('GitHub'),
                         ),
                       ],
@@ -420,23 +411,18 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Already have an account? ',
+                          'Đã có tài khoản? ',
                           style: AppTextStyles.bodyMedium.copyWith(
                             color: AppColors.textSecondary,
                           ),
                         ),
                         TextButton(
                           onPressed: () {
-                            // Pop back to login screen (skip account type selection)
-                            // Navigation stack: Welcome → Login → AccountType → SignUp
-                            // We need to pop 2 screens to get back to Login
-                            Navigator.of(context).pop(); // Pop SignUp
-                            Navigator.of(
-                              context,
-                            ).pop(); // Pop AccountType, back to Login
+                            Navigator.of(context).pop();
+                            Navigator.of(context).pop();
                           },
                           child: Text(
-                            'Login',
+                            'Đăng nhập',
                             style: AppTextStyles.bodyMedium.copyWith(
                               color: AppColors.primary,
                               fontWeight: FontWeight.w600,

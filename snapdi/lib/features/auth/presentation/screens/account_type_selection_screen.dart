@@ -3,7 +3,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
 import 'sign_up_screen.dart';
-import 'photographer_sign_up_screen.dart';
+// import 'photographer_sign_up_screen.dart';
+import 'PhotographerSignUpStage1Screen.dart';
 
 enum AccountType { user, snapper }
 
@@ -31,7 +32,7 @@ class _AccountTypeSelectionScreenState
         context,
         MaterialPageRoute(
           builder: (context) => _selectedAccountType == AccountType.snapper
-              ? PhotographerSignUpScreen(accountType: _selectedAccountType!)
+              ? PhotographerSignUpStage1Screen(accountType: _selectedAccountType!)
               : SignUpScreen(accountType: _selectedAccountType!),
         ),
       );
@@ -72,7 +73,7 @@ class _AccountTypeSelectionScreenState
 
                 // Title
                 Text(
-                  'Select your account type',
+                  'Chọn loại tài khoản của bạn',
                   style: AppTextStyles.headline3.copyWith(
                     color: AppColors.primaryDark,
                     fontWeight: FontWeight.w600,
@@ -129,7 +130,7 @@ class _AccountTypeSelectionScreenState
                       ),
                     ),
                     child: Text(
-                      'Next',
+                      'Tiếp tục',
                       style: AppTextStyles.buttonLarge.copyWith(
                         color: AppColors.black,
                         fontWeight: FontWeight.w600,
@@ -194,7 +195,7 @@ class _AccountTypeCard extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Custom asset icon
-            Container(
+            SizedBox(
               width: 95,
               height: 95,
 

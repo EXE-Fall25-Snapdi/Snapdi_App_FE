@@ -1,6 +1,4 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/error/failures.dart';
 import '../../domain/services/auth_service.dart';

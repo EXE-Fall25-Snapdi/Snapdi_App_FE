@@ -83,7 +83,12 @@ class _LoginScreenState extends State<LoginScreen> {
           await _authService.storeAuthTokens(loginResponse);
 
           if (mounted) {
-            context.go('/home');
+            if (loginResponse.user.roleId == 3) {
+              // Photographer
+              context.go('/photographer-welcome');
+            } else {
+              context.go('/home');
+            }
           }
         },
       );

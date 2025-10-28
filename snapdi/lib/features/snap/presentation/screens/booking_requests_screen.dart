@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
+import '../../../../core/utils/utils.dart';
 
 /// Screen showing pending booking requests for photographers
 class BookingRequestsScreen extends StatefulWidget {
@@ -12,8 +13,6 @@ class BookingRequestsScreen extends StatefulWidget {
 }
 
 class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
-  final TextEditingController _searchController = TextEditingController();
-  
   List<BookingRequest> _requests = [];
   bool _isLoading = true;
 
@@ -23,27 +22,20 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
     _loadRequests();
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
   Future<void> _loadRequests() async {
     setState(() => _isLoading = true);
-    
+
     try {
       // TODO: Load actual booking requests from API
-      // For now, using mock data
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       setState(() {
         _requests = [
           BookingRequest(
             bookingId: 1,
             customerName: 'Khánh Linh',
             customerAvatar: null,
-            scheduleAt: '2025-10-31T14:00:00',
+            scheduleAt: '2025-10-31T14:40:00',
             locationAddress: 'Quận 1, TP. HCM',
             price: 400000,
             status: 'Chưa Dùng',
@@ -82,12 +74,13 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              // TODO: Call accept API
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
                     'Đã chấp nhận yêu cầu từ ${request.customerName}',
-                    style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: Colors.white,
+                    ),
                   ),
                   backgroundColor: Colors.green,
                 ),
@@ -97,11 +90,13 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
               });
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
+              backgroundColor: AppColors.primaryDarker,
             ),
             child: Text(
               'Chấp nhận',
-              style: AppTextStyles.buttonMedium.copyWith(color: Colors.white),
+              style: AppTextStyles.buttonMedium.copyWith(
+                color: AppColors.primary,
+              ),
             ),
           ),
         ],
@@ -132,12 +127,13 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              // TODO: Call reject API
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
                     'Đã từ chối yêu cầu từ ${request.customerName}',
-                    style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
+                    style: AppTextStyles.bodyMedium.copyWith(
+                      color: Colors.white,
+                    ),
                   ),
                   backgroundColor: AppColors.error,
                 ),
@@ -162,14 +158,10 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
   String _formatDateTime(String scheduleAt) {
     try {
       final dateTime = DateTime.parse(scheduleAt);
-      return '${dateTime.year}-${dateTime.month.toString().padLeft(2, '0')}-${dateTime.day.toString().padLeft(2, '0')}, ${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+      return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')} AM,ZN ${dateTime.day}/${dateTime.month}/${dateTime.year}';
     } catch (e) {
       return scheduleAt;
     }
-  }
-
-  String _formatPrice(int price) {
-    return '${price ~/ 1000}K';
   }
 
   @override
@@ -177,12 +169,9 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background gradient
+          // Background image
           Positioned.fill(
-            child: Image.asset(
-              AppAssets.backgroundGradient,
-              fit: BoxFit.cover,
-            ),
+            child: Image.asset(AppAssets.backgroundGradient, fit: BoxFit.cover),
           ),
 
           // Content
@@ -191,82 +180,31 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
               children: [
                 // Header
                 _buildHeader(),
-                
-                // Title with Calendar Icon
+
+                // Bell Icon Title
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
-                  child: Column(
-                    children: [
-                      // Calendar Icon
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: AppColors.primary,
-                          borderRadius: BorderRadius.circular(16),
+                  padding: const EdgeInsets.symmetric(vertical: 32),
+                  child: Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.1),
+                          blurRadius: 20,
+                          offset: const Offset(0, 10),
                         ),
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  height: 8,
-                                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Container(
-                                  height: 30,
-                                  margin: const EdgeInsets.symmetric(horizontal: 16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.9),
-                                    borderRadius: BorderRadius.circular(4),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Positioned(
-                              bottom: 20,
-                              right: 20,
-                              child: Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withOpacity(0.95),
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: AppColors.primary,
-                                    width: 2,
-                                  ),
-                                ),
-                                child: const Icon(
-                                  Icons.access_time,
-                                  color: AppColors.primary,
-                                  size: 18,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: SvgPicture.asset(
+                        AppAssets.notifySnapIcon,
+                        width: 50,
+                        height: 50,
                       ),
-                      
-                      const SizedBox(height: 16),
-                      
-                      // Title
-                      Text(
-                        'Yêu Cầu Chụp',
-                        style: AppTextStyles.headline2.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 28,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
 
@@ -274,29 +212,27 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
                 Expanded(
                   child: _isLoading
                       ? const Center(
-                          child: CircularProgressIndicator(
-                            color: Colors.white,
-                          ),
+                          child: CircularProgressIndicator(color: Colors.white),
                         )
                       : _requests.isEmpty
-                          ? Center(
-                              child: Text(
-                                'Không có yêu cầu chụp nào',
-                                style: AppTextStyles.bodyLarge.copyWith(
-                                  color: Colors.white.withOpacity(0.8),
-                                ),
-                              ),
-                            )
-                          : ListView.builder(
-                              padding: const EdgeInsets.symmetric(horizontal: 24),
-                              itemCount: _requests.length,
-                              itemBuilder: (context, index) {
-                                return _buildRequestCard(_requests[index]);
-                              },
+                      ? Center(
+                          child: Text(
+                            'Không có yêu cầu chụp nào',
+                            style: AppTextStyles.bodyLarge.copyWith(
+                              color: Colors.white.withOpacity(0.8),
                             ),
+                          ),
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.symmetric(horizontal: 24),
+                          itemCount: _requests.length,
+                          itemBuilder: (context, index) {
+                            return _buildRequestCard(_requests[index]);
+                          },
+                        ),
                 ),
-                
-                const SizedBox(height: 100), // Space for bottom nav
+
+                const SizedBox(height: 100),
               ],
             ),
           ),
@@ -310,68 +246,53 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
       padding: const EdgeInsets.all(16.0),
       child: Row(
         children: [
-          // Search Bar
+          // Back button
+          Container(
+            width: 45,
+            height: 45,
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+              onPressed: () => Navigator.pop(context),
+              padding: EdgeInsets.zero,
+            ),
+          ),
+
+          const SizedBox(width: 12),
+
+          // Title
           Expanded(
-            child: Container(
-              height: 45,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
-                borderRadius: BorderRadius.circular(25),
-              ),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Tìm kiếm...',
-                  hintStyle: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                  prefixIcon: const Icon(
-                    Icons.search,
-                    color: AppColors.primary,
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
+            child: Center(
+              child: Text(
+                'Yêu cầu chụp',
+                style: AppTextStyles.headline3.copyWith(
+                  color: Colors.black87,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
                 ),
               ),
             ),
           ),
-          
+
           const SizedBox(width: 12),
-          
-          // Menu and Profile Icons
+
+          // Menu Icon
           Container(
+            width: 45,
             height: 45,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.9),
-              borderRadius: BorderRadius.circular(25),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Row(
-              children: [
-                // Menu Icon
-                IconButton(
-                  icon: const Icon(Icons.menu, color: AppColors.primary),
-                  onPressed: () {
-                    // TODO: Open menu
-                  },
-                ),
-                
-                Container(
-                  width: 1,
-                  height: 25,
-                  color: AppColors.textSecondary.withOpacity(0.3),
-                ),
-                
-                // Profile Icon
-                IconButton(
-                  icon: const Icon(Icons.person, color: AppColors.primary),
-                  onPressed: () {
-                    context.go('/profile');
-                  },
-                ),
-              ],
+            child: IconButton(
+              icon: const Icon(Icons.menu, color: AppColors.primary, size: 24),
+              onPressed: () {
+                // TODO: Open menu
+              },
+              padding: EdgeInsets.zero,
             ),
           ),
         ],
@@ -385,12 +306,12 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
         ],
       ),
@@ -401,10 +322,10 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
             children: [
               // Avatar
               Container(
-                width: 50,
-                height: 50,
+                width: 60,
+                height: 60,
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.2),
+                  color: AppColors.greyLight,
                   shape: BoxShape.circle,
                 ),
                 child: request.customerAvatar != null
@@ -416,13 +337,13 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
                       )
                     : const Icon(
                         Icons.person,
-                        color: AppColors.primary,
-                        size: 28,
+                        color: AppColors.textSecondary,
+                        size: 32,
                       ),
               ),
-              
+
               const SizedBox(width: 12),
-              
+
               // Name and Date
               Expanded(
                 child: Column(
@@ -433,6 +354,7 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
                       style: AppTextStyles.headline4.copyWith(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
+                        color: Colors.black87,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -440,35 +362,59 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
                       _formatDateTime(request.scheduleAt),
                       style: AppTextStyles.bodySmall.copyWith(
                         color: AppColors.textSecondary,
-                        fontSize: 12,
+                        fontSize: 11,
                       ),
                     ),
                   ],
                 ),
               ),
-              
-              // Price
-              Text(
-                _formatPrice(request.price),
-                style: AppTextStyles.headline3.copyWith(
+
+              // Price badge
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
                   color: AppColors.primary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SvgPicture.asset(
+                      AppAssets.walletIcon,
+                      width: 16,
+                      height: 16,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      StringUtils.formatVND((request.price), showSymbol: false),
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          
+
           const SizedBox(height: 16),
-          
+
           // Status and Duration Badges
           Row(
             children: [
               // Status Badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.2),
+                  color: Colors.green.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -477,28 +423,31 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
                     const Icon(
                       Icons.check_circle,
                       color: Colors.green,
-                      size: 16,
+                      size: 14,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      request.status,
+                      request.photoType,
                       style: AppTextStyles.bodySmall.copyWith(
                         color: Colors.green,
                         fontWeight: FontWeight.w600,
-                        fontSize: 12,
+                        fontSize: 11,
                       ),
                     ),
                   ],
                 ),
               ),
-              
+
               const SizedBox(width: 8),
-              
+
               // Duration Badge
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.2),
+                  color: AppColors.primary.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
@@ -507,7 +456,7 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
                     const Icon(
                       Icons.access_time,
                       color: AppColors.primary,
-                      size: 16,
+                      size: 14,
                     ),
                     const SizedBox(width: 4),
                     Text(
@@ -515,7 +464,7 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
                       style: AppTextStyles.bodySmall.copyWith(
                         color: AppColors.primary,
                         fontWeight: FontWeight.w600,
-                        fontSize: 12,
+                        fontSize: 11,
                       ),
                     ),
                   ],
@@ -523,9 +472,9 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
               ),
             ],
           ),
-          
+
           const SizedBox(height: 20),
-          
+
           // Action Buttons
           Row(
             children: [
@@ -537,37 +486,41 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
                     backgroundColor: AppColors.textSecondary,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(30),
                     ),
+                    elevation: 0,
                   ),
                   child: Text(
                     'Từ Chối',
                     style: AppTextStyles.buttonMedium.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
+                      fontSize: 14,
                     ),
                   ),
                 ),
               ),
-              
+
               const SizedBox(width: 12),
-              
+
               // Accept Button
               Expanded(
                 child: ElevatedButton(
                   onPressed: () => _acceptRequest(request),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: AppColors.primaryDarker,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(30),
                     ),
+                    elevation: 0,
                   ),
                   child: Text(
                     'Chấp Nhận',
                     style: AppTextStyles.buttonMedium.copyWith(
-                      color: Colors.white,
+                      color: AppColors.primary,
                       fontWeight: FontWeight.bold,
+                      fontSize: 14,
                     ),
                   ),
                 ),
@@ -587,7 +540,7 @@ class BookingRequest {
   final String? customerAvatar;
   final String scheduleAt;
   final String locationAddress;
-  final int price;
+  final double price;
   final String status;
   final String duration;
   final String photoType;

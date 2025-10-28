@@ -86,7 +86,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         context.go('/explore');
         break;
       case 2:
-        context.go('/snap');
+        if (_roleId == 3) {
+          // If photographer, navigate to snap screen
+          context.go('/photographer-snap');
+        } else {
+          // Otherwise, navigate to a placeholder snap screen
+          context.go('/snap');
+        }
         break;
       case 3:
         context.go('/history');

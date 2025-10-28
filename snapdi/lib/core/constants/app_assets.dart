@@ -26,6 +26,7 @@ class AppAssets {
   // Mascots
   static const String mascot = '$_imagesPath/mascot.png';
   static const String mascotWave = '$_imagesPath/mascot_wave.png';
+  static const String mascotSnap = '$_imagesPath/mascot_snap.png';
 
   // Placeholders
   static const String userPlaceholder = '$_imagesPath/user_placeholder.png';
@@ -73,6 +74,7 @@ class AppAssets {
   static const String bookIcon = '$_iconsPath/book_icon.svg';
   static const String menuIcon = '$_iconsPath/menu_icon.svg';
   static const String notifyIcon = '$_iconsPath/notify_icon.svg';
+  static const String notifySnapIcon = '$_iconsPath/notify_snap_icon.svg';
   static const String nowIcon = '$_iconsPath/now_icon.svg';
   static const String paymentIcon = '$_iconsPath/payment_icon.svg';
   static const String vipIcon = '$_iconsPath/vip_icon.svg';
@@ -89,6 +91,7 @@ class AppAssets {
   static const String cameraAltIcon = '$_iconsPath/camera_icon.svg';
   static const String messageIcon = '$_iconsPath/message_icon.svg';
   static const String profileActionIcon = '$_iconsPath/profile_icon.svg';
+  static const String walletIcon = '$_iconsPath/wallet_icon.svg';
 
   // Account Type Icons
   static const String snapperAccountIcon = '$_iconsPath/snaper_acc_icon.svg';
@@ -113,7 +116,8 @@ class AppAssets {
 
   // static const String snapdiLogoWhite = '$_logosPath/snapdi_logo_white.png';
   static const String snapdiLogo = '$_logosPath/logo.svg';
-  static const String snapdiLogoWithText = '$_logosPath/snapdi_logo_with_text.svg';
+  static const String snapdiLogoWithText =
+      '$_logosPath/snapdi_logo_with_text.svg';
 
   // Social Media Logos
   // static const String googleLogo = '$_logosPath/google_logo.png';
@@ -163,6 +167,7 @@ class AppAssets {
     portfolioPlaceholder,
     mascot,
     mascotWave,
+    mascotSnap,
     promotion1,
     promotion2,
     locationImage1,
@@ -189,6 +194,7 @@ class AppAssets {
     bookIcon,
     menuIcon,
     notifyIcon,
+    notifySnapIcon,
     nowIcon,
     paymentIcon,
     vipIcon,
@@ -204,6 +210,7 @@ class AppAssets {
     cameraAltIcon,
     messageIcon,
     profileActionIcon,
+    walletIcon,
     snapperAccountIcon,
     userAccountIcon,
     // weddingIcon,

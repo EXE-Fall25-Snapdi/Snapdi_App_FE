@@ -437,6 +437,8 @@ extension on BookingData {
       status: BookingStatus(statusId: statusId, statusName: statusName),
       price: price,
       note: note,
+      photoTypeId: photoTypeId,
+      time: time,
     );
   }
 }

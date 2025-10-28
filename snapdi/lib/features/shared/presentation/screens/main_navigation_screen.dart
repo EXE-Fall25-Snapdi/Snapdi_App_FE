@@ -80,7 +80,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void _onNavItemTapped(int index) {
     switch (index) {
       case 0:
-        context.go('/home');
+        if (_roleId == 3) {
+          // If photographer, navigate to photographer welcome
+          context.go('/photographer-welcome');
+        } else {
+          // Otherwise, navigate to home
+          context.go('/home');
+        }
         break;
       case 1:
         context.go('/explore');

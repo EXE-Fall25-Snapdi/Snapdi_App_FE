@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:snapdi/core/constants/app_assets.dart';
 import 'package:snapdi/core/storage/token_storage.dart';
 import 'package:snapdi/core/constants/app_theme.dart';
+import 'package:snapdi/core/providers/user_info_provider.dart';
 
 /// Splash screen that checks authentication status and redirects accordingly
 class SplashScreen extends StatefulWidget {
@@ -35,9 +36,20 @@ class _SplashScreenState extends State<SplashScreen> {
 
       if (!mounted) return;
 
-      // If user is logged in and has a valid token, go to home
+      // If user is logged in and has a valid token, check role and navigate
       if (isLoggedIn && accessToken != null && accessToken.isNotEmpty) {
-        context.go('/home');
+        // Get user role
+        final userInfoProvider = UserInfoProvider.instance;
+        final roleId = await userInfoProvider.getRoleId();
+        
+        if (!mounted) return;
+
+        // Navigate to photographer-snap if role is 3, otherwise go to home
+        if (roleId == 3) {
+          context.go('/photographer-snap');
+        } else {
+          context.go('/home');
+        }
       } else {
         // Otherwise, show welcome screen
         context.go('/welcome');

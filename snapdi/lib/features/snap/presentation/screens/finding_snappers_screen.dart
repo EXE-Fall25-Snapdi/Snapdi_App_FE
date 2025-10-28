@@ -312,8 +312,9 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
         scheduleAt: scheduleDateTime.toIso8601String(),
         locationAddress: widget.locationAddress ?? widget.location ?? '',
         price: snapper.photoPrice.toInt(),
-        note:
-            widget.note!, // Can be extended to accept user notes in the future
+        note: widget.note!,
+        photoTypeId: snapper.photoTypeId,
+        time: snapper.photoTime,
       );
 
       final response = await _bookingService.createBooking(bookingRequest);
@@ -328,9 +329,11 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
               snapper: snapper,
               location: widget.location,
               date: widget.date,
-              time: widget.time,
+              scheduleAt: widget.time,
               bookingId: response.data!.bookingId,
               amount: response.data!.price.toDouble(),
+              photoTypeId: snapper.photoTypeId,
+              time: snapper.photoTime,
             ),
           ),
         );

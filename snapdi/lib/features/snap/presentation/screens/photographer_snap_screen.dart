@@ -53,73 +53,62 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
         setState(() => _userName = userName.split(' ').first);
       }
 
-      // TODO: Load photographer's bookings from API
-      setState(() {
-        _upcomingBookings = [
-          BookingData(
-            bookingId: 1,
+      // Get photographer ID
+      final photographerId = await _userInfoProvider.getUserId();
+      
+      if (photographerId == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Fetch pending bookings from API
+      final pendingBookingsResponse = await _photographerService.getPendingBookings(
+        photographerId: photographerId,
+        page: 1,
+        pageSize: 10,
+      );
+
+      if (pendingBookingsResponse != null && pendingBookingsResponse.data.isNotEmpty) {
+        // Convert pending bookings to BookingData for display
+        final upcomingBookings = pendingBookingsResponse.data.map((booking) {
+          return BookingData(
+            bookingId: booking.bookingId,
             customer: BookingUser(
-              userId: 101,
-              name: 'Nguyễn Văn A',
-              email: 'customer1@example.com',
-              phone: '0901234567',
+              userId: booking.user.userId,
+              name: booking.user.name ?? 'Customer',
+              email: booking.user.email ?? '',
+              phone: booking.user.phone ?? '',
             ),
             photographer: BookingPhotographer(
-              userId: 201,
-              name: 'Photographer',
-              email: 'photographer@example.com',
-              phone: '0987654321',
+              userId: booking.photographer.userId,
+              name: booking.photographer.name ?? 'Photographer',
+              email: booking.photographer.email ?? '',
+              phone: booking.photographer.phone ?? '',
             ),
-            scheduleAt: '2025-10-28T14:30:00',
-            locationAddress: 'Quận 1, TP.HCM',
-            status: BookingStatus(statusId: 1, statusName: 'Confirmed'),
-            price: 500000,
-            note: 'Wedding photography',
-          ),
-          BookingData(
-            bookingId: 2,
-            customer: BookingUser(
-              userId: 102,
-              name: 'Trần Thị B',
-              email: 'customer2@example.com',
-              phone: '0902345678',
-            ),
-            photographer: BookingPhotographer(
-              userId: 201,
-              name: 'Photographer',
-              email: 'photographer@example.com',
-              phone: '0987654321',
-            ),
-            scheduleAt: '2025-10-28T17:30:00',
-            locationAddress: 'Quận 10, TP.HCM',
-            status: BookingStatus(statusId: 1, statusName: 'Confirmed'),
-            price: 300000,
-            note: 'Portrait session',
-          ),
-          BookingData(
-            bookingId: 3,
-            customer: BookingUser(
-              userId: 103,
-              name: 'Lê Văn C',
-              email: 'customer3@example.com',
-              phone: '0903456789',
-            ),
-            photographer: BookingPhotographer(
-              userId: 201,
-              name: 'Photographer',
-              email: 'photographer@example.com',
-              phone: '0987654321',
-            ),
-            scheduleAt: '2025-10-28T20:30:00',
-            locationAddress: 'Quận Phú Nhuận, TP.HCM',
-            status: BookingStatus(statusId: 1, statusName: 'Confirmed'),
-            price: 450000,
-            note: 'Event photography',
-          ),
-        ];
-        _isLoading = false;
-      });
+            scheduleAt: booking.scheduleAt,
+            locationAddress: booking.locationAddress,
+            status: BookingStatus(statusId: booking.status.statusId, statusName: booking.status.statusName),
+            price: booking.price.toInt(), // Convert double to int
+            note: booking.note,
+            photoTypeId: booking.photoType.photoTypeId,
+            time: booking.duration,
+          );
+        }).toList();
+
+        setState(() {
+          _upcomingBookings = upcomingBookings;
+          _pendingRequestsCount = upcomingBookings.length;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _upcomingBookings = [];
+          _pendingRequestsCount = 0;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
+      print('Error loading pending bookings: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -264,7 +253,7 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
             ),
             child: IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
-              onPressed: () => context.pop(),
+              onPressed: () => context.go('/photographer-welcome'),
               padding: EdgeInsets.zero,
             ),
           ),

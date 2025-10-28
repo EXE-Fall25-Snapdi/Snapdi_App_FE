@@ -6,18 +6,22 @@ class BookingConfirmScreen extends StatelessWidget {
   final SnapperProfile snapper;
   final String? location;
   final DateTime? date;
-  final TimeOfDay? time;
+  final TimeOfDay? scheduleAt;
   final int bookingId;
   final double amount;
+  final int? photoTypeId;
+  final int? time;
 
   const BookingConfirmScreen({
     Key? key,
     required this.snapper,
     this.location,
     this.date,
-    this.time,
+    this.scheduleAt,
     required this.bookingId,
     required this.amount,
+    this.photoTypeId,
+    this.time,
   }) : super(key: key);
 
   @override
@@ -37,7 +41,7 @@ class BookingConfirmScreen extends StatelessWidget {
             Text('Snapper: ${snapper.name}'),
             Text('Địa điểm: $location'),
             Text('Ngày: ${date?.day}/${date?.month}/${date?.year}'),
-            Text('Giờ: ${time?.format(context)}'),
+            Text('Giờ: ${scheduleAt?.format(context)}'),
             
             const SizedBox(height: 24),
             

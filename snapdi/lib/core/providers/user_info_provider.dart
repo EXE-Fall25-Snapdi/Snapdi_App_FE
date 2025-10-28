@@ -110,6 +110,16 @@ class UserInfoProvider {
     }
   }
   
+  /// Get user role ID
+  Future<int?> getRoleId() async {
+    try {
+      final user = await getUser();
+      return user?.roleId;
+    } catch (e) {
+      return null;
+    }
+  }
+
   /// Get user role name
   Future<String?> getRoleName() async {
     try {

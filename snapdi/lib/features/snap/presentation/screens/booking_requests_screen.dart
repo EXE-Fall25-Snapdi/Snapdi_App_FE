@@ -3,6 +3,11 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/utils/utils.dart';
+import '../../../../core/providers/user_info_provider.dart';
+import '../../../../core/storage/token_storage.dart';
+import '../../../../core/network/api_service.dart';
+import '../../../photographer/data/services/photographer_service.dart';
+import '../../../auth/domain/services/auth_service.dart';
 
 /// Screen showing pending booking requests for photographers
 class BookingRequestsScreen extends StatefulWidget {
@@ -13,12 +18,24 @@ class BookingRequestsScreen extends StatefulWidget {
 }
 
 class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
+  final UserInfoProvider _userInfoProvider = UserInfoProvider.instance;
+  late final PhotographerService _photographerService;
+  late final AuthService _authService;
+
   List<BookingRequest> _requests = [];
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    // Initialize services
+    final apiService = ApiService();
+    final tokenStorage = TokenStorage.instance;
+    _authService = AuthServiceImpl(
+      apiService: apiService,
+      tokenStorage: tokenStorage,
+    );
+    _photographerService = PhotographerService(authService: _authService);
     _loadRequests();
   }
 
@@ -26,27 +43,52 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // TODO: Load actual booking requests from API
-      await Future.delayed(const Duration(milliseconds: 500));
+      // Get photographer ID
+      final photographerId = await _userInfoProvider.getUserId();
+      
+      if (photographerId == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
 
-      setState(() {
-        _requests = [
-          BookingRequest(
-            bookingId: 1,
-            customerName: 'Khánh Linh',
-            customerAvatar: null,
-            scheduleAt: '2025-10-31T14:40:00',
-            locationAddress: 'Quận 1, TP. HCM',
-            price: 400000,
-            status: 'Chưa Dùng',
-            duration: '1 tiếng',
-            photoType: 'Chân dung',
-            note: 'Cần chụp ảnh chân dung cho hồ sơ công ty',
-          ),
-        ];
-        _isLoading = false;
-      });
+      // Fetch pending bookings from API
+      final pendingBookingsResponse = await _photographerService.getPendingBookings(
+        photographerId: photographerId,
+        page: 1,
+        pageSize: 20,
+      );
+       
+       print('Pending bookings response: $pendingBookingsResponse');
+
+      if (pendingBookingsResponse != null && pendingBookingsResponse.data.isNotEmpty) {
+        // Convert pending bookings to BookingRequest for display
+        final requests = pendingBookingsResponse.data.map((booking) {
+          return BookingRequest(
+            bookingId: booking.bookingId,
+            customerName: booking.user.name ?? 'Customer',
+            customerAvatar: booking.user.avatarUrl,
+            scheduleAt: booking.scheduleAt,
+            locationAddress: booking.locationAddress,
+            price: booking.price,
+            status: booking.status.statusName,
+            duration: '${booking.duration}h',
+            photoType: booking.photoType.photoTypeName,
+            note: booking.note,
+          );
+        }).toList();
+
+        setState(() {
+          _requests = requests;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _requests = [];
+          _isLoading = false;
+        });
+      }
     } catch (e) {
+      print('Error loading booking requests: $e');
       setState(() => _isLoading = false);
     }
   }

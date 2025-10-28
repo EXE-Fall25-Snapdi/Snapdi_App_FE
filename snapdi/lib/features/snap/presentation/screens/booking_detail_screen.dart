@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/storage/token_storage.dart';
+import '../../../../core/utils/utils.dart';
 import '../../data/services/style_service.dart';
 import '../../data/services/photo_type_service.dart';
 import '../../data/services/nominatim_service.dart';
@@ -50,17 +52,14 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   void initState() {
     super.initState();
     _loadDropdownData();
-    // Set initial booking location from widget
     if (widget.selectedLocation != null) {
       _bookingLocationController.text = widget.selectedLocation!;
       _chosenBookingLocation = widget.selectedLocation!;
       _useUserLocation = false;
     } else {
       _useUserLocation = true;
-      // Fetch GPS location when using user location (from Snap button)
       _getUserCurrentLocation();
     }
-    // Keep chosen booking location in sync when user edits the booking location
     _bookingLocationController.addListener(() {
       if (!_useUserLocation) {
         _chosenBookingLocation = _bookingLocationController.text;
@@ -81,8 +80,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         setState(() {
           _photoTypes = photoTypes;
           _styles = styles;
-          // Set defaults to null (bypass filter option)
-          _selectedCategory = 'Tất cả';
+          // Don't set default values - force user to select
+          _selectedCategory = null; // Changed from 'Tất cả'
           _selectedCategoryId = null;
           _selectedStyle = 'Tất cả';
           _selectedStyleId = null;
@@ -97,6 +96,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       }
     }
   }
+
 
   @override
   void dispose() {
@@ -114,7 +114,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     });
 
     try {
-      // Check location permission
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -134,23 +133,23 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           _isLoadingUserLocation = false;
         });
         if (mounted) {
-          _showErrorDialog('Quyền truy cập vị trí bị từ chối vĩnh viễn. Vui lòng bật trong cài đặt.');
+          _showErrorDialog(
+            'Quyền truy cập vị trí bị từ chối vĩnh viễn. Vui lòng bật trong cài đặt.',
+          );
         }
         return;
       }
 
-      // Get current position
       Position position = await Geolocator.getCurrentPosition(
         desiredAccuracy: LocationAccuracy.high,
       );
 
-      // Get address from coordinates
       try {
         final suggestion = await _nominatimService.reverseGeocode(
           position.latitude,
           position.longitude,
         );
-        
+
         if (mounted && suggestion != null) {
           setState(() {
             _userLocationController.text = suggestion.displayName;
@@ -158,15 +157,16 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           });
         } else {
           setState(() {
-            _userLocationController.text = 'Lat: ${position.latitude.toStringAsFixed(6)}, Lng: ${position.longitude.toStringAsFixed(6)}';
+            _userLocationController.text =
+                'Lat: ${position.latitude.toStringAsFixed(6)}, Lng: ${position.longitude.toStringAsFixed(6)}';
             _isLoadingUserLocation = false;
           });
         }
       } catch (e) {
-        // If reverse geocoding fails, use coordinates
         if (mounted) {
           setState(() {
-            _userLocationController.text = 'Lat: ${position.latitude.toStringAsFixed(6)}, Lng: ${position.longitude.toStringAsFixed(6)}';
+            _userLocationController.text =
+                'Lat: ${position.latitude.toStringAsFixed(6)}, Lng: ${position.longitude.toStringAsFixed(6)}';
             _isLoadingUserLocation = false;
           });
         }
@@ -195,7 +195,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               onPrimary: Colors.black,
               surface: Colors.white,
               onSurface: Colors.black,
-            ), dialogTheme: DialogThemeData(backgroundColor: Colors.white),
+            ),
+            dialogTheme: DialogThemeData(backgroundColor: Colors.white),
           ),
           child: child!,
         );
@@ -205,8 +206,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     if (picked != null && picked != _selectedDate) {
       setState(() {
         _selectedDate = picked;
-        
-        // If new date is today, check if current time is in the past
+
         final now = DateTime.now();
         if (picked.year == now.year &&
             picked.month == now.month &&
@@ -218,8 +218,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             _selectedTime.hour,
             _selectedTime.minute,
           );
-          
-          // If selected time would be in the past, update to current time
+
           if (selectedDateTime.isBefore(now)) {
             _selectedTime = TimeOfDay.now();
           }
@@ -229,14 +228,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   }
 
   Future<void> _selectTime(BuildContext context) async {
-    // Get current time to compare
     final now = DateTime.now();
     final currentTime = TimeOfDay.now();
-    
-    // Determine initial time
+
     TimeOfDay initialTime = _selectedTime;
-    
-    // If selected date is today and selected time is in the past, use current time
+
     if (_selectedDate.year == now.year &&
         _selectedDate.month == now.month &&
         _selectedDate.day == now.day) {
@@ -247,20 +243,18 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         _selectedTime.hour,
         _selectedTime.minute,
       );
-      
+
       if (selectedDateTime.isBefore(now)) {
         initialTime = currentTime;
       }
     }
-    
+
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: initialTime,
       builder: (context, child) {
         return MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-            alwaysUse24HourFormat: false,
-          ),
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
           child: Theme(
             data: Theme.of(context).copyWith(
               colorScheme: ColorScheme.light(
@@ -270,20 +264,24 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 onSurface: Colors.black,
               ),
               timePickerTheme: TimePickerThemeData(
-                // Use input mode for scroll-type picker
-                hourMinuteTextStyle: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
-                dayPeriodTextStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+                hourMinuteTextStyle: const TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.bold,
+                ),
+                dayPeriodTextStyle: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
             child: child!,
           ),
         );
       },
-      initialEntryMode: TimePickerEntryMode.dial, // Use dial for scroll-type interface
+      initialEntryMode: TimePickerEntryMode.dial,
     );
 
     if (picked != null) {
-      // Check if selected time is in the past
       final selectedDateTime = DateTime(
         _selectedDate.year,
         _selectedDate.month,
@@ -291,12 +289,12 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         picked.hour,
         picked.minute,
       );
-      
+
       if (selectedDateTime.isBefore(DateTime.now())) {
         _showErrorDialog('Không thể chọn thời gian trong quá khứ');
         return;
       }
-      
+
       setState(() {
         _selectedTime = picked;
       });
@@ -304,35 +302,41 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   }
 
   Future<void> _submitBooking() async {
-    // Validate inputs
     if (_bookingLocationController.text.isEmpty) {
       _showErrorDialog('Vui lòng chọn địa điểm chụp ảnh');
       return;
     }
 
-    // Budget, Category and Style are now optional (can be null/empty to bypass filter)
+    // Validate photo type is selected
+    if (_selectedCategory == null || _selectedCategoryId == null) {
+      _showErrorDialog('Vui lòng chọn thể loại chụp ảnh');
+      return;
+    }
 
+    // Parse budget values
     int? minBudget;
     int? maxBudget;
 
     if (_minBudgetController.text.isNotEmpty) {
-      minBudget = int.tryParse(_minBudgetController.text);
-      if (minBudget == null || minBudget < 0) {
+      minBudget = StringUtils.parseVNDToInt(_minBudgetController.text);
+      if (minBudget < 0) {
         _showErrorDialog('Ngân sách tối thiểu không hợp lệ');
         return;
       }
     }
 
     if (_maxBudgetController.text.isNotEmpty) {
-      maxBudget = int.tryParse(_maxBudgetController.text);
-      if (maxBudget == null || maxBudget < 0) {
+      maxBudget = StringUtils.parseVNDToInt(_maxBudgetController.text);
+      if (maxBudget < 0) {
         _showErrorDialog('Ngân sách tối đa không hợp lệ');
         return;
       }
     }
 
     if (minBudget != null && maxBudget != null && minBudget > maxBudget) {
-      _showErrorDialog('Ngân sách tối thiểu không thể lớn hơn ngân sách tối đa');
+      _showErrorDialog(
+        'Ngân sách tối thiểu không thể lớn hơn ngân sách tối đa',
+      );
       return;
     }
 
@@ -341,7 +345,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     });
 
     try {
-      // Get user ID from token storage
       final userId = await _tokenStorage.getUserId();
       if (userId == null) {
         _showErrorDialog('Không tìm thấy thông tin người dùng');
@@ -351,12 +354,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
         return;
       }
 
-      // Determine the active location based on user's choice
-      final activeLocation = _useUserLocation 
-          ? _userLocationController.text 
+      final activeLocation = _useUserLocation
+          ? _userLocationController.text
           : _bookingLocationController.text;
 
-      // Navigate to finding snappers screen - booking will be created after selecting photographer
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -366,11 +367,12 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             time: _selectedTime,
             city: activeLocation.isEmpty ? '' : activeLocation,
             styleIds: _selectedStyleId != null ? [_selectedStyleId!] : [],
-            photoTypeIds: _selectedCategoryId != null ? [_selectedCategoryId!] : [],
+            photoTypeIds: [_selectedCategoryId!], // Always has value now
             minBudget: minBudget,
             maxBudget: maxBudget,
             customerId: userId,
             locationAddress: activeLocation,
+            note: _notesController.text,
           ),
         ),
       );
@@ -385,6 +387,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       }
     }
   }
+
 
   void _showErrorDialog(String message) {
     showDialog(
@@ -414,7 +417,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
               padding: const EdgeInsets.all(16.0),
               child: Row(
                 children: [
-                  // Back button
                   Container(
                     width: 40,
                     height: 40,
@@ -447,7 +449,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     _buildSectionCard(
                       child: Column(
                         children: [
-                          // User location field
                           Row(
                             children: [
                               Expanded(
@@ -457,8 +458,8 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                                     _buildLocationTextField(
                                       icon: AppAssets.locationIcon,
                                       controller: _userLocationController,
-                                      hintText: _isLoadingUserLocation 
-                                          ? 'Đang lấy vị trí...' 
+                                      hintText: _isLoadingUserLocation
+                                          ? 'Đang lấy vị trí...'
                                           : 'Vị trí hiện tại',
                                       isActive: _useUserLocation,
                                       readOnly: _useUserLocation,
@@ -471,9 +472,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                                           height: 16,
                                           child: CircularProgressIndicator(
                                             strokeWidth: 2,
-                                            valueColor: AlwaysStoppedAnimation<Color>(
-                                              AppColors.primary,
-                                            ),
+                                            valueColor:
+                                                AlwaysStoppedAnimation<Color>(
+                                                  AppColors.primary,
+                                                ),
                                           ),
                                         ),
                                       ),
@@ -481,31 +483,34 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              // Swap toggle: use user location or chosen booking location
                               Container(
                                 decoration: BoxDecoration(
                                   color: const Color(0xFFE8F5F2),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: IconButton(
-                                  tooltip: _useUserLocation ? 'Sử dụng vị trí của bạn' : 'Sử dụng vị trí đã chọn',
+                                  tooltip: _useUserLocation
+                                      ? 'Sử dụng vị trí của bạn'
+                                      : 'Sử dụng vị trí đã chọn',
                                   onPressed: () async {
                                     setState(() {
                                       _useUserLocation = !_useUserLocation;
                                     });
-                                    
+
                                     if (_useUserLocation) {
-                                      // Fetch GPS location when activating user location
                                       await _getUserCurrentLocation();
                                     } else {
-                                      // restore chosen booking location when toggling off
                                       _bookingLocationController.text =
                                           _chosenBookingLocation;
                                     }
                                   },
                                   icon: Icon(
-                                    _useUserLocation ? Icons.my_location : Icons.place,
-                                    color: _useUserLocation ? AppColors.primary : Colors.grey[700],
+                                    _useUserLocation
+                                        ? Icons.my_location
+                                        : Icons.place,
+                                    color: _useUserLocation
+                                        ? AppColors.primary
+                                        : Colors.grey[700],
                                     size: 20,
                                   ),
                                   padding: const EdgeInsets.all(8),
@@ -514,7 +519,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                             ],
                           ),
                           const SizedBox(height: 12),
-                          // Booking location field
                           _buildLocationTextField(
                             icon: AppAssets.searchIcon,
                             controller: _bookingLocationController,
@@ -552,7 +556,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                             ],
                           ),
                           const SizedBox(height: 16),
-                          // Date picker
                           InkWell(
                             onTap: () => _selectDate(context),
                             child: Container(
@@ -585,7 +588,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                             ),
                           ),
                           const SizedBox(height: 12),
-                          // Time picker
                           InkWell(
                             onTap: () => _selectTime(context),
                             child: Container(
@@ -626,7 +628,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     // Category and Style section
                     Row(
                       children: [
-                        // Category
                         Expanded(
                           child: _buildSectionCard(
                             child: Column(
@@ -648,20 +649,31 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                                         color: Colors.black87,
                                       ),
                                     ),
+                                    const SizedBox(width: 4),
+                                    // Required indicator
+                                    const Text(
+                                      '*',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.red,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ],
                                 ),
                                 const SizedBox(height: 12),
                                 _isLoadingData
-                                    ? const Center(child: CircularProgressIndicator())
+                                    ? const Center(
+                                        child: CircularProgressIndicator(),
+                                      )
                                     : _photoTypes.isEmpty
-                                        ? const Text('Không có dữ liệu')
-                                        : _buildPhotoTypeDropdown(),
+                                    ? const Text('Không có dữ liệu')
+                                    : _buildPhotoTypeDropdown(),
                               ],
                             ),
                           ),
                         ),
                         const SizedBox(width: 12),
-                        // Style
                         Expanded(
                           child: _buildSectionCard(
                             child: Column(
@@ -687,10 +699,12 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                                 ),
                                 const SizedBox(height: 12),
                                 _isLoadingData
-                                    ? const Center(child: CircularProgressIndicator())
+                                    ? const Center(
+                                        child: CircularProgressIndicator(),
+                                      )
                                     : _styles.isEmpty
-                                        ? const Text('Không có dữ liệu')
-                                        : _buildStyleDropdown(),
+                                    ? const Text('Không có dữ liệu')
+                                    : _buildStyleDropdown(),
                               ],
                             ),
                           ),
@@ -700,7 +714,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
 
                     const SizedBox(height: 16),
 
-                    // Budget section
+                    // Budget section with VND formatting
                     _buildSectionCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -724,7 +738,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                             ],
                           ),
                           const SizedBox(height: 12),
-                          // Budget range inputs
                           Row(
                             children: [
                               // Min budget
@@ -753,7 +766,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                                       child: Row(
                                         children: [
                                           const Text(
-                                            'VND',
+                                            'VNĐ',
                                             style: TextStyle(
                                               fontSize: 12,
                                               fontWeight: FontWeight.w500,
@@ -764,7 +777,13 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                                           Expanded(
                                             child: TextField(
                                               controller: _minBudgetController,
-                                              keyboardType: TextInputType.number,
+                                              keyboardType:
+                                                  TextInputType.number,
+                                              inputFormatters: [
+                                                FilteringTextInputFormatter
+                                                    .digitsOnly,
+                                                CurrencyInputFormatter(),
+                                              ],
                                               style: const TextStyle(
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.w500,
@@ -818,7 +837,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                                       child: Row(
                                         children: [
                                           const Text(
-                                            'VND',
+                                            'VNĐ',
                                             style: TextStyle(
                                               fontSize: 12,
                                               fontWeight: FontWeight.w500,
@@ -829,7 +848,13 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                                           Expanded(
                                             child: TextField(
                                               controller: _maxBudgetController,
-                                              keyboardType: TextInputType.number,
+                                              keyboardType:
+                                                  TextInputType.number,
+                                              inputFormatters: [
+                                                FilteringTextInputFormatter
+                                                    .digitsOnly,
+                                                CurrencyInputFormatter(),
+                                              ],
                                               style: const TextStyle(
                                                 fontSize: 14,
                                                 fontWeight: FontWeight.w500,
@@ -924,7 +949,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           ],
         ),
       ),
-      // Bottom button
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -964,7 +988,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     )
                   : const Text(
                       'Tìm ngay',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
             ),
           ),
@@ -1053,34 +1080,34 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           icon: Icon(Icons.expand_more, color: AppColors.primary),
           dropdownColor: Colors.white,
           borderRadius: BorderRadius.circular(12),
+          hint: Text(
+            'Chọn thể loại',
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: Colors.grey.shade700,
+            ),
+          ),
           style: const TextStyle(
             fontSize: 14,
             fontWeight: FontWeight.w500,
             color: Colors.black87,
           ),
-          items: [
-            // Add "All" option
-            const DropdownMenuItem<String>(
-              value: 'Tất cả',
-              child: Text('Tất cả'),
-            ),
-            // Add actual photo types
-            ..._photoTypes.map((PhotoType photoType) {
-              return DropdownMenuItem<String>(
-                value: photoType.photoTypeName,
-                child: Text(photoType.photoTypeName),
-              );
-            }).toList(),
-          ],
+          items: _photoTypes.map((PhotoType photoType) {
+            return DropdownMenuItem<String>(
+              value: photoType.photoTypeName,
+              child: Text(photoType.photoTypeName),
+            );
+          }).toList(),
           onChanged: (value) {
             setState(() {
               _selectedCategory = value;
-              if (value == 'Tất cả') {
-                _selectedCategoryId = null;
-              } else {
+              if (value != null) {
                 _selectedCategoryId = _photoTypes
                     .firstWhere((pt) => pt.photoTypeName == value)
                     .photoTypeId;
+              } else {
+                _selectedCategoryId = null;
               }
             });
           },
@@ -1088,6 +1115,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       ),
     );
   }
+
 
   Widget _buildStyleDropdown() {
     return Container(
@@ -1109,12 +1137,10 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
             color: Colors.black87,
           ),
           items: [
-            // Add "All" option
             const DropdownMenuItem<String>(
               value: 'Tất cả',
               child: Text('Tất cả'),
             ),
-            // Add actual styles
             ..._styles.map((Style style) {
               return DropdownMenuItem<String>(
                 value: style.styleName,
@@ -1138,5 +1164,4 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
       ),
     );
   }
-
 }

@@ -35,7 +35,7 @@ class _PhotographerSignUpStage3ScreenState
   final List<String> _yearsOfExperienceOptions = [
     'Dưới 1 năm',
     '1-3 năm',
-    'Trên 3-5 năm',
+    '3-5 năm',
     'Trên 5 năm',
   ];
   String? _selectedYearsOfExperience;

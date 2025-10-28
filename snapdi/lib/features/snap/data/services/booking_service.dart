@@ -3,38 +3,90 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import '../../../../core/constants/environment.dart';
 import '../../../../core/storage/token_storage.dart';
+import '../../../../features/auth/domain/services/auth_service.dart';
 import '../models/booking_request.dart';
 import '../models/booking_response.dart';
 import '../models/booking_list_response.dart';
 
 class BookingService {
   final TokenStorage _tokenStorage = TokenStorage.instance;
+  final AuthService _authService = AuthServiceImpl();
+
+  /// Get valid token with automatic refresh if expired
+  Future<String?> _getValidToken() async {
+    String? token = await _tokenStorage.getAccessToken();
+
+    if (token == null) {
+      return null;
+    }
+
+    return token;
+  }
+
+  /// Retry request with token refresh on 401
+  Future<http.Response> _makeAuthenticatedRequest({
+    required Future<http.Response> Function(String token) request,
+  }) async {
+    String? token = await _getValidToken();
+
+    if (token == null) {
+      throw Exception('No authentication token available');
+    }
+
+    // First attempt
+    http.Response response = await request(token);
+
+    // If 401, try to refresh token and retry
+    if (response.statusCode == 401) {
+      print('Token expired (401), attempting refresh...');
+
+      final refreshResult = await _authService.refreshToken();
+
+      return refreshResult.fold(
+        (failure) {
+          // Refresh failed, return original 401 response
+          print('Token refresh failed: ${failure.message}');
+          return response;
+        },
+        (loginResponse) async {
+          // Refresh succeeded, retry with new token
+          print('Token refreshed successfully, retrying request...');
+          return await request(loginResponse.token);
+        },
+      );
+    }
+
+    return response;
+  }
 
   Future<BookingResponse> createBooking(BookingRequest request) async {
     try {
-      final token = await _tokenStorage.getAccessToken();
+      HttpOverrides.global = _DevHttpOverrides();
 
-      if (token == null) {
-        return BookingResponse(
-          success: false,
-          message: 'No authentication token found',
-        );
-      }
-
-      final requestBody = jsonEncode(request.toJson());
-
-      final response = await http.post(
-        Uri.parse('${Environment.apiBaseUrl}/api/Booking'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
+      final response = await _makeAuthenticatedRequest(
+        request: (token) async {
+          
+          return await http.post(
+            Uri.parse('${Environment.apiBaseUrl}/api/Booking'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode(request.toJson()),
+          );
         },
-        body: requestBody,
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final jsonResponse = jsonDecode(response.body);
         return BookingResponse.fromJson(jsonResponse);
+      } else if (response.statusCode == 401) {
+        // Token refresh failed or still unauthorized
+        await _tokenStorage.clearAll();
+        return BookingResponse(
+          success: false,
+          message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+        );
       } else {
         try {
           final errorBody = jsonDecode(response.body);
@@ -42,19 +94,21 @@ class BookingService {
             success: false,
             message:
                 errorBody['message'] ??
-                'Failed to create booking: ${response.statusCode}',
+                errorBody['Message'] ??
+                'Không thể tạo đặt chỗ: ${response.statusCode}',
           );
         } catch (e) {
           return BookingResponse(
             success: false,
-            message: 'Failed to create booking: ${response.statusCode}',
+            message: 'Không thể tạo đặt chỗ: ${response.statusCode}',
           );
         }
       }
     } catch (e) {
+      print('Error creating booking: $e');
       return BookingResponse(
         success: false,
-        message: 'Error creating booking: ${e.toString()}',
+        message: 'Lỗi khi tạo đặt chỗ: ${e.toString()}',
       );
     }
   }
@@ -64,31 +118,32 @@ class BookingService {
     int statusId,
   ) async {
     try {
-      final token = await _tokenStorage.getAccessToken();
-      if (token == null) {
-        return BookingResponse(
-          success: false,
-          message: 'No authentication token found',
-        );
-      }
-
-      // Bypass SSL certificate verification for development (same pattern as other services)
       HttpOverrides.global = _DevHttpOverrides();
 
-      final requestBody = jsonEncode(statusId);
-
-      final response = await http.put(
-        Uri.parse('${Environment.apiBaseUrl}/api/Booking/$bookingId/status'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
+      final response = await _makeAuthenticatedRequest(
+        request: (token) async {
+          return await http.put(
+            Uri.parse(
+              '${Environment.apiBaseUrl}/api/Booking/$bookingId/status',
+            ),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode(statusId),
+          );
         },
-        body: requestBody,
       );
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
         return BookingResponse.fromJson(jsonResponse);
+      } else if (response.statusCode == 401) {
+        await _tokenStorage.clearAll();
+        return BookingResponse(
+          success: false,
+          message: 'Phiên đăng nhập đã hết hạn',
+        );
       } else {
         try {
           final errorBody = jsonDecode(response.body);
@@ -96,89 +151,87 @@ class BookingService {
             success: false,
             message:
                 errorBody['message'] ??
-                'Failed to update booking status: ${response.statusCode}',
+                'Không thể cập nhật trạng thái: ${response.statusCode}',
           );
         } catch (e) {
           return BookingResponse(
             success: false,
-            message: 'Failed to update booking status: ${response.statusCode}',
+            message: 'Không thể cập nhật trạng thái: ${response.statusCode}',
           );
         }
       }
     } catch (e) {
-      return BookingResponse(
-        success: false,
-        message: 'Error updating booking status: ${e.toString()}',
-      );
+      return BookingResponse(success: false, message: 'Lỗi: ${e.toString()}');
     }
   }
 
-  /// Get bookings for the currently authenticated user.
-  /// The API endpoint is GET /api/Booking/me and returns a paged result with items + paging metadata.
   Future<BookingListResponse?> getMyBookings({
     int page = 1,
     int pageSize = 10,
   }) async {
     try {
-      final token = await _tokenStorage.getAccessToken();
-      if (token == null) {
-        return null;
-      }
-
-      // Bypass SSL certificate verification for development
       HttpOverrides.global = _DevHttpOverrides();
 
-      final uri = Uri.parse('${Environment.apiBaseUrl}/api/Booking/me').replace(
-        queryParameters: {
-          'page': page.toString(),
-          'pageSize': pageSize.toString(),
-        },
-      );
+      final response = await _makeAuthenticatedRequest(
+        request: (token) async {
+          final uri = Uri.parse('${Environment.apiBaseUrl}/api/Booking/me')
+              .replace(
+                queryParameters: {
+                  'page': page.toString(),
+                  'pageSize': pageSize.toString(),
+                },
+              );
 
-      final response = await http.get(
-        uri,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
+          return await http.get(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          );
         },
       );
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
         return BookingListResponse.fromJson(jsonResponse);
+      } else if (response.statusCode == 401) {
+        await _tokenStorage.clearAll();
+        return null;
       } else {
         return null;
       }
     } catch (e) {
+      print('Error getting bookings: $e');
       return null;
     }
   }
 
-  /// Get a single booking by id: GET /api/Booking/{id}
   Future<BookingResponse> getBookingById(int bookingId) async {
     try {
-      final token = await _tokenStorage.getAccessToken();
-      if (token == null) {
-        return BookingResponse(
-          success: false,
-          message: 'No authentication token found',
-        );
-      }
-
-      // Bypass SSL certificate verification for development
       HttpOverrides.global = _DevHttpOverrides();
 
-      final response = await http.get(
-        Uri.parse('${Environment.apiBaseUrl}/api/Booking/$bookingId'),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
+      final response = await _makeAuthenticatedRequest(
+        request: (token) async {
+          return await http.get(
+            Uri.parse('${Environment.apiBaseUrl}/api/Booking/$bookingId'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          );
         },
       );
 
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
         return BookingResponse.fromJson(jsonResponse);
+      } else if (response.statusCode == 401) {
+        await _tokenStorage.clearAll();
+        return BookingResponse(
+          success: false,
+          message: 'Phiên đăng nhập đã hết hạn',
+        );
       } else {
         try {
           final errorBody = jsonDecode(response.body);
@@ -186,20 +239,17 @@ class BookingService {
             success: false,
             message:
                 errorBody['message'] ??
-                'Failed to fetch booking: ${response.statusCode}',
+                'Không thể lấy thông tin đặt chỗ: ${response.statusCode}',
           );
         } catch (e) {
           return BookingResponse(
             success: false,
-            message: 'Failed to fetch booking: ${response.statusCode}',
+            message: 'Không thể lấy thông tin đặt chỗ: ${response.statusCode}',
           );
         }
       }
     } catch (e) {
-      return BookingResponse(
-        success: false,
-        message: 'Error fetching booking: ${e.toString()}',
-      );
+      return BookingResponse(success: false, message: 'Lỗi: ${e.toString()}');
     }
   }
 }

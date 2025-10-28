@@ -571,7 +571,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => context.go('/login'),
             child: Text(
               'Đăng xuất',
               style: AppTextStyles.buttonMedium.copyWith(

@@ -98,16 +98,24 @@ class SearchCenter {
 class PhotoType {
   final int photoTypeId;
   final String photoTypeName;
+  final double photoPrice;
+  final int time;
 
   PhotoType({
     required this.photoTypeId,
     required this.photoTypeName,
+    required this.photoPrice,
+    required this.time,
   });
 
   factory PhotoType.fromJson(Map<String, dynamic> json) {
     return PhotoType(
       photoTypeId: json['photoTypeId'] ?? 0,
       photoTypeName: json['photoTypeName'] ?? '',
+      photoPrice: (json['photoPrice'] != null)
+          ? double.parse(json['photoPrice'].toString())
+          : 0.0,
+      time: json['time'] ?? 0,
     );
   }
 }
@@ -145,7 +153,6 @@ class SnapperInfo {
   final String? yearsOfExperience;
   final String? equipmentDescription;
   final String? description;
-  final double photoPrice;
   final String workLocation;
   final List<PhotoType> photoTypes;
   final List<StyleInfo> styles;
@@ -170,7 +177,6 @@ class SnapperInfo {
     this.yearsOfExperience,
     this.equipmentDescription,
     this.description,
-    required this.photoPrice,
     required this.workLocation,
     required this.photoTypes,
     required this.styles,
@@ -197,7 +203,6 @@ class SnapperInfo {
       yearsOfExperience: json['yearsOfExperience'],
       equipmentDescription: json['equipmentDescription'],
       description: json['description'],
-      photoPrice: (json['photoPrice'] ?? 0).toDouble(),
       workLocation: json['workLocation'] ?? '',
       photoTypes: (json['photoTypes'] as List?)
               ?.map((item) => PhotoType.fromJson(item))

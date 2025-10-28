@@ -19,13 +19,13 @@ class WelcomeScreen extends StatelessWidget {
               const Spacer(flex: 2),
 
               // Logo Section
-              SvgPicture.asset(AppAssets.snapdiLogo),
+              SvgPicture.asset(AppAssets.snapdiLogo, height: 100, width: 100),
 
               const SizedBox(height: AppDimensions.marginXLarge),
 
               // Welcome Text
               Text(
-                'Welcome to Snapdi',
+                'Chào mừng đến với Snapdi',
                 style: AppTextStyles.headline1,
                 textAlign: TextAlign.center,
               ),
@@ -34,7 +34,7 @@ class WelcomeScreen extends StatelessWidget {
 
               // Description
               Text(
-                'Find and book professional photographers for your special moments. From weddings to portraits, we connect you with talented photographers in your area.',
+                'Tìm và đặt chụp ảnh chuyên nghiệp cho những khoảnh khắc đặc biệt của bạn. Từ đám cưới đến chân dung, chúng tôi kết nối bạn với các nhiếp ảnh gia tài năng trong khu vực của bạn.',
                 style: AppTextStyles.bodyLarge.copyWith(
                   color: AppColors.textSecondary,
                   height: 1.5,
@@ -49,7 +49,6 @@ class WelcomeScreen extends StatelessWidget {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Use go_router for navigation
                     context.push('/login');
                   },
                   style: ElevatedButton.styleFrom(
@@ -64,7 +63,7 @@ class WelcomeScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  child: Text('Get Started', style: AppTextStyles.buttonLarge),
+                  child: Text('Bắt đầu', style: AppTextStyles.buttonLarge),
                 ),
               ),
 
@@ -75,7 +74,6 @@ class WelcomeScreen extends StatelessWidget {
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () {
-                    // Use go_router for navigation
                     context.push('/photographer-signup');
                   },
                   style: OutlinedButton.styleFrom(
@@ -90,7 +88,7 @@ class WelcomeScreen extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    'Register as Photographer',
+                    'Đăng ký là Nhiếp ảnh gia',
                     style: AppTextStyles.buttonLarge.copyWith(
                       color: AppColors.primary,
                     ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:geolocator/geolocator.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/providers/user_info_provider.dart';
@@ -20,7 +20,6 @@ class PhotographerSnapScreen extends StatefulWidget {
 }
 
 class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
-  final TextEditingController _searchController = TextEditingController();
   final UserInfoProvider _userInfoProvider = UserInfoProvider.instance;
   late final PhotographerService _photographerService;
   late final AuthService _authService;
@@ -29,8 +28,6 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
   int _pendingRequestsCount = 1;
   List<BookingData> _upcomingBookings = [];
   bool _isLoading = true;
-  bool _isAvailable = true;
-  bool _isUpdatingStatus = false;
 
   @override
   void initState() {
@@ -46,12 +43,6 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
     _loadData();
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
 
@@ -62,74 +53,62 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
         setState(() => _userName = userName.split(' ').first);
       }
 
-      // TODO: Load photographer's bookings from API
-      // For now, using mock data based on the design
-      setState(() {
-        _upcomingBookings = [
-          BookingData(
-            bookingId: 1,
+      // Get photographer ID
+      final photographerId = await _userInfoProvider.getUserId();
+      
+      if (photographerId == null) {
+        setState(() => _isLoading = false);
+        return;
+      }
+
+      // Fetch pending bookings from API
+      final pendingBookingsResponse = await _photographerService.getPendingBookings(
+        photographerId: photographerId,
+        page: 1,
+        pageSize: 10,
+      );
+
+      if (pendingBookingsResponse != null && pendingBookingsResponse.data.isNotEmpty) {
+        // Convert pending bookings to BookingData for display
+        final upcomingBookings = pendingBookingsResponse.data.map((booking) {
+          return BookingData(
+            bookingId: booking.bookingId,
             customer: BookingUser(
-              userId: 101,
-              name: 'Nguyễn Văn A',
-              email: 'customer1@example.com',
-              phone: '0901234567',
+              userId: booking.user.userId,
+              name: booking.user.name ?? 'Customer',
+              email: booking.user.email ?? '',
+              phone: booking.user.phone ?? '',
             ),
             photographer: BookingPhotographer(
-              userId: 201,
-              name: 'Photographer',
-              email: 'photographer@example.com',
-              phone: '0987654321',
+              userId: booking.photographer.userId,
+              name: booking.photographer.name ?? 'Photographer',
+              email: booking.photographer.email ?? '',
+              phone: booking.photographer.phone ?? '',
             ),
-            scheduleAt: '2025-10-23T12:00:00',
-            locationAddress: 'Quận 1, TP. HCM',
-            status: BookingStatus(statusId: 1, statusName: 'Confirmed'),
-            price: 500000,
-            note: 'Wedding photography',
-          ),
-          BookingData(
-            bookingId: 2,
-            customer: BookingUser(
-              userId: 102,
-              name: 'Trần Thị B',
-              email: 'customer2@example.com',
-              phone: '0902345678',
-            ),
-            photographer: BookingPhotographer(
-              userId: 201,
-              name: 'Photographer',
-              email: 'photographer@example.com',
-              phone: '0987654321',
-            ),
-            scheduleAt: '2025-10-23T15:00:00',
-            locationAddress: 'Quận 10, TP. HCM',
-            status: BookingStatus(statusId: 1, statusName: 'Confirmed'),
-            price: 300000,
-            note: 'Portrait session',
-          ),
-          BookingData(
-            bookingId: 3,
-            customer: BookingUser(
-              userId: 103,
-              name: 'Lê Văn C',
-              email: 'customer3@example.com',
-              phone: '0903456789',
-            ),
-            photographer: BookingPhotographer(
-              userId: 201,
-              name: 'Photographer',
-              email: 'photographer@example.com',
-              phone: '0987654321',
-            ),
-            scheduleAt: '2025-10-24T19:00:00',
-            locationAddress: 'Quận Tân Phú, TP. HCM',
-            status: BookingStatus(statusId: 1, statusName: 'Confirmed'),
-            price: 450000,
-            note: 'Event photography',
-          ),
-        ];
-        _isLoading = false;
-      });
+            scheduleAt: booking.scheduleAt,
+            locationAddress: booking.locationAddress,
+            status: BookingStatus(statusId: booking.status.statusId, statusName: booking.status.statusName),
+            price: booking.price.toInt(), // Convert double to int
+            note: booking.note,
+            photoTypeId: booking.photoType.photoTypeId,
+            time: booking.duration,
+          );
+        }).toList();
+
+        setState(() {
+          _upcomingBookings = upcomingBookings;
+          _pendingRequestsCount = upcomingBookings.length;
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _upcomingBookings = [];
+          _pendingRequestsCount = 0;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
+      print('Error loading pending bookings: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -139,205 +118,10 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
       final dateTime = DateTime.parse(scheduleAt);
       final hour = dateTime.hour.toString().padLeft(2, '0');
       final minute = dateTime.minute.toString().padLeft(2, '0');
-      return '$hour:$minute';
+      return '$hour:$minute, ngày mai';
     } catch (e) {
-      return '12:00';
+      return '12:00, hôm nay';
     }
-  }
-
-  String _getTimeLabel(String scheduleAt) {
-    try {
-      final dateTime = DateTime.parse(scheduleAt);
-      final now = DateTime.now();
-      final today = DateTime(now.year, now.month, now.day);
-      final bookingDate = DateTime(dateTime.year, dateTime.month, dateTime.day);
-
-      if (bookingDate == today) {
-        return 'hôm nay';
-      } else if (bookingDate == today.add(const Duration(days: 1))) {
-        return 'ngày mai';
-      } else {
-        return 'ngày ${dateTime.day}/${dateTime.month}';
-      }
-    } catch (e) {
-      return 'hôm nay';
-    }
-  }
-
-  Future<void> _updateStatus() async {
-    setState(() => _isUpdatingStatus = true);
-
-    try {
-      // Get current location
-      Position? position;
-      try {
-        LocationPermission permission = await Geolocator.checkPermission();
-        if (permission == LocationPermission.denied) {
-          permission = await Geolocator.requestPermission();
-        }
-
-        if (permission == LocationPermission.whileInUse ||
-            permission == LocationPermission.always) {
-          position = await Geolocator.getCurrentPosition(
-            desiredAccuracy: LocationAccuracy.high,
-          );
-        }
-      } catch (e) {
-        // Location fetch failed, continue without location
-      }
-
-      // Get photographer ID
-      final userId = await _userInfoProvider.getUserId();
-      if (userId == null) {
-        throw Exception('User ID not found');
-      }
-
-      // Update status
-      final success = await _photographerService.updateStatus(
-        photographerId: userId,
-        isAvailable: _isAvailable,
-        latitude: position?.latitude,
-        longitude: position?.longitude,
-      );
-
-      setState(() => _isUpdatingStatus = false);
-
-      if (!mounted) return;
-
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _isAvailable
-                  ? 'Trạng thái: Sẵn sàng nhận việc'
-                  : 'Trạng thái: Không khả dụng',
-              style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
-            ),
-            backgroundColor: Colors.green,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Không thể cập nhật trạng thái',
-              style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
-            ),
-            backgroundColor: AppColors.error,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    } catch (e) {
-      setState(() => _isUpdatingStatus = false);
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Lỗi: ${e.toString()}',
-            style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
-          ),
-          backgroundColor: AppColors.error,
-          duration: const Duration(seconds: 2),
-        ),
-      );
-    }
-  }
-
-  void _showStatusDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Cập nhật trạng thái', style: AppTextStyles.headline4),
-        content: StatefulBuilder(
-          builder: (context, setDialogState) {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Chọn trạng thái của bạn:',
-                  style: AppTextStyles.bodyMedium,
-                ),
-                const SizedBox(height: 16),
-                SwitchListTile(
-                  title: Text(
-                    _isAvailable ? 'Sẵn sàng nhận việc' : 'Không khả dụng',
-                    style: AppTextStyles.bodyLarge.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  subtitle: Text(
-                    _isAvailable
-                        ? 'Bạn sẽ nhận được yêu cầu chụp mới'
-                        : 'Bạn sẽ không nhận yêu cầu chụp mới',
-                    style: AppTextStyles.bodySmall.copyWith(
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  value: _isAvailable,
-                  activeColor: AppColors.primary,
-                  onChanged: (value) {
-                    setState(() => _isAvailable = value);
-                    setDialogState(() {});
-                  },
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.location_on,
-                        color: AppColors.primary,
-                        size: 20,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Vị trí hiện tại sẽ được cập nhật tự động',
-                          style: AppTextStyles.bodySmall.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(
-              'Hủy',
-              style: AppTextStyles.buttonMedium.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _updateStatus();
-            },
-            style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
-            child: Text(
-              'Cập nhật',
-              style: AppTextStyles.buttonMedium.copyWith(color: Colors.white),
-            ),
-          ),
-        ],
-      ),
-    );
   }
 
   @override
@@ -345,9 +129,13 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background gradient
+          // Background image
           Positioned.fill(
-            child: Image.asset(AppAssets.backgroundGradient, fit: BoxFit.cover),
+            child: Image.asset(
+              AppAssets
+                  .backgroundGradient, // or use backgroundFinding/backgroundFound
+              fit: BoxFit.cover,
+            ),
           ),
 
           // Content
@@ -357,82 +145,48 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
                 // Header Section
                 _buildHeader(),
 
-                // Greeting and Status Button
+                // Update the Greeting section - Center it
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,
                     vertical: 16,
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      RichText(
-                        text: TextSpan(
-                          style: AppTextStyles.headline2.copyWith(
-                            color: Colors.white,
-                            fontSize: 32,
-                          ),
-                          children: [
-                            const TextSpan(
-                              text: 'Hola, ',
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                  child: Center(
+                    // Changed from Align to Center
+                    child: Column(
+                      crossAxisAlignment:
+                          CrossAxisAlignment.center, // Changed to center
+                      children: [
+                        RichText(
+                          text: TextSpan(
+                            style: AppTextStyles.headline2.copyWith(
+                              color: Colors.white,
+                              fontSize: 28,
                             ),
-                            TextSpan(
-                              text: _userName,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w300,
+                            children: [
+                              const TextSpan(
+                                text: 'Hola,',
+                                style: TextStyle(fontWeight: FontWeight.w300),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Status Update Button
-                      ElevatedButton.icon(
-                        onPressed: _isUpdatingStatus ? null : _showStatusDialog,
-                        icon: _isUpdatingStatus
-                            ? const SizedBox(
-                                width: 16,
-                                height: 16,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white,
-                                  ),
+                              TextSpan(
+                                text: _userName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
                                 ),
-                              )
-                            : Icon(
-                                _isAvailable
-                                    ? Icons.check_circle
-                                    : Icons.cancel,
-                                size: 20,
                               ),
-                        label: Text(
-                          _isUpdatingStatus
-                              ? 'Đang cập nhật...'
-                              : (_isAvailable
-                                    ? 'Sẵn sàng - Cập nhật trạng thái'
-                                    : 'Không khả dụng - Cập nhật trạng thái'),
-                          style: AppTextStyles.buttonMedium.copyWith(
-                            color: Colors.white,
-                            fontSize: 13,
+                            ],
                           ),
                         ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _isAvailable
-                              ? Colors.green
-                              : AppColors.textSecondary,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Start your day with beauty!!!',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 14,
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
 
@@ -452,15 +206,15 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
                               // Photo Requests Card
                               _buildPhotoRequestsCard(),
 
-                              const SizedBox(height: 32),
+                              const SizedBox(height: 24),
 
                               // Upcoming Sessions Section
                               Text(
-                                'Lịch Chụp Sắp Tới',
-                                style: AppTextStyles.headline3.copyWith(
+                                'Lịch chụp sắp tới',
+                                style: AppTextStyles.headline4.copyWith(
                                   color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 20,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 16,
                                 ),
                               ),
 
@@ -471,9 +225,7 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
                                   .map((booking) => _buildBookingCard(booking))
                                   .toList(),
 
-                              const SizedBox(
-                                height: 100,
-                              ), // Space for bottom nav
+                              const SizedBox(height: 100),
                             ],
                           ),
                         ),
@@ -491,74 +243,40 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
       padding: const EdgeInsets.all(16.0),
       child: Row(
         children: [
-          // Search Bar
-          Expanded(
-            child: Container(
-              height: 45,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
-                borderRadius: BorderRadius.circular(25),
-              ),
-              child: TextField(
-                controller: _searchController,
-                decoration: InputDecoration(
-                  hintText: 'Tìm kiếm...',
-                  hintStyle: AppTextStyles.bodyMedium.copyWith(
-                    color: AppColors.textSecondary,
-                  ),
-                  prefixIcon: const Icon(
-                    Icons.search,
-                    color: AppColors.primary,
-                  ),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                ),
-              ),
+          // Back button
+          Container(
+            width: 45,
+            height: 45,
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white, size: 24),
+              onPressed: () => context.go('/photographer-welcome'),
+              padding: EdgeInsets.zero,
             ),
           ),
 
-          const SizedBox(width: 12),
+          const Spacer(),
 
-          // Menu and Profile Icons
+          // Menu Icon
           Container(
+            width: 45,
             height: 45,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.9),
-              borderRadius: BorderRadius.circular(25),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
             ),
-            child: Row(
-              children: [
-                // Menu Icon
-                IconButton(
-                  icon: const Icon(Icons.menu, color: AppColors.primary),
-                  onPressed: () {
-                    // TODO: Open menu
-                  },
-                ),
-
-                Container(
-                  width: 1,
-                  height: 25,
-                  color: AppColors.textSecondary.withOpacity(0.3),
-                ),
-
-                // Profile Icon
-                IconButton(
-                  icon: const Icon(Icons.person, color: AppColors.primary),
-                  onPressed: () async {
-                    final id = await _userInfoProvider.getUserId();
-                    if (id != null) {
-                      context.go('/profile/$id');
-                    } else {
-                      // fallback to home if id not available
-                      context.go('/home');
-                    }
-                  },
-                ),
-              ],
+            child: IconButton(
+              icon: const Icon(Icons.menu, color: AppColors.primary, size: 24),
+              onPressed: () async {
+                final id = await _userInfoProvider.getUserId();
+                if (id != null) {
+                  context.go('/profile/$id');
+                }
+              },
+              padding: EdgeInsets.zero,
             ),
           ),
         ],
@@ -569,7 +287,6 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
   Widget _buildPhotoRequestsCard() {
     return GestureDetector(
       onTap: () {
-        // Navigate to photo requests screen
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -581,7 +298,7 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(30),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.1),
@@ -597,63 +314,55 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Yêu Cầu Chụp',
+                    'Yêu cầu chụp',
                     style: AppTextStyles.headline4.copyWith(
                       fontWeight: FontWeight.bold,
-                      fontSize: 18,
+                      fontSize: 16,
+                      color: Colors.black87,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Bạn có $_pendingRequestsCount yêu cầu chụp đang chờ....',
-                    style: AppTextStyles.bodyMedium.copyWith(
+                    'Bạn có một yêu cầu chụp đang chờ....',
+                    style: AppTextStyles.bodySmall.copyWith(
                       color: AppColors.textSecondary,
-                      fontSize: 13,
+                      fontSize: 12,
                     ),
                   ),
                 ],
               ),
             ),
 
-            // Calendar Icon
+            // Bell Icon with notification
             Container(
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.circular(12),
+                color: AppColors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.primary, width: 2),
               ),
               child: Stack(
                 children: [
-                  const Center(
-                    child: Icon(
-                      Icons.calendar_today,
-                      color: Colors.white,
-                      size: 28,
+                  Center(
+                    child: SvgPicture.asset(
+                      AppAssets.notifySnapIcon,
+                      width: 28,
+                      height: 28,
                     ),
                   ),
 
-                  // Notification Badge
+                  // Red dot indicator
                   if (_pendingRequestsCount > 0)
                     Positioned(
-                      right: 8,
-                      top: 8,
+                      right: 12,
+                      top: 12,
                       child: Container(
-                        width: 20,
-                        height: 20,
+                        width: 12,
+                        height: 12,
                         decoration: const BoxDecoration(
                           color: Colors.red,
                           shape: BoxShape.circle,
-                        ),
-                        child: Center(
-                          child: Text(
-                            '$_pendingRequestsCount',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
                         ),
                       ),
                     ),
@@ -666,16 +375,17 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
     );
   }
 
+  // Update _buildBookingCard - Remove colorFilter
   Widget _buildBookingCard(BookingData booking) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        color: const Color(0xFFD4EBE6),
+        borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -687,11 +397,15 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
           Container(
             width: 50,
             height: 50,
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(12),
+            
+            child: Center(
+              child: SvgPicture.asset(
+                AppAssets.whiteLocationIcon,
+                width: 42,
+                height: 42,
+                // Removed colorFilter
+              ),
             ),
-            child: const Icon(Icons.location_on, color: Colors.white, size: 28),
           ),
 
           const SizedBox(width: 16),
@@ -703,17 +417,18 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
               children: [
                 Text(
                   booking.locationAddress,
-                  style: AppTextStyles.headline4.copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                  style: AppTextStyles.bodyLarge.copyWith(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 15,
+                    color: Colors.black87,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  '${_formatTime(booking.scheduleAt)}, ${_getTimeLabel(booking.scheduleAt)}',
-                  style: AppTextStyles.bodyMedium.copyWith(
+                  _formatTime(booking.scheduleAt),
+                  style: AppTextStyles.bodySmall.copyWith(
                     color: AppColors.textSecondary,
-                    fontSize: 13,
+                    fontSize: 12,
                   ),
                 ),
               ],

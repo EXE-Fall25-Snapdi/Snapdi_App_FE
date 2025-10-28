@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import '../../../../core/storage/token_storage.dart';
 import '../../../../core/constants/environment.dart';
 import '../../../auth/domain/services/auth_service.dart';
+import '../../../snap/data/models/pending_booking.dart';
 
 /// Service for photographer-specific API calls
 class PhotographerService {
@@ -137,6 +138,64 @@ class PhotographerService {
       print('PhotographerService: Error in _performStatusUpdate - $e');
       print('Stack trace: $stackTrace');
       rethrow; // Rethrow to provide meaningful error to caller
+    } finally {
+      client.close();
+    }
+  }
+
+  /// Get pending bookings for a photographer
+  /// 
+  /// Returns a list of pending booking requests for the photographer
+  Future<PendingBookingResponse?> getPendingBookings({
+    required int photographerId,
+    int page = 1,
+    int pageSize = 10,
+  }) async {
+    // Bypass SSL certificate verification for development only
+    if (Environment.isDevelopment) {
+      HttpOverrides.global = _DevHttpOverrides();
+    }
+
+    final client = _createClient();
+
+    try {
+      final token = await _tokenStorage.getAccessToken();
+      if (token == null) {
+        print('PhotographerService: No access token found');
+        return null;
+      }
+
+      print('PhotographerService: Fetching pending bookings for photographer #$photographerId');
+
+      final response = await client.get(
+        Uri.parse(
+          '${Environment.apiBaseUrl}/api/Booking/photographer/$photographerId/pending?page=$page&pageSize=$pageSize',
+        ),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('PhotographerService: Response status - ${response.statusCode}');
+
+      // Handle success status codes
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        print('PhotographerService: Pending bookings fetched successfully');
+        final jsonData = jsonDecode(response.body);
+        return PendingBookingResponse.fromJson(jsonData);
+      } else if (response.statusCode == 401) {
+        print('PhotographerService: Unauthorized - token may be expired');
+        return null;
+      } else {
+        print('PhotographerService: Request failed with status ${response.statusCode}');
+        print('PhotographerService: Response body - ${response.body}');
+        return null;
+      }
+    } catch (e, stackTrace) {
+      print('PhotographerService: Error fetching pending bookings - $e');
+      print('Stack trace: $stackTrace');
+      return null;
     } finally {
       client.close();
     }

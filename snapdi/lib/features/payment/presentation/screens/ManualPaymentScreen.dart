@@ -4,17 +4,18 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../data/models/manual_payment_request.dart';
 import '../../domain/services/payment_service.dart';
-import 'upload_proof_screen.dart';
 import 'PaymentStatusScreen.dart';
 
 class ManualPaymentScreen extends StatefulWidget {
   final int bookingId;
   final double amount;
+  final int paymentId;
 
   const ManualPaymentScreen({
     super.key,
     required this.bookingId,
     required this.amount,
+    required this.paymentId,
   });
 
   @override
@@ -24,7 +25,10 @@ class ManualPaymentScreen extends StatefulWidget {
 class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
   final TextEditingController transactionCodeController = TextEditingController();
   bool isLoading = false;
-  String? uploadedImagePath;
+
+  // NEW: must agree fee policy
+  bool _agreeFeePolicy = false;
+
   final PaymentService _paymentService = PaymentService();
 
   // Thông tin ngân hàng
@@ -51,8 +55,6 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final qrData = '970436-$bankName-$accountNumber-$accountName-Booking_${widget.bookingId}-Amount:${widget.amount.toStringAsFixed(0)}';
-
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
@@ -97,7 +99,7 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '${widget.amount.toStringAsFixed(0)}đ',
+                    '${(widget.amount * 0.2).toStringAsFixed(0)}đ',
                     style: const TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
@@ -110,7 +112,7 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
 
             const SizedBox(height: 16),
 
-            // QR Code Section
+            // QR Code Section (ảnh tĩnh)
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
               padding: const EdgeInsets.all(20),
@@ -143,7 +145,7 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
                       border: Border.all(color: Colors.grey[300]!),
                     ),
                     child: Image.asset(
-                      'assets/images/QR_Image.png', // Đường dẫn đến ảnh QR của bạn
+                      'assets/images/QR_Image.png', // Đặt ảnh QR của bạn
                       width: 200,
                       height: 200,
                       fit: BoxFit.contain,
@@ -220,20 +222,20 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
                     Icons.person_outline,
                     onCopy: () => _copyToClipboard(accountName, 'tên chủ tài khoản'),
                   ),
-                  const Divider(height: 24),
-                  _buildBankInfoRow(
-                    'Nội dung',
-                    'Booking_${widget.bookingId}',
-                    Icons.description_outlined,
-                    onCopy: () => _copyToClipboard('Booking_${widget.bookingId}', 'nội dung chuyển khoản'),
-                  ),
+                  // const Divider(height: 24),
+                  // _buildBankInfoRow(
+                  //   'Nội dung',
+                  //   'Booking_${widget.bookingId}',
+                  //   Icons.description_outlined,
+                  //   onCopy: () => _copyToClipboard('Booking_${widget.bookingId}', 'nội dung chuyển khoản'),
+                  // ),
                 ],
               ),
             ),
 
             const SizedBox(height: 16),
 
-            // Form nhập thông tin
+            // Form nhập + đồng ý Fee Policy
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
               padding: const EdgeInsets.all(20),
@@ -259,109 +261,39 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  TextField(
-                    controller: transactionCodeController,
-                    decoration: InputDecoration(
-                      labelText: 'Mã giao dịch',
-                      hintText: 'Nhập mã giao dịch từ ngân hàng',
-                      prefixIcon: const Icon(Icons.receipt_long),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: BorderSide(color: Colors.grey[300]!),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        borderSide: const BorderSide(color: Color(0xFF00BFA5), width: 2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: uploadedImagePath != null
-                            ? const Color(0xFF00BFA5)
-                            : Colors.grey[300]!,
-                      ),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Material(
-                      color: Colors.transparent,
-                      child: InkWell(
-                        borderRadius: BorderRadius.circular(12),
-                        onTap: () async {
-                          final result = await Navigator.push<String?>(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const UploadProofScreen(),
-                            ),
-                          );
-                          if (result != null) {
-                            setState(() => uploadedImagePath = result);
-                          }
-                        },
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(8),
-                                decoration: BoxDecoration(
-                  color: uploadedImagePath != null
-                    ? const Color(0xFF00BFA5).withOpacity(0.1)
-                    : Colors.grey[100],
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Icon(
-                  uploadedImagePath != null
-                    ? Icons.check_circle
-                    : Icons.cloud_upload_outlined,
-                  color: uploadedImagePath != null
-                    ? const Color(0xFF00BFA5)
-                    : Colors.grey[600],
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                          Text(
-                                            uploadedImagePath != null
-                                                ? 'Đã chọn hóa đơn'
-                                                : 'Tải lên hóa đơn chuyển khoản',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w500,
-                                              color: uploadedImagePath != null
-                                                  ? const Color(0xFF00BFA5)
-                                                  : Colors.black,
-                                            ),
-                                          ),
-                                          if (uploadedImagePath != null)
-                                            Text(
-                                              uploadedImagePath!.split('/').last,
-                                              style: const TextStyle(
-                                                fontSize: 12,
-                                                color: Colors.grey,
-                                              ),
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                  ],
-                                ),
-                              ),
-                              Icon(
-                                Icons.arrow_forward_ios,
-                                size: 16,
-                                color: Colors.grey[400],
-                              ),
-                            ],
-                          ),
-                        ),
+                  // TextField(
+                  //   controller: transactionCodeController,
+                  //   decoration: InputDecoration(
+                  //     labelText: 'Mã giao dịch (tuỳ chọn)',
+                  //     hintText: 'Nhập mã giao dịch từ ngân hàng (nếu có)',
+                  //     prefixIcon: const Icon(Icons.receipt_long),
+                  //     border: OutlineInputBorder(
+                  //       borderRadius: BorderRadius.circular(12),
+                  //     ),
+                  //     enabledBorder: OutlineInputBorder(
+                  //       borderRadius: BorderRadius.circular(12),
+                  //       borderSide: BorderSide(color: Colors.grey[300]!),
+                  //     ),
+                  //     focusedBorder: OutlineInputBorder(
+                  //       borderRadius: BorderRadius.circular(12),
+                  //       borderSide: const BorderSide(color: Color(0xFF00BFA5), width: 2),
+                  //     ),
+                  //   ),
+                  // ),
+                 // const SizedBox(height: 12),
+
+                  // NEW: Agree Fee Policy
+                  CheckboxListTile(
+                    value: _agreeFeePolicy,
+                    onChanged: (v) => setState(() => _agreeFeePolicy = v ?? false),
+                    controlAffinity: ListTileControlAffinity.leading,
+                    contentPadding: EdgeInsets.zero,
+                    title: const Text('Tôi đồng ý với chính sách người dùng'),
+                    subtitle: InkWell(
+                      onTap: _showFeePolicyDialog,
+                      child: const Text(
+                        'Xem chi tiết chính sách',
+                        style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline),
                       ),
                     ),
                   ),
@@ -378,7 +310,7 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: isLoading ? null : _submitPayment,
+                  onPressed: (isLoading || !_agreeFeePolicy) ? null : _submitPayment,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF00BFA5),
                     shape: RoundedRectangleBorder(
@@ -408,8 +340,76 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
             ),
 
             const SizedBox(height: 24),
+            // Nút huỷ thanh toán
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: OutlinedButton(
+                  onPressed: isLoading ? null : _cancelPayment,
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.red),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: isLoading
+                      ? const SizedBox(
+                          height: 24,
+                          width: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.red,
+                          ),
+                        )
+                      : const Text(
+                          'Huỷ thanh toán',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.red,
+                          ),
+                        ),
+                ),
+              ),
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showFeePolicyDialog() {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Fee Policy'),
+        content: const SingleChildScrollView(
+          child: Text(
+            '1. Đăng ký & sử dụng tài khoản:\n'
+                '- Người dùng phải cung cấp thông tin chính xác và không mạo danh.\n'
+                '- Ứng dụng có quyền khóa tài khoản nếu phát hiện hành vi gian lận.\n\n'
+                '2. Đặt lịch & thanh toán:\n'
+                '- Khách hàng thanh toán trước 20% giá trị booking để xác nhận.\n'
+                '- Khoản phí này không hoàn lại nếu huỷ do phía khách hàng.\n'
+                '- Nhiếp ảnh gia có thể hoàn trả nếu không thể thực hiện buổi chụp.\n\n'
+                '3. Quyền riêng tư:\n'
+                '- Thông tin cá nhân được bảo mật và chỉ sử dụng cho mục đích đặt lịch.\n'
+                '- Ứng dụng không chia sẻ dữ liệu cho bên thứ ba nếu không có sự đồng ý.\n\n'
+                '4. Hành vi bị cấm:\n'
+                '- Đăng tải nội dung vi phạm pháp luật, xúc phạm hoặc lừa đảo.\n'
+                '- Sử dụng ảnh của người khác mà không được phép.\n\n'
+                '5. Giải quyết tranh chấp:\n'
+                '- Mọi tranh chấp phát sinh sẽ được giải quyết thông qua thương lượng.\n'
+                '- Nếu không đạt thỏa thuận, vụ việc sẽ được xử lý theo quy định pháp luật Việt Nam.\n\n'
+                'Bằng việc sử dụng ứng dụng, bạn đồng ý với các điều khoản nêu trên.',
+            style: TextStyle(fontSize: 14, height: 1.4),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Đóng')),
+        ],
       ),
     );
   }
@@ -460,16 +460,14 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
   }
 
   Future<void> _submitPayment() async {
-  if (uploadedImagePath == null || transactionCodeController.text.isEmpty) {
+    if (!_agreeFeePolicy) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Row(
             children: [
               Icon(Icons.warning_amber_rounded, color: Colors.white),
               SizedBox(width: 12),
-              Expanded(
-                child: Text('Vui lòng nhập mã giao dịch và tải lên hóa đơn!'),
-              ),
+              Expanded(child: Text('Bạn cần đồng ý với Fee Policy để tiếp tục.')),
             ],
           ),
           backgroundColor: Colors.orange,
@@ -482,15 +480,21 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
 
     setState(() => isLoading = true);
 
+    // FIX: feePolicyId luôn = 1, không còn widget.feePolicyId
     final request = ManualPaymentRequest(
       bookingId: widget.bookingId,
-      amount: widget.amount,
-      transactionReference: transactionCodeController.text,
-      proofImageUrl: uploadedImagePath!,
+      feePolicyId: 1,
+      // Nếu model có field transactionReference/amount, có thể truyền thêm:
+      // transactionReference: transactionCodeController.text,
+      // amount: widget.amount,
     );
 
     try {
-      final status = await _paymentService.confirmManualPayment(request);
+      final success = await _paymentService.confirmPaid(request, widget.paymentId);
+      String status ='';
+      if(success == true){
+         status = 'paid';
+      }
       if (!mounted) return;
 
       Navigator.pushReplacement(
@@ -501,7 +505,7 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(
@@ -520,6 +524,37 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
       if (mounted) {
         setState(() => isLoading = false);
       }
+    }
+  }
+
+  Future<void> _cancelPayment() async {
+    setState(() => isLoading = true);
+    final cancelRequest = ManualPaymentRequest(
+      bookingId: widget.bookingId,
+      feePolicyId: 1,
+      // Nếu model có field transactionReference/amount, có thể truyền thêm:
+      // transactionReference: transactionCodeController.text,
+      // amount: widget.amount,
+    );
+    try {
+      final success = await _paymentService.CancelManualPayment(
+        cancelRequest,
+        widget.paymentId,
+      );
+      String status ='';
+      if(success == true){
+         status = 'cancelled';
+      }
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => PaymentStatusScreen(status: status)),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+    } finally {
+      if (mounted) setState(() => isLoading = false);
     }
   }
 }

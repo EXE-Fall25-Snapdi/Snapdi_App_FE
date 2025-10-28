@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
 class PaymentStatusScreen extends StatefulWidget {
-  final String status; // 'pending', 'approved', 'rejected'
+  final String status; // 'paid', 'cancelled'
 
   const PaymentStatusScreen({super.key, required this.status});
 
@@ -109,27 +109,27 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen>
 
                       const SizedBox(height: 32),
 
-                      // Additional info box
-                      if (widget.status == 'pending')
+                      // Additional info box cho trường hợp thanh toán thành công
+                      if (widget.status.toLowerCase() == 'paid')
                         FadeTransition(
                           opacity: _fadeAnimation,
                           child: Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.orange[50],
+                              color: const Color(0xFF00BFA5).withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.orange[200]!),
+                              border: Border.all(color: const Color(0xFF00BFA5).withOpacity(0.3)),
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.access_time, color: Colors.orange[700], size: 20),
+                                Icon(Icons.info_outline, color: const Color(0xFF00BFA5), size: 20),
                                 const SizedBox(width: 12),
                                 const Expanded(
                                   child: Text(
-                                    'Thời gian xử lý: 5-10 phút\nBạn sẽ nhận được thông báo khi thanh toán được xác nhận',
+                                    'Photographer sẽ liên hệ với bạn sớm nhất có thể để xác nhận lịch chụp',
                                     style: TextStyle(
                                       fontSize: 13,
-                                      color: Colors.orange,
+                                      color: Color(0xFF00BFA5),
                                       height: 1.4,
                                     ),
                                   ),
@@ -144,62 +144,32 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen>
               ),
             ),
 
-            // Action buttons
+            // Action buttons - CHỈ NÚT VỀ TRANG CHỦ
             Padding(
               padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  if (widget.status == 'pending') ...[
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: OutlinedButton(
-                        onPressed: () {
-                          // TODO: Navigate to booking detail
-                        },
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: statusConfig.color),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                        child: Text(
-                          'Xem chi tiết booking',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: statusConfig.color,
-                          ),
-                        ),
-                      ),
+              child: SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.popUntil(context, (route) => route.isFirst);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: statusConfig.color,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    const SizedBox(height: 12),
-                  ],
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.popUntil(context, (route) => route.isFirst);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: statusConfig.color,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Về trang chủ',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                        ),
-                      ),
+                    elevation: 0,
+                  ),
+                  child: const Text(
+                    'Về trang chủ',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
                     ),
                   ),
-                ],
+                ),
               ),
             ),
           ],
@@ -210,26 +180,20 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen>
 
   _StatusConfig _getStatusConfig() {
     switch (widget.status.toLowerCase()) {
-      case 'approved':
+      case 'paid':
         return _StatusConfig(
           icon: Icons.check_circle_outline,
           title: 'Thanh toán thành công!',
           description: 'Booking của bạn đã được xác nhận.\nChúc bạn có trải nghiệm tuyệt vời!',
           color: const Color(0xFF00BFA5),
         );
-      case 'rejected':
-        return _StatusConfig(
-          icon: Icons.error_outline,
-          title: 'Thanh toán thất bại',
-          description: 'Giao dịch của bạn không được xác nhận.\nVui lòng thử lại hoặc liên hệ hỗ trợ.',
-          color: Colors.red,
-        );
+      case 'cancelled':
       default:
         return _StatusConfig(
-          icon: Icons.pending_outlined,
-          title: 'Đang chờ xác nhận',
-          description: 'Chúng tôi đang xác minh thông tin thanh toán của bạn.\nVui lòng đợi trong giây lát.',
-          color: Colors.orange,
+          icon: Icons.cancel_outlined,
+          title: 'Thanh toán đã bị hủy',
+          description: 'Giao dịch của bạn đã được hủy.\nBạn có thể thử lại hoặc chọn phương thức thanh toán khác.',
+          color: Colors.red,
         );
     }
   }
@@ -247,5 +211,4 @@ class _StatusConfig {
     required this.description,
     required this.color,
   });
-
 }

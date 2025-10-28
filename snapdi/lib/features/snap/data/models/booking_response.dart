@@ -90,6 +90,8 @@ class BookingData {
   final BookingStatus status;
   final int price;
   final String? note;
+  final int photoTypeId;
+  final int time;
 
   BookingData({
     required this.bookingId,
@@ -99,6 +101,8 @@ class BookingData {
     required this.locationAddress,
     required this.status,
     required this.price,
+    required this.photoTypeId,
+    required this.time,
     this.note,
   });
 
@@ -112,6 +116,8 @@ class BookingData {
       status: BookingStatus.fromJson(json['status'] ?? {}),
       price: json['price'] ?? 0,
       note: json['note'],
+      photoTypeId: json['photoTypeId'] ?? 0,
+      time: json['time'] ?? 0
     );
   }
 }

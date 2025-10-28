@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
+import '../../data/services/booking_service.dart';
 import '../../../../core/utils/utils.dart';
 import '../../../../core/providers/user_info_provider.dart';
 import '../../../../core/storage/token_storage.dart';
@@ -18,12 +21,16 @@ class BookingRequestsScreen extends StatefulWidget {
 }
 
 class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
+  final TextEditingController _photoController = TextEditingController();
+  final BookingService _bookingService = BookingService();
+
   final UserInfoProvider _userInfoProvider = UserInfoProvider.instance;
   late final PhotographerService _photographerService;
   late final AuthService _authService;
 
   List<BookingRequest> _requests = [];
   bool _isLoading = true;
+  bool _isAgree = false;
 
   @override
   void initState() {
@@ -57,7 +64,7 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
         page: 1,
         pageSize: 20,
       );
-       
+
        print('Pending bookings response: $pendingBookingsResponse');
 
       if (pendingBookingsResponse != null && pendingBookingsResponse.data.isNotEmpty) {
@@ -116,6 +123,7 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
+              // TODO: Call accept API
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(
@@ -197,12 +205,691 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
     );
   }
 
+  Future<void> _showSuccessDialog(BuildContext context) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        // Auto dismiss after 2 seconds
+        Future.delayed(const Duration(seconds: 2), () {
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
+        });
+
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Close button
+                Align(
+                  alignment: Alignment.topRight,
+                  child: IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // Success Icon
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: SvgPicture.asset(
+                    'assets/icons/navbar_camera.svg',
+                    width: 48,
+                    height: 48,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Success Text
+                Text(
+                  "Trả ảnh",
+                  style: AppTextStyles.headline3.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "Thành công",
+                  style: AppTextStyles.headline3.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+// Failure Dialog
+  Future<void> _showFailureDialog(BuildContext context) async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        // Auto dismiss after 2 seconds
+        Future.delayed(const Duration(seconds: 2), () {
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
+        });
+
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: const Color(0xFFB8C5C5),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Close button
+                Align(
+                  alignment: Alignment.topRight,
+                  child: IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close, color: Colors.white),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
+                // Failure Icon
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.3),
+                    shape: BoxShape.circle,
+                  ),
+                  child: SvgPicture.asset(
+                    'assets/icons/navbar_camera.svg',
+                    width: 48,
+                    height: 48,
+                    color: AppColors.grey,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Failure Text
+                Text(
+                  "Trả ảnh",
+                  style: AppTextStyles.headline3.copyWith(
+                    color: const Color(0xFF2D4A4A),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  "Thất bại",
+                  style: AppTextStyles.headline3.copyWith(
+                    color: const Color(0xFF2D4A4A),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _showUploadPhotoDialog(BookingRequest request) async {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      useRootNavigator: true,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            final screenHeight = MediaQuery.of(context).size.height;
+
+            return Container(
+              // Thay vì cố định chiều cao cứng, dùng constraints để modal co giãn tốt hơn
+              constraints: BoxConstraints(
+                maxHeight: screenHeight * 0.95,
+                minHeight: screenHeight * 0.4,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    blurRadius: 15,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              child: Padding(
+                // Padding tổng (trên/trái/phải). Bottom sẽ được điều chỉnh bởi AnimatedPadding bên trong
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                child: AnimatedPadding(
+                  // AnimatedPadding giúp animate khi bàn phím bật/tắt
+                  padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOut,
+                  child: SingleChildScrollView(
+                    // Cho phép ẩn bàn phím khi kéo
+                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                    // Thêm padding nhỏ phía dưới để không dính quá sát
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: ConstrainedBox(
+                      // Đảm bảo nội dung ít nhất chiếm 85% chiều cao modal để Spacer hoạt động tốt
+                      constraints: BoxConstraints(
+                        minHeight: screenHeight * 0.85 - 48, // trừ đi padding xung quanh
+                      ),
+                      child: IntrinsicHeight(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Title
+                            Center(
+                              child: Text(
+                                "Thông tin",
+                                style: AppTextStyles.headline3.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+
+                            // Avatar + Name + Price
+                            Row(
+                              children: [
+                                CircleAvatar(
+                                  radius: 24,
+                                  backgroundColor: Colors.grey.shade200,
+                                  backgroundImage: request.customerAvatar != null
+                                      ? NetworkImage(request.customerAvatar!)
+                                      : null,
+                                  child: request.customerAvatar == null
+                                      ? Icon(Icons.person, color: Colors.grey.shade400, size: 28)
+                                      : null,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        request.customerName,
+                                        style: AppTextStyles.headline4.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      Text(
+                                        StringUtils.formatVND(request.price),
+                                        style: AppTextStyles.bodyMedium.copyWith(
+                                          color: AppColors.primary,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            // Info Grid (2x2)
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _infoCard(
+                                    Icons.calendar_today_outlined,
+                                    _formatDate(request.scheduleAt),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _infoCard(
+                                    Icons.access_time_outlined,
+                                    _formatTime(request.scheduleAt),
+                                    backgroundColor: AppColors.primary,
+                                    textColor: Colors.white,
+                                    iconColor: Colors.white,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _infoCard(
+                                    Icons.camera_alt_outlined,
+                                    request.photoType,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _infoCard(
+                                    Icons.schedule_outlined,
+                                    request.duration,
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 20),
+
+                            // Location Address
+                            if (request.locationAddress.isNotEmpty)
+                              Column(
+                                children: [
+                                  _infoRowWithIcon(
+                                    Icons.location_on_outlined,
+                                    "Địa điểm",
+                                    request.locationAddress,
+                                  ),
+                                  const SizedBox(height: 12),
+                                ],
+                              ),
+
+                            // Booking Status
+                            _infoRowWithIcon(
+                              Icons.info_outline,
+                              "Trạng thái",
+                              request.status,
+                              valueColor: _getStatusColor(request.status),
+                            ),
+
+                            // Note (if available)
+                            if (request.note != null && request.note!.isNotEmpty)
+                              Column(
+                                children: [
+                                  const SizedBox(height: 12),
+                                  Container(
+                                    width: double.infinity,
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey.shade100,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Ghi chú",
+                                          style: AppTextStyles.bodySmall.copyWith(
+                                            color: Colors.grey.shade600,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          request.note!,
+                                          style: AppTextStyles.bodySmall.copyWith(
+                                            color: Colors.grey.shade800,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+
+                            const SizedBox(height: 20),
+                            Divider(color: Colors.grey.shade300, thickness: 1),
+                            const SizedBox(height: 16),
+
+                            // Input URL Section
+                            Text(
+                              "Nhập từ URL",
+                              style: AppTextStyles.bodyMedium.copyWith(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: _photoController,
+                                    decoration: InputDecoration(
+                                      hintText: "Nhập link ảnh...",
+                                      hintStyle: TextStyle(color: Colors.grey.shade400),
+                                      filled: true,
+                                      fillColor: Colors.grey.shade100,
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      contentPadding: const EdgeInsets.symmetric(
+                                        horizontal: 16,
+                                        vertical: 12,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                ElevatedButton(
+                                  onPressed: () {
+                                    // Handle URL validation
+                                    final link = _photoController.text.trim();
+                                    if (link.isNotEmpty) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            "Link đã được nhập",
+                                            style: AppTextStyles.bodyMedium.copyWith(
+                                              color: Colors.white,
+                                            ),
+                                          ),
+                                          backgroundColor: Colors.green,
+                                          duration: const Duration(seconds: 1),
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 12,
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    "Kiểm tra",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 16),
+
+                            // Checkbox Agreement
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(
+                                  width: 24,
+                                  height: 24,
+                                  child: Checkbox(
+                                    value: _isAgree,
+                                    onChanged: (value) {
+                                      setState(() {
+                                        _isAgree = value ?? false;
+                                      });
+                                    },
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    "Tôi đã đọc và đồng ý với chính sách của SNAPDI",
+                                    style: AppTextStyles.bodySmall.copyWith(
+                                      color: Colors.grey.shade600,
+                                      height: 1.4,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            // Spacer để đẩy nút xuống đáy modal
+                            const Spacer(),
+
+                            // Action Buttons
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      _photoController.clear();
+                                      Navigator.pop(context);
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      side: BorderSide(color: Colors.grey.shade300),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                    ),
+                                    child: Text(
+                                      "Hủy",
+                                      style: TextStyle(
+                                        color: Colors.grey.shade700,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: ElevatedButton(
+                                    onPressed: _isAgree
+                                        ? () async {
+                                      final link = _photoController.text.trim();
+                                      if (link.isEmpty) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              "Vui lòng nhập link ảnh",
+                                              style: AppTextStyles.bodyMedium.copyWith(
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                            backgroundColor: AppColors.error,
+                                          ),
+                                        );
+                                        return;
+                                      }
+
+                                      try {
+                                        await _bookingService.updatePhotoLink(
+                                          request.bookingId,
+                                          link,
+                                        );
+                                        _photoController.clear();
+                                        Navigator.pop(context); // Close bottom sheet
+                                        _showSuccessDialog(context); // Show success dialog
+                                        _loadRequests(); // Reload the requests
+                                      } catch (e) {
+                                        _photoController.clear();
+                                        Navigator.pop(context); // Close bottom sheet
+                                        _showFailureDialog(context); // Show failure dialog
+                                      }
+                                    }
+                                        : null,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: AppColors.primary,
+                                      disabledBackgroundColor: Colors.grey.shade300,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                    ),
+                                    child: const Text(
+                                      "Xác nhận",
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+// Helper widget for info rows with icon
+  Widget _infoRowWithIcon(
+      IconData icon,
+      String label,
+      String value, {
+        Color? valueColor,
+      }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, color: AppColors.primary, size: 20),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: Colors.grey.shade600,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                value,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: valueColor ?? Colors.black87,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+// Helper method to get status color
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'Pending':
+      case 'chờ xác nhận':
+        return Colors.orange;
+      case 'Confirmed':
+      case 'đã xác nhận':
+        return Colors.green;
+      case 'Completed':
+      case 'hoàn thành':
+        return Colors.blue;
+      case 'Cancelled':
+      case 'đã hủy':
+        return Colors.red;
+      default:
+        return Colors.grey;
+    }
+  }
+
+// Helper widget for info cards (2x2 grid)
+  Widget _infoCard(
+      IconData icon,
+      String text, {
+        Color backgroundColor = Colors.white,
+        Color iconColor = Colors.black54,
+        Color textColor = Colors.black87,
+      }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: iconColor, size: 20),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTextStyles.bodyMedium.copyWith(
+                color: textColor,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   String _formatDateTime(String scheduleAt) {
     try {
       final dateTime = DateTime.parse(scheduleAt);
       return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')} AM,ZN ${dateTime.day}/${dateTime.month}/${dateTime.year}';
     } catch (e) {
       return scheduleAt;
+    }
+  }
+
+  String _formatPrice(int price) {
+    return '${price ~/ 1000}K';
+  }
+
+  String _formatDate(String scheduleAt) {
+    try {
+      final dateTime = DateTime.parse(scheduleAt);
+      final day = dateTime.day.toString().padLeft(2, '0');
+      final month = dateTime.month.toString().padLeft(2, '0');
+      final year = dateTime.year.toString();
+      return '$day/$month/$year';
+    } catch (e) {
+      return '01/01/1970';
+    }
+  }
+
+  String _formatTime(String scheduleAt) {
+    try {
+      final dateTime = DateTime.parse(scheduleAt);
+      final hour = dateTime.hour.toString().padLeft(2, '0');
+      final minute = dateTime.minute.toString().padLeft(2, '0');
+      return '$hour:$minute';
+    } catch (e) {
+      return '12:00';
     }
   }
 
@@ -563,6 +1250,31 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
                       color: AppColors.primary,
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(width: 12),
+
+              // Upload Photo Button
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () => _showUploadPhotoDialog(request),
+                  icon: const Icon(Icons.cloud_upload, size: 18),
+                  label: Text(
+                    'Tải ảnh',
+                    style: AppTextStyles.buttonMedium.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
                 ),

@@ -165,6 +165,65 @@ class BookingService {
     }
   }
 
+  Future<BookingResponse> updatePhotoLink(
+      int bookingId,
+      String photoLink,
+      ) async {
+    try {
+      HttpOverrides.global = _DevHttpOverrides();
+
+      final Map<String, dynamic> requestBody = {
+        'photoLink': photoLink,
+      };
+
+      final response = await _makeAuthenticatedRequest(
+        request: (token) async {
+          return await http.put(
+            Uri.parse(
+              '${Environment.apiBaseUrl}/api/Booking/$bookingId/photoLink',
+            ),
+            headers: {
+              'Content-Type': 'application/json; charset=UTF-8',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode(requestBody),
+          );
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        return BookingResponse.fromJson(jsonResponse);
+      } else if (response.statusCode == 401) {
+        await _tokenStorage.clearAll();
+        return BookingResponse(
+          success: false,
+          message: 'Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.',
+        );
+      } else if (response.statusCode == 404) {
+        return BookingResponse(
+            success: false,
+            message: 'Không tìm thấy đặt lịch với ID $bookingId.');
+      } else {
+        try {
+          final errorBody = jsonDecode(response.body);
+          return BookingResponse(
+            success: false,
+            message: errorBody['message'] ??
+                'Không thể cập nhật link ảnh: Lỗi ${response.statusCode}',
+          );
+        } catch (e) {
+          return BookingResponse(
+            success: false,
+            message: 'Không thể cập nhật link ảnh: Lỗi ${response.statusCode}',
+          );
+        }
+      }
+    } catch (e) {
+      return BookingResponse(success: false, message: 'Lỗi kết nối: ${e.toString()}');
+    }
+  }
+
   Future<BookingListResponse?> getMyBookings({
     int page = 1,
     int pageSize = 10,

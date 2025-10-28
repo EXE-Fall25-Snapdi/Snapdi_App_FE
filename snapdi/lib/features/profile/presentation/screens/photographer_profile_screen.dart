@@ -17,7 +17,8 @@ class PhotographerProfileScreen extends StatefulWidget {
   const PhotographerProfileScreen({super.key, required this.userId});
 
   @override
-  State<PhotographerProfileScreen> createState() => _PhotographerProfileScreenState();
+  State<PhotographerProfileScreen> createState() =>
+      _PhotographerProfileScreenState();
 }
 
 class _PhotographerProfileScreenState extends State<PhotographerProfileScreen> {
@@ -69,7 +70,9 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen> {
       (failure) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Failed to load photographer profile')),
+            const SnackBar(
+              content: Text('Failed to load photographer profile'),
+            ),
           );
         }
       },
@@ -135,407 +138,280 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen> {
     context.push('/profile/${_currentUser?.userId}');
   }
 
+  // =================================================================
+  // PHẦN BUILD ĐÃ ĐƯỢC CẬP NHẬT
+  // =================================================================
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
+    final photographer = _photographerDetail;
+    if (photographer == null) {
+      return const Scaffold(
+        body: Center(child: Text('Photographer not found')),
+      );
+    }
 
-    final double statusBarHeight = MediaQuery.of(context).padding.top;
-
+    // Giao diện mới dùng SingleChildScrollView và Column
     return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Stack(
+      body: SingleChildScrollView(
+        child: SafeArea(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // 1. Header mới với logo
+              _buildHeader(),
+
+              // 2. Thông tin profile mới (thay thế _buildProfileCard)
+              _buildProfileInfoSection(),
+
+              const SizedBox(height: 24),
+
+              // 3. Nội dung chính (Portfolio) - (đã xóa Stats)
+              _buildMainContent(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // =================================================================
+  // CÁC WIDGET CON ĐÃ ĐƯỢC THAY ĐỔI / THÊM MỚI
+  // =================================================================
+
+  /// (MỚI) Widget header chỉ chứa logo
+  Widget _buildHeader() {
+    final photographer = _photographerDetail;
+    if (photographer == null) return const SizedBox();
+    return Padding(
+      padding: const EdgeInsets.only(top: 16, left: 10, right: 10),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Background gradient
-          Positioned.fill(
-            child: Image.asset(
-              AppAssets.backgroundGradient,
-              fit: BoxFit.cover,
+          ElevatedButton(
+            onPressed: () => context.go('/'),
+            style: ElevatedButton.styleFrom(
+              shape: const CircleBorder(), // 1. Đặt hình dạng là hình tròn
+              padding: const EdgeInsets.all(
+                12,
+              ), // 2. Đặt kích thước đệm (thay đổi số này để nút to/nhỏ)
+              backgroundColor: const Color(0xFF00D580), // 3. Đặt màu nền
+              foregroundColor: Colors.black, // 4. Đặt màu cho icon bên trong
+            ),
+            child: const Icon(
+              Icons.arrow_back, // Icon mũi tên quay lại
+              size: 24, // Kích thước icon (tùy chọn)
             ),
           ),
-
-          // Main content
-          SingleChildScrollView(
-            child: Column(
-              children: [
-                SizedBox(height: statusBarHeight + 16),
-
-                // Back button and settings menu
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Colors.white),
-                        onPressed: () => Navigator.of(context).pop(),
-                      ),
-                      if (_isOwnProfile)
-                        IconButton(
-                          icon: const Icon(Icons.more_vert, color: Colors.white),
-                          onPressed: _handleSettingsMenu,
-                        ),
-                    ],
-                  ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text(
+                photographer.name,
+                style: AppTextStyles.headline4.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
-
-                const SizedBox(height: 16),
-
-                // Profile card with overlapping content
-                Stack(
-                  clipBehavior: Clip.none,
-                  alignment: Alignment.topCenter,
-                  children: [
-                    // Main content (stats + portfolio)
-                    Padding(
-                      padding: const EdgeInsets.only(top: 80),
-                      child: _buildMainContent(),
-                    ),
-
-                    // Profile card (floating on top)
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: _buildProfileCard(),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: 100),
-              ],
+                textAlign: TextAlign.left,
+              ),
             ),
           ),
+          if (_isOwnProfile)
+            IconButton(
+              icon: const Icon(Icons.more_vert),
+              onPressed: _handleSettingsMenu,
+            ),
         ],
       ),
     );
   }
 
-  Widget _buildProfileCard() {
+  /// (MỚI) Thay thế cho _buildProfileCard()
+  /// Bố cục ngang: Avatar | Thông tin
+  Widget _buildProfileInfoSection() {
     final photographer = _photographerDetail;
     if (photographer == null) return const SizedBox();
 
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 20,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
+    return Padding(
+      padding: const EdgeInsets.only(left: 16, right: 16, top: 16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Avatar
+          // --- 1. Avatar ---
           Container(
-            width: 100,
-            height: 100,
+            width: 120, // Kích thước avatar nhỏ hơn
+            height: 120,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              border: Border.all(color: AppColors.primary, width: 3),
+              border: Border.all(color: AppColors.primary, width: 2),
             ),
             child: ClipOval(
               child: photographer.avatarUrl != null
                   ? CloudinaryImage(
                       publicId: photographer.avatarUrl!,
-                      width: 100,
-                      height: 100,
+                      width: 120,
+                      height: 120,
                       fit: BoxFit.cover,
                     )
                   : Container(
                       color: AppColors.greyLight,
                       child: Icon(
                         Icons.person,
-                        size: 50,
+                        size: 40,
                         color: AppColors.primary,
                       ),
                     ),
             ),
           ),
 
-          const SizedBox(height: 16),
-
-          // Name
-          Text(
-            photographer.name,
-            style: AppTextStyles.headline3.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-            textAlign: TextAlign.center,
-          ),
-
-          const SizedBox(height: 8),
-
-          // Level and rating
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
+          const SizedBox(width: 32),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.primaryLight.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  photographer.photographerProfile?.levelPhotographer ?? 'Photographer',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    color: AppColors.primaryDark,
-                    fontWeight: FontWeight.w600,
+              if (photographer.photographerProfile?.description != null)
+                SizedBox(
+                  width: 200, // Giới hạn chiều rộng để tự động xuống dòng
+                  child: Text(
+                    photographer.photographerProfile?.description ??
+                        'Chưa có mô tả',
+                    style: AppTextStyles.bodyMedium,
+                    maxLines: 3, // Tối đa 3 dòng
+                    overflow: TextOverflow.ellipsis, // Hiển thị ... nếu quá dài
+                    softWrap: true, // Tự động xuống dòng
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
+              const SizedBox(height: 4),
               Row(
                 children: [
-                  const Icon(
-                    Icons.star,
-                    size: 18,
-                    color: Colors.amber,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    (photographer.photographerProfile?.avgRating ?? 0.0)
-                        .toStringAsFixed(1),
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      fontWeight: FontWeight.w600,
+                  // Nút "Nhắn tin" (chỉ cho khách hàng)
+                  if (_isCustomerViewingPhotographer)
+                    ElevatedButton(
+                      onPressed: _isCreatingConversation
+                          ? null
+                          : _handleMessageButton,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 6,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        textStyle: AppTextStyles.bodySmall, // Chữ nhỏ hơn
+                      ),
+                      child: _isCreatingConversation
+                          ? const SizedBox(
+                              width: 32,
+                              height: 6,
+                              child: CircularProgressIndicator(
+                                color: Color.fromARGB(255, 20, 19, 19),
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text('Nhắn tin'),
                     ),
-                  ),
+                  if (_isPhotographerViewingOwnProfile)
+                    ElevatedButton(
+                      onPressed: _handleUpdatePortfolio,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 6,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        textStyle: AppTextStyles.bodySmall, // Chữ nhỏ hơn
+                      ),
+                      child: const Text('Cập nhật Portfolio'),
+                    ),
                 ],
               ),
             ],
           ),
-
-          if (photographer.photographerProfile?.description != null) ...[
-            const SizedBox(height: 12),
-            Text(
-              photographer.photographerProfile!.description!,
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
-              ),
-              textAlign: TextAlign.center,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
-
-          const SizedBox(height: 16),
-
-          // Action button
-          if (_isCustomerViewingPhotographer)
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _isCreatingConversation ? null : _handleMessageButton,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: _isCreatingConversation
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.message, size: 20),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Message',
-                            style: AppTextStyles.buttonLarge,
-                          ),
-                        ],
-                      ),
-              ),
-            )
-          else if (_isPhotographerViewingOwnProfile)
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: _handleUpdatePortfolio,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.photo_library, size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Update Portfolio',
-                      style: AppTextStyles.buttonLarge,
-                    ),
-                  ],
-                ),
-              ),
-            ),
         ],
       ),
     );
   }
 
+  /// (ĐÃ SỬA) Chỉ còn Portfolio title và Grid
   Widget _buildMainContent() {
-    return Column(
-      children: [
-        if (_portfolios.isNotEmpty) ...[
-          _buildStatsSection(),
-          const SizedBox(height: 24),
-        ] else ...[
-          const SizedBox(height: 80),
-        ],
-
-        // Portfolio section
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Portfolio',
-                style: AppTextStyles.headline4.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              _portfolios.isEmpty
-                  ? Container(
-                      padding: const EdgeInsets.all(40),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Center(
-                        child: Text(
-                          'No portfolio photos yet',
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
-                      ),
-                    )
-                  : GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 3,
-                        crossAxisSpacing: 8,
-                        mainAxisSpacing: 8,
-                        childAspectRatio: 1,
-                      ),
-                      itemCount: _portfolios.length,
-                      itemBuilder: (context, index) {
-                        final portfolio = _portfolios[index];
-                        return ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: CloudinaryImage(
-                            publicId: portfolio.photoUrl,
-                            width: 120,
-                            height: 120,
-                            fit: BoxFit.cover,
-                          ),
-                        );
-                      },
-                    ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatsSection() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
+      padding: const EdgeInsets.symmetric(horizontal: 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Column(
+              // Dùng CrossAxisAlignment.center để icon và gạch chân
+              // luôn thẳng hàng với nhau
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // 1. Icon 3x3
+                Icon(Icons.apps, size: 28, color: AppColors.primary),
+
+                const SizedBox(height: 6),
+
+                // 2. Đường gạch ngang
+                Container(
+                  height: 4,
+                  width: 28,
+                  decoration: BoxDecoration(
+                    color: Colors.black87,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _buildStatItem(
-              '${_portfolios.length}',
-              'Photos',
-              Icons.photo_library,
-            ),
-            _buildDivider(),
-            _buildStatItem(
-              _photographerDetail?.photographerProfile?.yearsOfExperience ?? '0',
-              'Experience',
-              Icons.work,
-            ),
-            _buildDivider(),
-            _buildStatItem(
-              '0',
-              'Followers',
-              Icons.people,
-            ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 16),
+          _portfolios.isEmpty
+              ? Container(
+                  padding: const EdgeInsets.all(40),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'No portfolio photos yet',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ),
+                )
+              : GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    crossAxisSpacing: 4, // Giảm khoảng cách cho giống hình
+                    mainAxisSpacing: 4, // Giảm khoảng cách cho giống hình
+                    childAspectRatio: 1,
+                  ),
+                  itemCount: _portfolios.length,
+                  itemBuilder: (context, index) {
+                    final portfolio = _portfolios[index];
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(4), // Bo góc nhẹ
+                      child: CloudinaryImage(
+                        publicId: portfolio.photoUrl,
+                        width: 120,
+                        height: 120,
+                        fit: BoxFit.cover,
+                      ),
+                    );
+                  },
+                ),
+        ],
       ),
-    );
-  }
-
-  Widget _buildStatItem(String value, String label, IconData icon) {
-    return Column(
-      children: [
-        Icon(
-          icon,
-          color: AppColors.primary,
-          size: 28,
-        ),
-        const SizedBox(height: 8),
-        Text(
-          value,
-          style: AppTextStyles.headline4.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: AppTextStyles.bodySmall.copyWith(
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDivider() {
-    return Container(
-      width: 1,
-      height: 40,
-      color: AppColors.greyLight,
     );
   }
 }
-

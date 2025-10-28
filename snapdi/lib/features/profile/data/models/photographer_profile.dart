@@ -25,6 +25,9 @@ class PhotographerProfile {
   @JsonKey(name: 'levelPhotographer')
   final String? levelPhotographer;
 
+  @JsonKey(name: 'workLocation')
+  final String? workLocation;
+
   const PhotographerProfile({
     required this.userId,
     this.equipmentDescription,
@@ -33,6 +36,7 @@ class PhotographerProfile {
     required this.isAvailable,
     this.description,
     this.levelPhotographer,
+    this.workLocation,
   });
 
   factory PhotographerProfile.fromJson(Map<String, dynamic> json) =>

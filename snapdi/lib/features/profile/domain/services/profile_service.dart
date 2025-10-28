@@ -11,6 +11,11 @@ abstract class ProfileService {
     int userId,
   );
   Future<Either<Failure, List<PhotoPortfolio>>> getMyPortfolios();
+  Future<Either<Failure, bool>> updatePhotographerProfile(
+    int userId,
+    String? description,
+    String? workLocation,
+  );
 }
 
 class ProfileServiceImpl implements ProfileService {
@@ -87,6 +92,53 @@ class ProfileServiceImpl implements ProfileService {
       } else {
         return Left(
           ServerFailure('Failed to get portfolios: ${response.statusCode}'),
+        );
+      }
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return Left(ServerFailure('Unexpected error: ${e.toString()}'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> updatePhotographerProfile(
+    int userId,
+    String? description,
+    String? workLocation,
+  ) async {
+    try {
+      final token = await _tokenStorage.getAccessToken();
+      if (token == null) {
+        return Left(AuthenticationFailure('No access token found'));
+      }
+
+      final Map<String, dynamic> requestBody = {};
+      if (description != null) {
+        requestBody['description'] = description;
+      }
+      if (workLocation != null) {
+        requestBody['workLocation'] = workLocation;
+      }
+
+      final response = await _apiService.patch(
+        '/api/Photographer/$userId/profile',
+        data: requestBody,
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode == 200) {
+        return const Right(true);
+      } else {
+        return Left(
+          ServerFailure(
+            'Failed to update photographer profile: ${response.statusCode}',
+          ),
         );
       }
     } on DioException catch (e) {

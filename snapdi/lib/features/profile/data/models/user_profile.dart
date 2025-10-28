@@ -1,4 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
+import 'photographer_profile.dart';
 
 part 'user_profile.g.dart';
 
@@ -16,6 +17,9 @@ class UserProfile {
   final String? locationAddress;
   final String? locationCity;
   final String? avatarUrl;
+  
+  @JsonKey(name: 'photographerProfile')
+  final PhotographerProfile? photographerProfile;
 
   UserProfile({
     required this.userId,
@@ -30,6 +34,7 @@ class UserProfile {
     this.locationAddress,
     this.locationCity,
     this.avatarUrl,
+    this.photographerProfile,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) =>

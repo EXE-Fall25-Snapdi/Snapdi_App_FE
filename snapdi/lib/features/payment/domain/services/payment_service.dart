@@ -1,7 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
+import 'dart:math';
 import 'package:dio/dio.dart';
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/network/api_service.dart';
 import '../../../../core/storage/token_storage.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -75,78 +77,132 @@ class PaymentService {
   /// Xác nhận thanh toán thủ công
   /// Returns: true nếu thành công
   /// Returns the payment status string from server (e.g., 'done', 'pending')
-  Future<String> confirmManualPayment(ManualPaymentRequest request) async {
+  Future<int> confirmManualPayment(ManualPaymentRequest request) async {
     try {
-      final api = ApiService();
-      final dio = api.dio;
+      // 1) Lấy token từ secure storage, fallback SharedPreferences
+      final secureToken = await TokenStorage.instance.getAccessToken();
+      final prefs = await SharedPreferences.getInstance();
+      final legacyToken = prefs.getString(AppConstants.authTokenKey);
+      final token = (secureToken?.isNotEmpty == true) ? secureToken : legacyToken;
 
-      // Ensure auth token set in ApiService headers (if available)
-      final token = await TokenStorage.instance.getAccessToken();
-      if (token != null && token.isNotEmpty) {
-        api.setAuthToken(token);
+      if (token == null || token.isEmpty) {
+        throw Exception('Unauthorized: no auth token found');
       }
+      print('🔐 Using auth token: ${token.substring(0, min(12, token.length))}...');
 
-      // Debug: print token and headers to help diagnose 401
-      print('🔐 Stored auth token: ${token == null ? '<null>' : token.substring(0, token.length > 8 ? 8 : token.length) + '...'}');
-      print('🔎 Dio headers before request: ${dio.options.headers}');
+      // 2) Gắn Authorization vào Dio
+      final dio = ApiService().dio;
+      dio.options.headers['Authorization'] = 'Bearer $token';
+      dio.options.headers['Content-Type'] = 'application/json';
 
-      // If proofImageUrl is a local file path, send multipart with file using Dio
-      final proofPath = request.proofImageUrl;
-      Response response;
-
-      // Always send FormData so the server can read form fields (backend expects form data)
-      MultipartFile? multipartFile;
-      if (proofPath != null && File(proofPath).existsSync()) {
-        final filename = proofPath.split(Platform.pathSeparator).last;
-        multipartFile = await MultipartFile.fromFile(proofPath, filename: filename);
-      }
-
-      final formMap = <String, dynamic>{
-        'BookingId': request.bookingId.toString(),
-        'Amount': request.amount.toString(),
-        'TransactionReference': request.transactionReference ?? '',
-      };
-      if (multipartFile != null) formMap['proofImage'] = multipartFile;
-
-      final formData = FormData.fromMap(formMap);
-
-      // Note: controller route is api/payments/manual-payment (PaymentsController)
-      // Ensure Authorization header is present on the Dio instance and also send in request options
-      if (token != null && token.isNotEmpty) {
-        dio.options.headers['Authorization'] = 'Bearer $token';
-      }
-      print('🔎 Dio headers just before request: ${dio.options.headers}');
-
-      try {
-        final reqOptions = token != null && token.isNotEmpty
-            ? Options(headers: {'Authorization': 'Bearer $token'})
-            : null;
-        response = await dio.post('/api/payments/manual-payment', data: formData, options: reqOptions);
-      } on DioException catch (e) {
-        // Provide more context for 401/other failures
-        final status = e.response?.statusCode;
-        final respData = e.response?.data;
-        print('❌ DioException during manual-payment: status=$status, data=$respData, message=${e.message}');
-        // If token appears missing, give a specific hint
-        if (token == null || token.isEmpty) {
-          throw Exception('Unauthorized: no auth token found. Please log in.');
-        }
-        // Otherwise rethrow with backend response info
-        throw Exception('Request failed: status=$status, body=$respData');
-      }
+      // 3) Gửi JSON (không multipart)
+      final response = await dio.post(
+        '/api/payments/confirm-manual-payment',
+        data: {
+          'bookingId': request.bookingId,
+          'feePolicyId': request.feePolicyId, // cố định = 1 từ màn hình
+        },
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data as Map<String, dynamic>;
-        final success = data['success'] as bool? ?? true;
-        if (!success) throw Exception(data['message'] ?? 'Payment confirmation failed');
-
-        // return server status field if present (status or paymentStatus)
-        final status = (data['status'] ?? data['paymentStatus'] ?? data['paymentStatusName']) as String?;
-        return status ?? 'pending';
+        final paymentId = data['paymentId'] as int?;
+      if (paymentId == null) {
+        throw Exception('paymentId not found in response');
       }
-
-      throw Exception('Payment failed: ${response.statusCode} - ${response.statusMessage}');
+      return paymentId;
+      }
+      throw Exception('Payment failed: ${response.statusCode}');
+    } on DioException catch (e) {
+      print('❌ DioException during manual-payment: status=${e.response?.statusCode}, data=${e.response?.data}, message=${e.message}');
+      rethrow;
     } catch (e) {
+      print('❌ Error confirming manual payment: $e');
+      rethrow;
+    }
+  }
+
+
+  Future<bool> confirmPaid(ManualPaymentRequest request, int paymentId) async {
+    try {
+      // 1) Lấy token từ secure storage, fallback SharedPreferences
+      final secureToken = await TokenStorage.instance.getAccessToken();
+      final prefs = await SharedPreferences.getInstance();
+      final legacyToken = prefs.getString(AppConstants.authTokenKey);
+      final token = (secureToken?.isNotEmpty == true) ? secureToken : legacyToken;
+
+      if (token == null || token.isEmpty) {
+        throw Exception('Unauthorized: no auth token found');
+      }
+      print('🔐 Using auth token: ${token.substring(0, min(12, token.length))}...');
+
+      // 2) Gắn Authorization vào Dio
+      final dio = ApiService().dio;
+      dio.options.headers['Authorization'] = 'Bearer $token';
+
+      // 3) Gửi JSON (không multipart)
+      final response = await dio.put(
+        '/api/payments/confirm-paid',
+        queryParameters: {'paymentId': paymentId},
+        data: {
+          'bookingId': request.bookingId,
+          'feePolicyId': request.feePolicyId, // cố định = 1 từ màn hình
+        },
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data as Map<String, dynamic>;
+        return (data['success'] as bool?) ?? false;
+      }
+      throw Exception('Payment failed: ${response.statusCode}');
+    } on DioException catch (e) {
+      print('❌ DioException during manual-payment: status=${e.response?.statusCode}, data=${e.response?.data}, message=${e.message}');
+      rethrow;
+    } catch (e) {
+      print('❌ Error confirming manual payment: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> CancelManualPayment(ManualPaymentRequest request, int paymentId) async {
+    try {
+      // 1) Lấy token từ secure storage, fallback SharedPreferences
+      final secureToken = await TokenStorage.instance.getAccessToken();
+      final prefs = await SharedPreferences.getInstance();
+      final legacyToken = prefs.getString(AppConstants.authTokenKey);
+      final token = (secureToken?.isNotEmpty == true) ? secureToken : legacyToken;
+
+      if (token == null || token.isEmpty) {
+        throw Exception('Unauthorized: no auth token found');
+      }
+      print('🔐 Using auth token: ${token.substring(0, min(12, token.length))}...');
+
+      // 2) Gắn Authorization vào Dio
+      final dio = ApiService().dio;
+      dio.options.headers['Authorization'] = 'Bearer $token';
+
+      // 3) Gửi JSON (không multipart)
+      final response = await dio.put(
+        '/api/payments/cancel-manual-payment?paymentId=$paymentId',
+        data: {
+          'bookingId': request.bookingId,
+          'feePolicyId': request.feePolicyId, // cố định = 1 từ màn hình
+        },
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data as Map<String, dynamic>;
+        return (data['success'] as bool?) ?? false;
+      }
+      throw Exception('Payment failed: ${response.statusCode}');
+    } on DioException catch (e) {
+      print('❌ DioException during manual-payment: status=${e.response?.statusCode}, data=${e.response?.data}, message=${e.message}');
+      rethrow;
+    } catch (e) {
+      print('❌ Error confirming manual payment: $e');
       rethrow;
     }
   }

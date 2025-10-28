@@ -1,20 +1,15 @@
 class ManualPaymentRequest {
   final int bookingId;
-  final String? transactionReference;
-  final String? proofImageUrl;
-  final double amount;
+  final int feePolicyId;
 
   ManualPaymentRequest({
     required this.bookingId,
-    required this.amount,
-    this.transactionReference,
-    this.proofImageUrl,
+    required this.feePolicyId,
   });
+  
 
   Map<String, dynamic> toJson() => {
     'bookingId': bookingId,
-    'transactionReference': transactionReference,
-    'proofImageUrl': proofImageUrl,
-    'amount': amount,
+    'feePolicyId': feePolicyId,
   };
 }

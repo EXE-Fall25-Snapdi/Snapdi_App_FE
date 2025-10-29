@@ -4,6 +4,7 @@ import 'package:snapdi/features/snap/data/models/pending_booking.dart';
 import '../../profile/presentation/widgets/cloudinary_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart'; // Add this import
+import 'package:snapdi/features/snap/presentation/screens/booking_status_screen.dart';
 
 class BookingTrackSnapperScreen extends StatefulWidget {
   const BookingTrackSnapperScreen({super.key});
@@ -229,6 +230,35 @@ class _BookingTrackSnapperScreenState extends State<BookingTrackSnapperScreen> {
                         ),
                       ),
                       const SizedBox(height: 24),
+
+                      // Button: View booking status
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => BookingStatusScreen(
+                                  bookingId: booking.bookingId,
+                                ),
+                              ),
+                            );
+                          },
+                          icon: const Icon(Icons.info_outline, size: 18),
+                          label: const Text('Xem trạng thái'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1DB584),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
 
                       // Booking ID
                       _buildDetailRow(

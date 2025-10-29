@@ -7,6 +7,7 @@ import '../../../../features/auth/domain/services/auth_service.dart';
 import '../models/booking_request.dart';
 import '../models/booking_response.dart';
 import '../models/booking_list_response.dart';
+import '../../../snap/data/models/pending_booking.dart';
 
 class BookingService {
   final TokenStorage _tokenStorage = TokenStorage.instance;
@@ -65,7 +66,6 @@ class BookingService {
 
       final response = await _makeAuthenticatedRequest(
         request: (token) async {
-          
           return await http.post(
             Uri.parse('${Environment.apiBaseUrl}/api/Booking'),
             headers: {
@@ -113,7 +113,7 @@ class BookingService {
     }
   }
 
-  Future<BookingResponse> updateBookingStatus(
+  Future<BookingData?> updateBookingStatus(
     int bookingId,
     int statusId,
   ) async {
@@ -122,7 +122,7 @@ class BookingService {
 
       final response = await _makeAuthenticatedRequest(
         request: (token) async {
-          return await http.put(
+          return await http.patch(
             Uri.parse(
               '${Environment.apiBaseUrl}/api/Booking/$bookingId/status',
             ),
@@ -130,55 +130,40 @@ class BookingService {
               'Content-Type': 'application/json',
               'Authorization': 'Bearer $token',
             },
-            body: jsonEncode(statusId),
+            body: jsonEncode({'statusId': statusId}),
           );
         },
       );
 
+
       if (response.statusCode == 200) {
         final jsonResponse = jsonDecode(response.body);
-        return BookingResponse.fromJson(jsonResponse);
+        return BookingData.fromJson(jsonResponse);
       } else if (response.statusCode == 401) {
         await _tokenStorage.clearAll();
-        return BookingResponse(
-          success: false,
-          message: 'Phiên đăng nhập đã hết hạn',
-        );
+        return null;
       } else {
         try {
-          final errorBody = jsonDecode(response.body);
-          return BookingResponse(
-            success: false,
-            message:
-                errorBody['message'] ??
-                'Không thể cập nhật trạng thái: ${response.statusCode}',
-          );
+          return null;
         } catch (e) {
-          return BookingResponse(
-            success: false,
-            message: 'Không thể cập nhật trạng thái: ${response.statusCode}',
-          );
+          return null;
         }
       }
     } catch (e) {
-      return BookingResponse(success: false, message: 'Lỗi: ${e.toString()}');
+      return null;
     }
   }
 
   Future<BookingResponse> updatePhotoLink(
-      int bookingId,
-      String photoLink,
-      ) async {
+    int bookingId,
+    String photoLink,
+  ) async {
     try {
       HttpOverrides.global = _DevHttpOverrides();
 
-      final Map<String, dynamic> requestBody = {
-        'photoLink': photoLink,
-      };
-
       final response = await _makeAuthenticatedRequest(
         request: (token) async {
-          return await http.put(
+          return await http.post(
             Uri.parse(
               '${Environment.apiBaseUrl}/api/Booking/$bookingId/photoLink',
             ),
@@ -186,7 +171,7 @@ class BookingService {
               'Content-Type': 'application/json; charset=UTF-8',
               'Authorization': 'Bearer $token',
             },
-            body: jsonEncode(requestBody),
+            body: jsonEncode({'photoLink': photoLink}),
           );
         },
       );
@@ -202,14 +187,16 @@ class BookingService {
         );
       } else if (response.statusCode == 404) {
         return BookingResponse(
-            success: false,
-            message: 'Không tìm thấy đặt lịch với ID $bookingId.');
+          success: false,
+          message: 'Không tìm thấy đặt lịch với ID $bookingId.',
+        );
       } else {
         try {
           final errorBody = jsonDecode(response.body);
           return BookingResponse(
             success: false,
-            message: errorBody['message'] ??
+            message:
+                errorBody['message'] ??
                 'Không thể cập nhật link ảnh: Lỗi ${response.statusCode}',
           );
         } catch (e) {
@@ -220,7 +207,10 @@ class BookingService {
         }
       }
     } catch (e) {
-      return BookingResponse(success: false, message: 'Lỗi kết nối: ${e.toString()}');
+      return BookingResponse(
+        success: false,
+        message: 'Lỗi kết nối: ${e.toString()}',
+      );
     }
   }
 
@@ -309,6 +299,108 @@ class BookingService {
       }
     } catch (e) {
       return BookingResponse(success: false, message: 'Lỗi: ${e.toString()}');
+    }
+  }
+
+  Future<PendingBookingResponse?> getBookingsByStatus({
+    required int statusId,
+    int page = 1,
+    int pageSize = 10,
+  }) async {
+    try {
+      HttpOverrides.global = _DevHttpOverrides();
+
+      final response = await _makeAuthenticatedRequest(
+        request: (token) async {
+          return await http.get(
+            Uri.parse(
+              '${Environment.apiBaseUrl}/api/Booking/me/status/$statusId?page=$page&pageSize=$pageSize',
+            ),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          );
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        return PendingBookingResponse.fromJson(jsonResponse);
+      } else if (response.statusCode == 401) {
+        await _tokenStorage.clearAll();
+        print('Unauthorized access - token may have expired.');
+        return null;
+      } else {
+        try {
+          final errorBody = jsonDecode(response.body);
+          print(
+            'Error fetching pending bookings: '
+            '${errorBody['message'] ?? response.statusCode}',
+          );
+          return null;
+        } catch (e) {
+          print('Error fetching pending bookings: ${response.statusCode}');
+          return null;
+        }
+      }
+    } catch (e) {
+      print('Exception fetching pending bookings: $e');
+      return null;
+    }
+  }
+
+  Future<PendingBookingResponse?> getBookingsByMultipleStatuses({
+    required List<int> statusIds,
+    int page = 1,
+    int pageSize = 100,
+  }) async {
+    try {
+      HttpOverrides.global = _DevHttpOverrides();
+
+      final response = await _makeAuthenticatedRequest(
+        request: (token) async {
+          // Create the request body
+          final Map<String, dynamic> requestBody = {
+            'statusIds': statusIds,
+            'page': page,
+            'pageSize': pageSize,
+          };
+
+          return await http.post(
+            Uri.parse('${Environment.apiBaseUrl}/api/Booking/me/statuses'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: jsonEncode(requestBody),
+          );
+        },
+      );
+
+      if (response.statusCode == 200) {
+        final jsonResponse = jsonDecode(response.body);
+        return PendingBookingResponse.fromJson(jsonResponse);
+      } else if (response.statusCode == 401) {
+        await _tokenStorage.clearAll();
+        print('Unauthorized access - token may have expired.');
+        return null;
+      } else {
+        try {
+          final errorBody = jsonDecode(response.body);
+          print(
+            'Error fetching bookings by statuses: '
+            '${errorBody['message'] ?? response.statusCode}',
+          );
+          return null;
+        } catch (e) {
+          print('Error fetching bookings by statuses: ${response.statusCode}');
+          return null;
+        }
+      }
+    } catch (e) {
+      print('Exception fetching bookings by statuses: $e');
+      return null;
     }
   }
 }

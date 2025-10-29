@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../data/services/booking_service.dart';
@@ -11,6 +9,7 @@ import '../../../../core/storage/token_storage.dart';
 import '../../../../core/network/api_service.dart';
 import '../../../photographer/data/services/photographer_service.dart';
 import '../../../auth/domain/services/auth_service.dart';
+import '../../../profile/presentation/widgets/cloudinary_image.dart';
 
 /// Screen showing pending booking requests for photographers
 class BookingRequestsScreen extends StatefulWidget {
@@ -21,7 +20,6 @@ class BookingRequestsScreen extends StatefulWidget {
 }
 
 class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
-  final TextEditingController _photoController = TextEditingController();
   final BookingService _bookingService = BookingService();
 
   final UserInfoProvider _userInfoProvider = UserInfoProvider.instance;
@@ -30,7 +28,6 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
 
   List<BookingRequest> _requests = [];
   bool _isLoading = true;
-  bool _isAgree = false;
 
   @override
   void initState() {
@@ -52,22 +49,24 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
     try {
       // Get photographer ID
       final photographerId = await _userInfoProvider.getUserId();
-      
+
       if (photographerId == null) {
         setState(() => _isLoading = false);
         return;
       }
 
       // Fetch pending bookings from API
-      final pendingBookingsResponse = await _photographerService.getPendingBookings(
-        photographerId: photographerId,
-        page: 1,
-        pageSize: 20,
-      );
+      final pendingBookingsResponse = await _photographerService
+          .getPendingBookings(
+            photographerId: photographerId,
+            page: 1,
+            pageSize: 20,
+          );
 
-       print('Pending bookings response: $pendingBookingsResponse');
+      print('Pending bookings response: $pendingBookingsResponse');
 
-      if (pendingBookingsResponse != null && pendingBookingsResponse.data.isNotEmpty) {
+      if (pendingBookingsResponse != null &&
+          pendingBookingsResponse.data.isNotEmpty) {
         // Convert pending bookings to BookingRequest for display
         final requests = pendingBookingsResponse.data.map((booking) {
           return BookingRequest(
@@ -101,8 +100,8 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
   }
 
   Future<void> _acceptRequest(BookingRequest request) async {
-    // TODO: Call API to accept the booking request
-    showDialog(
+    // Show confirmation dialog first
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Chấp nhận yêu cầu', style: AppTextStyles.headline4),
@@ -112,7 +111,7 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(context, false),
             child: Text(
               'Hủy',
               style: AppTextStyles.buttonMedium.copyWith(
@@ -121,24 +120,7 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
             ),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              // TODO: Call accept API
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Đã chấp nhận yêu cầu từ ${request.customerName}',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: Colors.white,
-                    ),
-                  ),
-                  backgroundColor: Colors.green,
-                ),
-              );
-              setState(() {
-                _requests.remove(request);
-              });
-            },
+            onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primaryDarker,
             ),
@@ -152,11 +134,86 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
         ],
       ),
     );
+
+    // If user cancelled, return early
+    if (confirmed != true) return;
+
+    // Set loading state
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
+
+    try {
+      // Call API to update booking status to Accepted (status ID 2)
+      final response = await _bookingService.updateBookingStatus(
+        request.bookingId,
+        2, // Accepted status ID
+      );
+
+      if (mounted) {
+        // Reset loading state
+        setState(() {
+          _isLoading = false;
+        });
+
+        if (response != null) {
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Đã chấp nhận yêu cầu từ ${request.customerName}',
+                style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
+              ),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 3),
+            ),
+          );
+
+          // Remove the request from the list
+          setState(() {
+            _requests.remove(request);
+          });
+        } else {
+          // Show error message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Không thể chấp nhận yêu cầu',
+                style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
+              ),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 3),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      // Reset loading state on error
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Lỗi: ${e.toString()}',
+              style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
+            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _rejectRequest(BookingRequest request) async {
-    // TODO: Call API to reject the booking request
-    showDialog(
+    // Show confirmation dialog first
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Từ chối yêu cầu', style: AppTextStyles.headline4),
@@ -166,7 +223,7 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(context, false),
             child: Text(
               'Hủy',
               style: AppTextStyles.buttonMedium.copyWith(
@@ -175,26 +232,8 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
             ),
           ),
           ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(
-                    'Đã từ chối yêu cầu từ ${request.customerName}',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: Colors.white,
-                    ),
-                  ),
-                  backgroundColor: AppColors.error,
-                ),
-              );
-              setState(() {
-                _requests.remove(request);
-              });
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.textSecondary,
-            ),
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             child: Text(
               'Từ chối',
               style: AppTextStyles.buttonMedium.copyWith(color: Colors.white),
@@ -203,160 +242,81 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
         ],
       ),
     );
-  }
 
-  Future<void> _showSuccessDialog(BuildContext context) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        // Auto dismiss after 2 seconds
-        Future.delayed(const Duration(seconds: 2), () {
-          if (context.mounted) {
-            Navigator.of(context).pop();
-          }
+    // If user cancelled, return early
+    if (confirmed != true) return;
+
+    // Set loading state
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+      });
+    }
+
+    try {
+      // Call API to update booking status to Rejected (status ID 8)
+      final response = await _bookingService.updateBookingStatus(
+        request.bookingId,
+        8, // Rejected/Cancelled status ID
+      );
+
+      if (mounted) {
+        // Reset loading state
+        setState(() {
+          _isLoading = false;
         });
 
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
+        if (response != null) {
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Đã từ chối yêu cầu từ ${request.customerName}',
+                style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
+              ),
+              backgroundColor: Colors.orange,
+              duration: Duration(seconds: 3),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Close button
-                Align(
-                  alignment: Alignment.topRight,
-                  child: IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ),
-                const SizedBox(height: 8),
+          );
 
-                // Success Icon
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: AppColors.primary.withOpacity(0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: SvgPicture.asset(
-                    'assets/icons/navbar_camera.svg',
-                    width: 48,
-                    height: 48,
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Success Text
-                Text(
-                  "Trả ảnh",
-                  style: AppTextStyles.headline3.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  "Thành công",
-                  style: AppTextStyles.headline3.copyWith(
-                    color: AppColors.primary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+          // Remove the request from the list
+          setState(() {
+            _requests.remove(request);
+          });
+        } else {
+          // Show error message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Không thể từ chối yêu cầu',
+                style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
+              ),
+              backgroundColor: Colors.red,
+              duration: Duration(seconds: 3),
             ),
-          ),
-        );
-      },
-    );
-  }
-
-// Failure Dialog
-  Future<void> _showFailureDialog(BuildContext context) async {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        // Auto dismiss after 2 seconds
-        Future.delayed(const Duration(seconds: 2), () {
-          if (context.mounted) {
-            Navigator.of(context).pop();
-          }
+          );
+        }
+      }
+    } catch (e) {
+      // Reset loading state on error
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
         });
 
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: const Color(0xFFB8C5C5),
-              borderRadius: BorderRadius.circular(20),
+        // Show error message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Lỗi: ${e.toString()}',
+              style: AppTextStyles.bodyMedium.copyWith(color: Colors.white),
             ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Close button
-                Align(
-                  alignment: Alignment.topRight,
-                  child: IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.close, color: Colors.white),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                // Failure Icon
-                Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.3),
-                    shape: BoxShape.circle,
-                  ),
-                  child: SvgPicture.asset(
-                    'assets/icons/navbar_camera.svg',
-                    width: 48,
-                    height: 48,
-                    color: AppColors.grey,
-                  ),
-                ),
-                const SizedBox(height: 24),
-
-                // Failure Text
-                Text(
-                  "Trả ảnh",
-                  style: AppTextStyles.headline3.copyWith(
-                    color: const Color(0xFF2D4A4A),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  "Thất bại",
-                  style: AppTextStyles.headline3.copyWith(
-                    color: const Color(0xFF2D4A4A),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 3),
           ),
         );
-      },
-    );
+      }
+    }
   }
 
   Future<void> _showUploadPhotoDialog(BookingRequest request) async {
@@ -378,7 +338,9 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
               ),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(32),
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.2),
@@ -389,21 +351,29 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
               ),
               child: Padding(
                 // Padding tổng (trên/trái/phải). Bottom sẽ được điều chỉnh bởi AnimatedPadding bên trong
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
                 child: AnimatedPadding(
                   // AnimatedPadding giúp animate khi bàn phím bật/tắt
-                  padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewInsets.bottom,
+                  ),
                   duration: const Duration(milliseconds: 200),
                   curve: Curves.easeOut,
                   child: SingleChildScrollView(
                     // Cho phép ẩn bàn phím khi kéo
-                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                    keyboardDismissBehavior:
+                        ScrollViewKeyboardDismissBehavior.onDrag,
                     // Thêm padding nhỏ phía dưới để không dính quá sát
                     padding: const EdgeInsets.only(bottom: 16),
                     child: ConstrainedBox(
                       // Đảm bảo nội dung ít nhất chiếm 85% chiều cao modal để Spacer hoạt động tốt
                       constraints: BoxConstraints(
-                        minHeight: screenHeight * 0.85 - 48, // trừ đi padding xung quanh
+                        minHeight:
+                            screenHeight * 0.85 -
+                            48, // trừ đi padding xung quanh
                       ),
                       child: IntrinsicHeight(
                         child: Column(
@@ -424,20 +394,21 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
                             // Avatar + Name + Price
                             Row(
                               children: [
-                                CircleAvatar(
-                                  radius: 24,
-                                  backgroundColor: Colors.grey.shade200,
-                                  backgroundImage: request.customerAvatar != null
-                                      ? NetworkImage(request.customerAvatar!)
-                                      : null,
-                                  child: request.customerAvatar == null
-                                      ? Icon(Icons.person, color: Colors.grey.shade400, size: 28)
-                                      : null,
+                                ClipOval(
+                                  child: CloudinaryImage(
+                                    publicId: request.customerAvatar!,
+                                    width: 60,
+                                    height: 60,
+                                    crop: 'fill',
+                                    gravity: 'face',
+                                    quality: 80,
+                                  ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         request.customerName,
@@ -447,10 +418,11 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
                                       ),
                                       Text(
                                         StringUtils.formatVND(request.price),
-                                        style: AppTextStyles.bodyMedium.copyWith(
-                                          color: AppColors.primary,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                        style: AppTextStyles.bodyMedium
+                                            .copyWith(
+                                              color: AppColors.primary,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                       ),
                                     ],
                                   ),
@@ -524,7 +496,8 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
                             ),
 
                             // Note (if available)
-                            if (request.note != null && request.note!.isNotEmpty)
+                            if (request.note != null &&
+                                request.note!.isNotEmpty)
                               Column(
                                 children: [
                                   const SizedBox(height: 12),
@@ -536,220 +509,30 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           "Ghi chú",
-                                          style: AppTextStyles.bodySmall.copyWith(
-                                            color: Colors.grey.shade600,
-                                            fontWeight: FontWeight.w600,
-                                          ),
+                                          style: AppTextStyles.bodySmall
+                                              .copyWith(
+                                                color: Colors.grey.shade600,
+                                                fontWeight: FontWeight.w600,
+                                              ),
                                         ),
                                         const SizedBox(height: 4),
                                         Text(
                                           request.note!,
-                                          style: AppTextStyles.bodySmall.copyWith(
-                                            color: Colors.grey.shade800,
-                                          ),
+                                          style: AppTextStyles.bodySmall
+                                              .copyWith(
+                                                color: Colors.grey.shade800,
+                                              ),
                                         ),
                                       ],
                                     ),
                                   ),
                                 ],
                               ),
-
-                            const SizedBox(height: 20),
-                            Divider(color: Colors.grey.shade300, thickness: 1),
-                            const SizedBox(height: 16),
-
-                            // Input URL Section
-                            Text(
-                              "Nhập từ URL",
-                              style: AppTextStyles.bodyMedium.copyWith(
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TextField(
-                                    controller: _photoController,
-                                    decoration: InputDecoration(
-                                      hintText: "Nhập link ảnh...",
-                                      hintStyle: TextStyle(color: Colors.grey.shade400),
-                                      filled: true,
-                                      fillColor: Colors.grey.shade100,
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                      contentPadding: const EdgeInsets.symmetric(
-                                        horizontal: 16,
-                                        vertical: 12,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    // Handle URL validation
-                                    final link = _photoController.text.trim();
-                                    if (link.isNotEmpty) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            "Link đã được nhập",
-                                            style: AppTextStyles.bodyMedium.copyWith(
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                          backgroundColor: Colors.green,
-                                          duration: const Duration(seconds: 1),
-                                        ),
-                                      );
-                                    }
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primary,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                      vertical: 12,
-                                    ),
-                                  ),
-                                  child: const Text(
-                                    "Kiểm tra",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                            const SizedBox(height: 16),
-
-                            // Checkbox Agreement
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                SizedBox(
-                                  width: 24,
-                                  height: 24,
-                                  child: Checkbox(
-                                    value: _isAgree,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _isAgree = value ?? false;
-                                      });
-                                    },
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    "Tôi đã đọc và đồng ý với chính sách của SNAPDI",
-                                    style: AppTextStyles.bodySmall.copyWith(
-                                      color: Colors.grey.shade600,
-                                      height: 1.4,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-
-                            // Spacer để đẩy nút xuống đáy modal
-                            const Spacer(),
-
-                            // Action Buttons
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton(
-                                    onPressed: () {
-                                      _photoController.clear();
-                                      Navigator.pop(context);
-                                    },
-                                    style: OutlinedButton.styleFrom(
-                                      side: BorderSide(color: Colors.grey.shade300),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(vertical: 16),
-                                    ),
-                                    child: Text(
-                                      "Hủy",
-                                      style: TextStyle(
-                                        color: Colors.grey.shade700,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: ElevatedButton(
-                                    onPressed: _isAgree
-                                        ? () async {
-                                      final link = _photoController.text.trim();
-                                      if (link.isEmpty) {
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              "Vui lòng nhập link ảnh",
-                                              style: AppTextStyles.bodyMedium.copyWith(
-                                                color: Colors.white,
-                                              ),
-                                            ),
-                                            backgroundColor: AppColors.error,
-                                          ),
-                                        );
-                                        return;
-                                      }
-
-                                      try {
-                                        await _bookingService.updatePhotoLink(
-                                          request.bookingId,
-                                          link,
-                                        );
-                                        _photoController.clear();
-                                        Navigator.pop(context); // Close bottom sheet
-                                        _showSuccessDialog(context); // Show success dialog
-                                        _loadRequests(); // Reload the requests
-                                      } catch (e) {
-                                        _photoController.clear();
-                                        Navigator.pop(context); // Close bottom sheet
-                                        _showFailureDialog(context); // Show failure dialog
-                                      }
-                                    }
-                                        : null,
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.primary,
-                                      disabledBackgroundColor: Colors.grey.shade300,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      padding: const EdgeInsets.symmetric(vertical: 16),
-                                    ),
-                                    child: const Text(
-                                      "Xác nhận",
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
                           ],
                         ),
                       ),
@@ -764,13 +547,13 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
     );
   }
 
-// Helper widget for info rows with icon
+  // Helper widget for info rows with icon
   Widget _infoRowWithIcon(
-      IconData icon,
-      String label,
-      String value, {
-        Color? valueColor,
-      }) {
+    IconData icon,
+    String label,
+    String value, {
+    Color? valueColor,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -802,7 +585,7 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
     );
   }
 
-// Helper method to get status color
+  // Helper method to get status color
   Color _getStatusColor(String status) {
     switch (status.toLowerCase()) {
       case 'Pending':
@@ -822,14 +605,14 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
     }
   }
 
-// Helper widget for info cards (2x2 grid)
+  // Helper widget for info cards (2x2 grid)
   Widget _infoCard(
-      IconData icon,
-      String text, {
-        Color backgroundColor = Colors.white,
-        Color iconColor = Colors.black54,
-        Color textColor = Colors.black87,
-      }) {
+    IconData icon,
+    String text, {
+    Color backgroundColor = Colors.white,
+    Color iconColor = Colors.black54,
+    Color textColor = Colors.black87,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
       decoration: BoxDecoration(
@@ -864,10 +647,6 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
     } catch (e) {
       return scheduleAt;
     }
-  }
-
-  String _formatPrice(int price) {
-    return '${price ~/ 1000}K';
   }
 
   String _formatDate(String scheduleAt) {
@@ -1030,258 +809,237 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
   }
 
   Widget _buildRequestCard(BookingRequest request) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          // Customer Info and Price
-          Row(
-            children: [
-              // Avatar
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: AppColors.greyLight,
-                  shape: BoxShape.circle,
+    return GestureDetector(
+      onTap: () => _showUploadPhotoDialog(request),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 16),
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 15,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            // Customer Info and Price
+            Row(
+              children: [
+                // Avatar
+                Container(
+                  width: 60,
+                  height: 60,
+                  decoration: BoxDecoration(
+                    color: AppColors.greyLight,
+                    shape: BoxShape.circle,
+                  ),
+                  child: ClipOval(
+                    child: CloudinaryImage(
+                      publicId: request.customerAvatar!,
+                      width: 60,
+                      height: 60,
+                      crop: 'fill',
+                      gravity: 'face',
+                      quality: 80,
+                    ),
+                  ),
                 ),
-                child: request.customerAvatar != null
-                    ? ClipOval(
-                        child: Image.network(
-                          request.customerAvatar!,
-                          fit: BoxFit.cover,
+
+                const SizedBox(width: 12),
+
+                // Name and Date
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        request.customerName,
+                        style: AppTextStyles.headline4.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                          color: Colors.black87,
                         ),
-                      )
-                    : const Icon(
-                        Icons.person,
-                        color: AppColors.textSecondary,
-                        size: 32,
                       ),
-              ),
-
-              const SizedBox(width: 12),
-
-              // Name and Date
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      request.customerName,
-                      style: AppTextStyles.headline4.copyWith(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                        color: Colors.black87,
+                      const SizedBox(height: 4),
+                      Text(
+                        _formatDateTime(request.scheduleAt),
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.textSecondary,
+                          fontSize: 11,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _formatDateTime(request.scheduleAt),
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textSecondary,
-                        fontSize: 11,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
 
-              // Price badge
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 8,
+                // Price badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SvgPicture.asset(
+                        AppAssets.walletIcon,
+                        width: 16,
+                        height: 16,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        StringUtils.formatVND(
+                          (request.price),
+                          showSymbol: false,
+                        ),
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                decoration: BoxDecoration(
-                  color: AppColors.primary,
-                  borderRadius: BorderRadius.circular(20),
+              ],
+            ),
+
+            const SizedBox(height: 16),
+
+            // Status and Duration Badges
+            Row(
+              children: [
+                // Status Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.check_circle,
+                        color: Colors.green,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        request.photoType,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: Colors.green,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SvgPicture.asset(
-                      AppAssets.walletIcon,
-                      width: 16,
-                      height: 16,
+
+                const SizedBox(width: 8),
+
+                // Duration Badge
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.access_time,
+                        color: AppColors.primary,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        request.duration,
+                        style: AppTextStyles.bodySmall.copyWith(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
+            // Action Buttons
+            Row(
+              children: [
+                // Reject Button
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => _rejectRequest(request),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.textSecondary,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                      elevation: 0,
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      StringUtils.formatVND((request.price), showSymbol: false),
-                      style: AppTextStyles.bodyMedium.copyWith(
+                    child: Text(
+                      'Từ Chối',
+                      style: AppTextStyles.buttonMedium.copyWith(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 14,
                       ),
                     ),
-                  ],
+                  ),
                 ),
-              ),
-            ],
-          ),
 
-          const SizedBox(height: 16),
+                const SizedBox(width: 12),
 
-          // Status and Duration Badges
-          Row(
-            children: [
-              // Status Badge
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.check_circle,
-                      color: Colors.green,
-                      size: 14,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      request.photoType,
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: Colors.green,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 11,
+                // Accept Button
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () => _acceptRequest(request),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primaryDarker,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
                       ),
+                      elevation: 0,
                     ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(width: 8),
-
-              // Duration Badge
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.access_time,
-                      color: AppColors.primary,
-                      size: 14,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      request.duration,
-                      style: AppTextStyles.bodySmall.copyWith(
+                    child: Text(
+                      'Chấp Nhận',
+                      style: AppTextStyles.buttonMedium.copyWith(
                         color: AppColors.primary,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 20),
-
-          // Action Buttons
-          Row(
-            children: [
-              // Reject Button
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () => _rejectRequest(request),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.textSecondary,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    'Từ Chối',
-                    style: AppTextStyles.buttonMedium.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
                   ),
                 ),
-              ),
-
-              const SizedBox(width: 12),
-
-              // Accept Button
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: () => _acceptRequest(request),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryDarker,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: Text(
-                    'Chấp Nhận',
-                    style: AppTextStyles.buttonMedium.copyWith(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-              ),
-
-              const SizedBox(width: 12),
-
-              // Upload Photo Button
-              Expanded(
-                child: ElevatedButton.icon(
-                  onPressed: () => _showUploadPhotoDialog(request),
-                  icon: const Icon(Icons.cloud_upload, size: 18),
-                  label: Text(
-                    'Tải ảnh',
-                    style: AppTextStyles.buttonMedium.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -13,7 +13,7 @@ import 'package:snapdi/features/profile/presentation/screens/account_settings_sc
 import 'package:snapdi/features/chat/presentation/screens/chat_screen.dart';
 import 'package:snapdi/features/shared/presentation/screens/main_navigation_screen.dart';
 import 'package:snapdi/features/home/presentation/screens/home_screen.dart';
-import 'package:snapdi/features/booking/presentation/screens/my_booking_screen.dart';
+import 'package:snapdi/features/booking/presentation/booking_schedule_screen.dart';
 import 'package:snapdi/features/snap/presentation/screens/snap_screen.dart';
 import 'package:snapdi/features/snap/presentation/screens/booking_status_screen.dart';
 import 'package:snapdi/core/constants/app_theme.dart';
@@ -93,7 +93,7 @@ final GoRouter router = GoRouter(
           path: '/bookings',
           pageBuilder: (context, state) => NoTransitionPage(
             key: state.pageKey,
-            child: const MyBookingScreen(),
+            child: const BookingScheduleScreen(),
           ),
         ),
         GoRoute(
@@ -148,7 +148,7 @@ final GoRouter router = GoRouter(
     GoRoute(
       path: '/bookings',
       parentNavigatorKey: _rootNavigatorKey,
-      builder: (context, state) => const MyBookingScreen(),
+      builder: (context, state) => const BookingScheduleScreen(),
     ),
 
     // Booking status route (booking detail / status tracker)

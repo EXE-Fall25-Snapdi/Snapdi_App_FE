@@ -44,9 +44,9 @@ class _SplashScreenState extends State<SplashScreen> {
         
         if (!mounted) return;
 
-        // Navigate to photographer-snap if role is 3, otherwise go to home
+        // Navigate to photographer-welcome if role is 3, otherwise go to home
         if (roleId == 3) {
-          context.go('/photographer-snap');
+          context.go('/photographer-welcome');
         } else {
           context.go('/home');
         }

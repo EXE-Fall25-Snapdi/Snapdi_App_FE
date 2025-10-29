@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../core/constants/app_assets.dart';
-import '../../../../core/constants/app_theme.dart';
+import '../../../core/constants/app_assets.dart';
+import '../../../core/constants/app_theme.dart';
 import 'package:snapdi/features/snap/data/services/booking_service.dart';
 import 'package:snapdi/features/snap/data/models/booking_list_response.dart';
 import 'package:snapdi/features/snap/data/models/booking_response.dart';

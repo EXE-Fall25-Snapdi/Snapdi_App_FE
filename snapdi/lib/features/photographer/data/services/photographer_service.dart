@@ -200,6 +200,159 @@ class PhotographerService {
       client.close();
     }
   }
+
+  /// Get current photographer availability status and profile
+  /// 
+  /// Returns photographer data including isAvailable and levelPhotographer
+  Future<PhotographerAvailability?> getAvailability(
+      {required int photographerId}) async {
+    // Bypass SSL certificate verification for development only
+    if (Environment.isDevelopment) {
+      HttpOverrides.global = _DevHttpOverrides();
+    }
+
+    try {
+      return await _performGetAvailability(photographerId: photographerId);
+    } catch (e, stackTrace) {
+      if (e.toString().contains('TOKEN_EXPIRED') ||
+          e.toString().contains('401') ||
+          e.toString().contains('bad response')) {
+        print('PhotographerService: Token expired, attempting refresh...');
+
+        // Try to refresh the token
+        final refreshResult = await _authService.refreshToken();
+
+        return refreshResult.fold(
+          (failure) {
+            print(
+                'PhotographerService: Token refresh failed - ${failure.message}');
+            // Check if it's refresh token expiration
+            if (failure.message.contains('REFRESH_TOKEN_EXPIRED')) {
+              print('PhotographerService: Refresh token expired, need to re-login');
+              throw Exception('REFRESH_TOKEN_EXPIRED');
+            }
+            // Throw TOKEN_EXPIRED for other auth failures
+            throw Exception('TOKEN_EXPIRED: ${failure.message}');
+          },
+          (loginResponse) {
+            print(
+                'PhotographerService: Token refreshed successfully, retrying request...');
+            // Retry the original request with the new token
+            return _performGetAvailability(photographerId: photographerId);
+          },
+        );
+      }
+
+      print('PhotographerService: Availability fetch failed - $e');
+      print('Stack trace: $stackTrace');
+      return null;
+    }
+  }
+
+  Future<PhotographerAvailability?> _performGetAvailability(
+      {required int photographerId}) async {
+    final client = _createClient();
+
+    try {
+      final token = await _tokenStorage.getAccessToken();
+      if (token == null) {
+        print('PhotographerService: No access token found');
+        return null;
+      }
+
+      print(
+          'PhotographerService: Fetching availability for photographer #$photographerId');
+
+      final response = await client.get(
+        Uri.parse(
+          '${Environment.apiBaseUrl}/api/Photographer/me/availability',
+        ),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      print('PhotographerService: Response status - ${response.statusCode}');
+
+      // Handle success status codes
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        print('PhotographerService: Availability fetched successfully');
+        final jsonData = jsonDecode(response.body);
+        return PhotographerAvailability.fromJson(jsonData);
+      } else if (response.statusCode == 401) {
+        print('PhotographerService: Unauthorized - token may be expired');
+        throw Exception('TOKEN_EXPIRED');
+      } else {
+        print('PhotographerService: Request failed with status ${response.statusCode}');
+        print('PhotographerService: Response body - ${response.body}');
+        return null;
+      }
+    } catch (e, stackTrace) {
+      if (e.toString().contains('TOKEN_EXPIRED')) {
+        rethrow; // Let the parent method handle token expiration
+      }
+
+      print('PhotographerService: Error in _performGetAvailability - $e');
+      print('Stack trace: $stackTrace');
+      rethrow; // Rethrow to provide meaningful error to caller
+    } finally {
+      client.close();
+    }
+  }
+}
+
+// Model for photographer availability status
+class PhotographerAvailability {
+  final int userId;
+  final String name;
+  final String email;
+  final bool isAvailable;
+  final double avgRating;
+  final String? levelPhotographer;
+  final PhotographerLocation? currentLocation;
+
+  PhotographerAvailability({
+    required this.userId,
+    required this.name,
+    required this.email,
+    required this.isAvailable,
+    required this.avgRating,
+    this.levelPhotographer,
+    this.currentLocation,
+  });
+
+  factory PhotographerAvailability.fromJson(Map<String, dynamic> json) {
+    return PhotographerAvailability(
+      userId: json['userId'] as int? ?? 0,
+      name: json['name'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      isAvailable: json['isAvailable'] as bool? ?? false,
+      avgRating: (json['avgRating'] as num?)?.toDouble() ?? 0.0,
+      levelPhotographer: json['levelPhotographer'] as String?,
+      currentLocation: json['currentLocation'] != null
+          ? PhotographerLocation.fromJson(json['currentLocation'])
+          : null,
+    );
+  }
+}
+
+// Model for photographer location
+class PhotographerLocation {
+  final double latitude;
+  final double longitude;
+
+  PhotographerLocation({
+    required this.latitude,
+    required this.longitude,
+  });
+
+  factory PhotographerLocation.fromJson(Map<String, dynamic> json) {
+    return PhotographerLocation(
+      latitude: (json['latitude'] as num?)?.toDouble() ?? 0.0,
+      longitude: (json['longitude'] as num?)?.toDouble() ?? 0.0,
+    );
+  }
 }
 
 class _DevHttpOverrides extends HttpOverrides {

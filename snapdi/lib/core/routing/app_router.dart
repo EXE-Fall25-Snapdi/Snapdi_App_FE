@@ -119,18 +119,11 @@ final GoRouter router = GoRouter(
         GoRoute(
           path: '/booking/:id/status',
           pageBuilder: (context, state) {
-            final id = int.tryParse(state.pathParameters['id'] ?? '');
-            if (id == null) {
-              return NoTransitionPage(
-                key: state.pageKey,
-                child: const Scaffold(
-                  body: Center(child: Text('Invalid booking id')),
-                ),
-              );
-            }
+            final idStr = state.pathParameters['id'];
+            final id = idStr != null ? int.tryParse(idStr) : null;
             return NoTransitionPage(
               key: state.pageKey,
-              child: BookingStatusScreen(bookingId: id, initialStatus: 'Paid'),
+              child: BookingStatusScreen(bookingId: id),
             );
           },
         ),

@@ -109,15 +109,35 @@ class BookingData {
   factory BookingData.fromJson(Map<String, dynamic> json) {
     return BookingData(
       bookingId: json['bookingId'] ?? 0,
-      customer: BookingUser.fromJson(json['customer'] ?? {}),
-      photographer: BookingPhotographer.fromJson(json['photographer'] ?? {}),
+      customer: json.containsKey('customer')
+          ? BookingUser.fromJson(json['customer'])
+          : BookingUser(
+              userId: json['customerId'] ?? 0,
+              name: json['customerName'] ?? '',
+              email: json['customerEmail'] ?? '',
+              phone: json['customerPhone'] ?? '',
+            ),
+      photographer: json.containsKey('photographer')
+          ? BookingPhotographer.fromJson(json['photographer'])
+          : BookingPhotographer(
+              userId: json['photographerId'] ?? 0,
+              name: json['photographerName'] ?? '',
+              email: json['photographerEmail'] ?? '',
+              phone: json['photographerPhone'] ?? '',
+              avgRating: 5.0,
+            ),
       scheduleAt: json['scheduleAt'] ?? '',
       locationAddress: json['locationAddress'] ?? '',
-      status: BookingStatus.fromJson(json['status'] ?? {}),
+      status: json.containsKey('status')
+          ? BookingStatus.fromJson(json['status'])
+          : BookingStatus(
+              statusId: json['statusId'] ?? 0,
+              statusName: json['statusName'] ?? '',
+            ),
       price: json['price'] ?? 0,
       note: json['note'],
       photoTypeId: json['photoTypeId'] ?? 0,
-      time: json['time'] ?? 0
+      time: json['time'] ?? 0,
     );
   }
 }
@@ -137,5 +157,3 @@ class BookingResponse {
     );
   }
 }
-
-

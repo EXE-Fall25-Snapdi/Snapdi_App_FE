@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/providers/user_info_provider.dart';
@@ -23,6 +24,8 @@ class _PhotographerWelcomeScreenState extends State<PhotographerWelcomeScreen> {
 
   bool _isOnline = false;
   bool _isUpdatingStatus = false;
+  bool _isLoading = true;
+  String? _levelPhotographer;
 
   @override
   void initState() {
@@ -35,6 +38,62 @@ class _PhotographerWelcomeScreenState extends State<PhotographerWelcomeScreen> {
       tokenStorage: tokenStorage,
     );
     _photographerService = PhotographerService(authService: _authService);
+
+    // Load availability status on init
+    _loadAvailability();
+  }
+
+  Future<void> _loadAvailability() async {
+    try {
+      final userId = await _userInfoProvider.getUserId();
+      if (userId == null) {
+        throw Exception('User ID not found');
+      }
+
+      final availability = await _photographerService.getAvailability(
+        photographerId: userId,
+      );
+      if (availability != null) {
+        setState(() {
+          _isOnline = availability.isAvailable;
+          _levelPhotographer = availability.levelPhotographer;
+          _isLoading = false;
+        });
+      } else {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
+    } catch (e) {
+      print('Error loading availability: $e');
+      // Check if it's a refresh token expiration error
+      if (e.toString().contains('REFRESH_TOKEN_EXPIRED')) {
+        print('Refresh token expired, session ended. Redirecting to login');
+        if (mounted) {
+          // Clear stored tokens
+          await TokenStorage.instance.clearTokens();
+          // Redirect to login
+          if (mounted) {
+            Navigator.of(context).pushReplacementNamed('/login');
+          }
+        }
+      } else if (e.toString().contains('TOKEN_EXPIRED') ||
+          e.toString().contains('401')) {
+        print('Access token expired, clearing and redirecting to login');
+        if (mounted) {
+          // Clear stored tokens
+          await TokenStorage.instance.clearTokens();
+          // Redirect to login
+          if (mounted) {
+            context.go('/login');
+          }
+        }
+      } else {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
+    }
   }
 
   Future<void> _toggleStatus() async {
@@ -211,81 +270,151 @@ class _PhotographerWelcomeScreenState extends State<PhotographerWelcomeScreen> {
 
                 const SizedBox(height: 100),
 
-                // Toggle Online/Offline button
+                // Toggle Online/Offline button - Pill style toggle
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 32),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 60,
-                    child: ElevatedButton(
-                      onPressed: _isUpdatingStatus ? null : _toggleStatus,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _isOnline
-                            ? Colors.green
-                            : Colors.white,
-                        foregroundColor: _isOnline
-                            ? Colors.white
-                            : AppColors.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
+                  child: Container(
+                    height: 56,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2D5A54),
+                      borderRadius: BorderRadius.circular(50),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.2),
+                          blurRadius: 12,
+                          offset: const Offset(0, 6),
                         ),
-                        elevation: 8,
-                        shadowColor: Colors.black.withOpacity(0.3),
-                      ),
-                      child: _isUpdatingStatus
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: _isLoading
                           ? Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 SizedBox(
-                                  width: 24,
-                                  height: 24,
+                                  width: 20,
+                                  height: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     valueColor: AlwaysStoppedAnimation<Color>(
-                                      _isOnline
-                                          ? Colors.white
-                                          : AppColors.primary,
+                                      Colors.white,
                                     ),
                                   ),
                                 ),
                                 const SizedBox(width: 12),
                                 Text(
-                                  'Đang cập nhật...',
+                                  'Đang tải...',
                                   style: AppTextStyles.buttonLarge.copyWith(
-                                    color: _isOnline
-                                        ? Colors.white
-                                        : AppColors.primary,
-                                    fontSize: 18,
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ],
                             )
-                          : Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  _isOnline
-                                      ? Icons.check_circle
-                                      : Icons.double_arrow_rounded,
-                                  color: _isOnline
-                                      ? Colors.white
-                                      : AppColors.primary,
-                                  size: 28,
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
-                                  _isOnline
-                                      ? 'Online - Đang sẵn sàng'
-                                      : 'Go Online',
-                                  style: AppTextStyles.buttonLarge.copyWith(
-                                    color: _isOnline
-                                        ? Colors.white
-                                        : AppColors.primary,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
+                          : _levelPhotographer == null
+                          ? Center(
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const Icon(
+                                    Icons.lock,
+                                    color: Colors.white70,
+                                    size: 20,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Hồ sơ chưa xác nhận',
+                                    style: AppTextStyles.buttonLarge.copyWith(
+                                      color: Colors.white70,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : InkWell(
+                              onTap: _isUpdatingStatus ? null : _toggleStatus,
+                              borderRadius: BorderRadius.circular(50),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  // Left content with arrow
+                                  Expanded(
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(left: 20),
+                                      child: Row(
+                                        children: [
+                                          if (_isUpdatingStatus)
+                                            SizedBox(
+                                              width: 20,
+                                              height: 20,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation<
+                                                      Color
+                                                    >(Colors.white),
+                                              ),
+                                            )
+                                          else
+                                            const Icon(
+                                              Icons.chevron_right,
+                                              color: Colors.white,
+                                              size: 24,
+                                            ),
+                                          const SizedBox(width: 12),
+                                          Text(
+                                            _isOnline
+                                                ? 'Go Offline'
+                                                : 'Go Online',
+                                            style: AppTextStyles.buttonLarge
+                                                .copyWith(
+                                                  color: Colors.white,
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                  // Right circle indicator
+                                  Container(
+                                    margin: const EdgeInsets.all(4),
+                                    width: 48,
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      color: _isOnline
+                                          ? Colors.green
+                                          : Colors.white,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.2),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Center(
+                                      child: Icon(
+                                        _isOnline
+                                            ? Icons.check_circle
+                                            : Icons.circle_outlined,
+                                        color: _isOnline
+                                            ? Colors.white
+                                            : const Color(0xFF2D5A54),
+                                        size: 28,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                ],
+                              ),
                             ),
                     ),
                   ),

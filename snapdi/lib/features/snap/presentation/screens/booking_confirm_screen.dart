@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../payment/presentation/screens/ManualPaymentScreen.dart';
-import '../../../payment/presentation/screens/payment_method_screen.dart';
 import 'finding_snappers_screen.dart';
 // NEW: import payment service
 import '../../../payment/domain/services/payment_service.dart';

@@ -211,7 +211,7 @@ class _PortfolioUploadScreenState extends State<PortfolioUploadScreen> {
 
   void _navigateToHome() {
     // Navigate to home and clear all previous routes
-    context.go('/home');
+    context.go('/photographer-welcome');
   }
 
   @override

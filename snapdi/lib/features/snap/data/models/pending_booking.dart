@@ -73,6 +73,9 @@ class PendingBooking {
   @JsonKey(name: 'note')
   final String? note;
 
+  @JsonKey(name: 'photoLink')
+  final String? photoLink;
+
   PendingBooking({
     required this.bookingId,
     required this.user,
@@ -84,6 +87,7 @@ class PendingBooking {
     required this.duration,
     required this.photoType,
     this.note,
+    this.photoLink,
   });
 
   factory PendingBooking.fromJson(Map<String, dynamic> json) =>

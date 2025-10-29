@@ -663,7 +663,40 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
                                 ),
                               ),
                             ),
+                            const SizedBox(height: 24),
                           ],
+
+                          // View Booking Status Button
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                // Close the modal
+                                Navigator.of(
+                                  context,
+                                  rootNavigator: true,
+                                ).pop();
+                                // Navigate to booking status screen
+                                context.push(
+                                  '/booking/${booking.bookingId}/status',
+                                );
+                              },
+                              icon: Icon(Icons.track_changes, size: 20),
+                              label: Text('Xem trạng thái đơn hàng'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF1DB584),
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 2,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
                         ],
                       ),
                     ),

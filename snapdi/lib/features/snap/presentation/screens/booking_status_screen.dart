@@ -78,27 +78,21 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
       debugPrint("📡 Joined room: Booking_$bookingId");
 
       // 👉 Lắng đúng event backend gửi
-      _hubConnection?.on('BookingUpdated', (args) {
+      _hubConnection?.on('BookingStatusChanged', (args) {
         if (args == null || args.isEmpty) return;
-        try {
-          final data = args.first;
-          debugPrint("📩 Received BookingUpdated: $data");
-
-          // Parse booking object (flat structure from API)
-          if (data is Map) {
-            // API trả flat structure: statusId ở root level, không phải nested
-            final newStatusId = data['statusId'] ?? 0;
-
-            setState(() {
-              _currentStep = _mapStatusToStep(newStatusId);
-              _booking = BookingData.fromJson(Map<String, dynamic>.from(data));
-            });
-            debugPrint(
-              "✅ Updated booking: status=$newStatusId, step=$_currentStep",
+        final data = args.first;
+        if (data is Map) {
+          final newStatusId = data['newStatusId'] ?? 0;
+          final newStatusName = data['newStatusName'] ?? 'Unknown';
+          setState(() {
+            _currentStep = _mapStatusToStep(newStatusId);
+            _booking = _booking?.copyWith(
+              status: BookingStatus(
+                statusId: newStatusId,
+                statusName: newStatusName,
+              ),
             );
-          }
-        } catch (e) {
-          debugPrint('❌ Error parsing BookingUpdated: $e');
+          });
         }
       });
     } catch (e) {
@@ -276,30 +270,6 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
       default:
         // For statuses outside 3..7, show 0 or -1 depending on semantics
         return 0;
-    }
-  }
-
-  String _mapStatusName(int statusId) {
-    // Return status display name based on backend id (align with provided table)
-    switch (statusId) {
-      case 1:
-        return 'Pending';
-      case 2:
-        return 'Confirmed';
-      case 3:
-        return 'Paid';
-      case 4:
-        return 'Going';
-      case 5:
-        return 'Processing';
-      case 6:
-        return 'Done';
-      case 7:
-        return 'Completed';
-      case 8:
-        return 'Cancelled';
-      default:
-        return 'Unknown';
     }
   }
 

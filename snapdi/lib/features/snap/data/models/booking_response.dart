@@ -79,6 +79,12 @@ class BookingStatus {
       statusName: json['statusName'] ?? '',
     );
   }
+  BookingStatus copyWith({int? statusId, String? statusName}) {
+    return BookingStatus(
+      statusId: statusId ?? this.statusId,
+      statusName: statusName ?? this.statusName,
+    );
+  }
 }
 
 class BookingData {
@@ -138,6 +144,31 @@ class BookingData {
       note: json['note'],
       photoTypeId: json['photoTypeId'] ?? 0,
       time: json['time'] ?? 0,
+    );
+  }
+  BookingData copyWith({
+    int? bookingId,
+    BookingUser? customer,
+    BookingPhotographer? photographer,
+    String? scheduleAt,
+    String? locationAddress,
+    BookingStatus? status,
+    int? price,
+    String? note,
+    int? photoTypeId,
+    int? time,
+  }) {
+    return BookingData(
+      bookingId: bookingId ?? this.bookingId,
+      customer: customer ?? this.customer,
+      photographer: photographer ?? this.photographer,
+      scheduleAt: scheduleAt ?? this.scheduleAt,
+      locationAddress: locationAddress ?? this.locationAddress,
+      status: status ?? this.status,
+      price: price ?? this.price,
+      note: note ?? this.note,
+      photoTypeId: photoTypeId ?? this.photoTypeId,
+      time: time ?? this.time,
     );
   }
 }

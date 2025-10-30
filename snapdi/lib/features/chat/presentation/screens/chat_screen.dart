@@ -83,7 +83,7 @@ class _ChatScreenState extends State<ChatScreen> {
       },
       (messages) {
         setState(() {
-          _messages = messages.reversed.toList(); // Reverse to show oldest first
+          _messages = messages; // Keep original order: oldest first
           _isLoading = false;
         });
         _scrollToBottom();

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:snapdi/features/snap/data/services/booking_service.dart';
 import 'package:snapdi/features/snap/data/models/pending_booking.dart';
 import 'package:url_launcher/url_launcher.dart'; // Thêm dependency này vào pubspec.yaml
@@ -212,6 +213,57 @@ class _BookingAcceptedScheduleScreenState
                         ),
                         const SizedBox(height: 24),
 
+                        // Notification for "Done" status
+                        if (booking.status.statusId == 6)
+                          Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.shade50,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.orange.shade200,
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Icon(
+                                  Icons.info_outline,
+                                  color: Colors.orange.shade700,
+                                  size: 24,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Chờ Link Ảnh',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.orange.shade700,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Chụp ảnh đã hoàn tất. Vui lòng chờ Photographer gửi link ảnh cho bạn.',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          color: Colors.orange.shade600,
+                                          height: 1.4,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        if (booking.status.statusId == 6)
+                          const SizedBox(height: 24),
+
                         // Booking ID
                         _buildDetailRow(
                           icon: Icons.confirmation_number,
@@ -315,6 +367,28 @@ class _BookingAcceptedScheduleScreenState
                                 ),
                               ),
                             ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // View Profile Button
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.pop(context);
+                              context.push('/photographer-profile/${booking.photographer.userId}');
+                            },
+                            icon: const Icon(Icons.person, size: 18),
+                            label: const Text('Xem Hồ Sơ'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF1DB584),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 24),

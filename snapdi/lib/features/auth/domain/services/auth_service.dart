@@ -44,6 +44,18 @@ abstract class AuthService {
     required String email,
   });
 
+  // Password Reset
+  Future<Either<Failure, VerificationResponse>> forgotPassword({
+    required String email,
+  });
+
+  Future<Either<Failure, VerificationResponse>> resetPassword({
+    required String email,
+    required String code,
+    required String newPassword,
+    required String confirmPassword,
+  });
+
   // Session Management
   Future<bool> storeAuthTokens(LoginResponse loginResponse);
   Future<bool> storeAuthTokensFromSignUp(SignUpResponse signUpResponse);
@@ -203,9 +215,7 @@ class AuthServiceImpl implements AuthService {
     try {
       final currentRefreshToken = await _tokenStorage.getRefreshToken();
       if (currentRefreshToken == null) {
-        return const Left(
-          AuthenticationFailure('No refresh token available - REFRESH_TOKEN_EXPIRED'),
-        );
+        return const Left(ServerFailure('No refresh token available'));
       }
 
       final response = await _apiService.post(
@@ -218,25 +228,7 @@ class AuthServiceImpl implements AuthService {
       await storeAuthTokens(loginResponse);
 
       return Right(loginResponse);
-    } on DioException catch (e) {
-      // Handle refresh token expiration
-      if (e.response?.statusCode == 401) {
-        print('AuthService: Refresh token expired - 401 response');
-        return const Left(
-          AuthenticationFailure('REFRESH_TOKEN_EXPIRED'),
-        );
-      }
-      return Left(_handleDioError(e));
     } catch (e) {
-      print('AuthService: Error refreshing token - $e');
-      // Check if error indicates refresh token is expired
-      if (e.toString().contains('401') || 
-          e.toString().contains('bad response') ||
-          e.toString().contains('Unauthorized')) {
-        return const Left(
-          AuthenticationFailure('REFRESH_TOKEN_EXPIRED'),
-        );
-      }
       return Left(ServerFailure(e.toString()));
     }
   }
@@ -444,6 +436,94 @@ class AuthServiceImpl implements AuthService {
       return Left(
         ServerFailure(
           'Unexpected error while resending verification code: ${e.toString()}',
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, VerificationResponse>> forgotPassword({
+    required String email,
+  }) async {
+    try {
+      final response = await _apiService.post(
+        '/api/Auth/forgot-password',
+        data: {'email': email},
+        options: Options(headers: {'Content-Type': 'application/json'}),
+      );
+
+      if (response.statusCode == 200) {
+        if (response.data != null) {
+          final verificationResponse = VerificationResponse.fromJson(
+            response.data,
+          );
+          return Right(verificationResponse);
+        } else {
+          return Left(
+            ServerFailure('No data received from forgot password request'),
+          );
+        }
+      } else {
+        return Left(
+          ServerFailure(
+            'Failed to send password reset code with status: ${response.statusCode}',
+          ),
+        );
+      }
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return Left(
+        ServerFailure(
+          'Unexpected error during forgot password: ${e.toString()}',
+        ),
+      );
+    }
+  }
+
+  @override
+  Future<Either<Failure, VerificationResponse>> resetPassword({
+    required String email,
+    required String code,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    try {
+      final response = await _apiService.post(
+        '/api/Auth/reset-password',
+        data: {
+          'email': email,
+          'code': code,
+          'newPassword': newPassword,
+          'confirmPassword': confirmPassword,
+        },
+        options: Options(headers: {'Content-Type': 'application/json'}),
+      );
+
+      if (response.statusCode == 200) {
+        if (response.data != null) {
+          final verificationResponse = VerificationResponse.fromJson(
+            response.data,
+          );
+          return Right(verificationResponse);
+        } else {
+          return Left(
+            ServerFailure('No data received from password reset'),
+          );
+        }
+      } else {
+        return Left(
+          ServerFailure(
+            'Failed to reset password with status: ${response.statusCode}',
+          ),
+        );
+      }
+    } on DioException catch (e) {
+      return Left(_handleDioError(e));
+    } catch (e) {
+      return Left(
+        ServerFailure(
+          'Unexpected error during password reset: ${e.toString()}',
         ),
       );
     }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:snapdi/features/snap/data/services/booking_service.dart';
 import 'package:snapdi/features/snap/data/models/pending_booking.dart';
 import '../../profile/presentation/widgets/cloudinary_image.dart';
@@ -289,6 +290,28 @@ class _BookingPendingScheduleScreenState
                               ),
                             ),
                           ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // View Profile Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            context.push('/photographer-profile/${booking.photographer.userId}');
+                          },
+                          icon: const Icon(Icons.person, size: 18),
+                          label: const Text('Xem Hồ Sơ'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1DB584),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 24),

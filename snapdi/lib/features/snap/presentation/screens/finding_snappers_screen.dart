@@ -6,7 +6,7 @@ import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
 import 'dart:async';
 import '../../../profile/presentation/widgets/cloudinary_image.dart';
-import '../../../chat/data/services/chat_api_service.dart';
+// import '../../../chat/data/services/chat_api_service.dart';
 import '../../data/services/snapper_service.dart';
 import '../../data/services/booking_service.dart';
 import '../../data/models/find_snappers_request.dart';
@@ -54,9 +54,9 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
   final List<SnapperProfile> _foundSnappers = [];
   final SnapperService _snapperService = SnapperService();
   final BookingService _bookingService = BookingService();
-  final ChatApiServiceImpl _chatApiService = ChatApiServiceImpl();
+  // final ChatApiServiceImpl _chatApiService = ChatApiServiceImpl();
   bool _isCreatingBooking = false;
-  bool _isCreatingConversation = false;
+  // bool _isCreatingConversation = false;
 
   // Store search center and radius for map display
   double? _searchCenterLatitude;
@@ -111,7 +111,7 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
       }
 
       final request = FindSnappersRequest(
-        workLocation: widget.city ?? '',
+        workLocation:'',
         photoTypeIds: widget.photoTypeIds ?? [],
         styleIds: widget.styleIds ?? [],
         isAvailable: true,
@@ -237,36 +237,36 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
     }
   }
 
-  Future<void> _openChatWithPhotographer(SnapperProfile snapper) async {
-    if (_isCreatingConversation) return;
+  // Future<void> _openChatWithPhotographer(SnapperProfile snapper) async {
+  //   if (_isCreatingConversation) return;
 
-    setState(() {
-      _isCreatingConversation = true;
-    });
+  //   setState(() {
+  //     _isCreatingConversation = true;
+  //   });
 
-    final result = await _chatApiService.createOrGetConversationWithUser(
-      snapper.userId,
-    );
+  //   final result = await _chatApiService.createOrGetConversationWithUser(
+  //     snapper.userId,
+  //   );
 
-    setState(() {
-      _isCreatingConversation = false;
-    });
+  //   setState(() {
+  //     _isCreatingConversation = false;
+  //   });
 
-    result.fold(
-      (failure) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Không thể mở chat: ${failure.message}')),
-          );
-        }
-      },
-      (conversationId) {
-        if (mounted) {
-          context.push('/chat/$conversationId', extra: snapper.name);
-        }
-      },
-    );
-  }
+  //   result.fold(
+  //     (failure) {
+  //       if (mounted) {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(content: Text('Không thể mở chat: ${failure.message}')),
+  //         );
+  //       }
+  //     },
+  //     (conversationId) {
+  //       if (mounted) {
+  //         context.push('/chat/$conversationId', extra: snapper.name);
+  //       }
+  //     },
+  //   );
+  // }
 
   void _showErrorDialog(String message) {
     showDialog(
@@ -937,7 +937,12 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                         height: 20,
                       ),
                       onPressed: () {
-                        _openChatWithPhotographer(snapper);
+                        // _openChatWithPhotographer(snapper);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Bạn cần thanh toán để mở chat với Snapper'),
+                          ),
+                        );
                       },
                       padding: EdgeInsets.zero,
                     ),

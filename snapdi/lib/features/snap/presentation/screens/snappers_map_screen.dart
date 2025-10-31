@@ -8,7 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/utils/utils.dart';
-import '../../../chat/data/services/chat_api_service.dart';
+// import '../../../chat/data/services/chat_api_service.dart';
 
 /// Screen to display snappers on a map based on their location
 class SnappersMapScreen extends StatefulWidget {
@@ -36,7 +36,7 @@ class _SnappersMapScreenState extends State<SnappersMapScreen> {
   final List<Marker> _markers = [];
   SnapperProfile? _selectedSnapper;
   bool _isCreatingConversation = false;
-  final ChatApiServiceImpl _chatApiService = ChatApiServiceImpl();
+  // final ChatApiServiceImpl _chatApiService = ChatApiServiceImpl();
 
   @override
   void initState() {
@@ -110,36 +110,36 @@ class _SnappersMapScreenState extends State<SnappersMapScreen> {
     }
   }
 
-  Future<void> _openChatWithPhotographer(SnapperProfile snapper) async {
-    if (_isCreatingConversation) return;
+  // Future<void> _openChatWithPhotographer(SnapperProfile snapper) async {
+  //   if (_isCreatingConversation) return;
 
-    setState(() {
-      _isCreatingConversation = true;
-    });
+  //   setState(() {
+  //     _isCreatingConversation = true;
+  //   });
 
-    final result = await _chatApiService.createOrGetConversationWithUser(
-      snapper.userId,
-    );
+  //   final result = await _chatApiService.createOrGetConversationWithUser(
+  //     snapper.userId,
+  //   );
 
-    setState(() {
-      _isCreatingConversation = false;
-    });
+  //   setState(() {
+  //     _isCreatingConversation = false;
+  //   });
 
-    result.fold(
-      (failure) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Không thể mở chat: ${failure.message}')),
-          );
-        }
-      },
-      (conversationId) {
-        if (mounted) {
-          context.push('/chat/$conversationId', extra: snapper.name);
-        }
-      },
-    );
-  }
+  //   result.fold(
+  //     (failure) {
+  //       if (mounted) {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(content: Text('Không thể mở chat: ${failure.message}')),
+  //         );
+  //       }
+  //     },
+  //     (conversationId) {
+  //       if (mounted) {
+  //         context.push('/chat/$conversationId', extra: snapper.name);
+  //       }
+  //     },
+  //   );
+  // }
 
   void _createBookingWithSnapper(SnapperProfile snapper) {
     // Pop back to finding snappers screen with the selected snapper
@@ -503,7 +503,14 @@ class _SnappersMapScreenState extends State<SnappersMapScreen> {
                       onPressed: _isCreatingConversation
                           ? null
                           : () {
-                              _openChatWithPhotographer(snapper);
+                              // _openChatWithPhotographer(snapper);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Bạn cần thanh toán để mở chat với Snapper',
+                                  ),
+                                ),
+                              );
                             },
                       padding: EdgeInsets.zero,
                     ),

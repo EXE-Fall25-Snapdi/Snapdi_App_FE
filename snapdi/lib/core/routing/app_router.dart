@@ -6,6 +6,9 @@ import 'package:snapdi/features/auth/presentation/screens/sign_up_screen.dart';
 import 'package:snapdi/features/auth/presentation/screens/PhotographerSignUpStage1Screen.dart';
 import 'package:snapdi/features/auth/presentation/screens/welcome_screen.dart';
 import 'package:snapdi/features/auth/presentation/screens/splash_screen.dart';
+import 'package:snapdi/features/auth/presentation/screens/verify_code_screen.dart';
+import 'package:snapdi/features/auth/presentation/screens/forgot_password_screen.dart';
+import 'package:snapdi/features/auth/presentation/screens/reset_password_screen.dart';
 import 'package:snapdi/features/payment/presentation/screens/PaymentStatusScreen.dart';
 import 'package:snapdi/features/profile/presentation/screens/profile_screen.dart';
 import 'package:snapdi/features/profile/presentation/screens/photographer_profile_screen.dart';
@@ -38,6 +41,27 @@ final GoRouter router = GoRouter(
       builder: (context, state) => const WelcomeScreen(),
     ),
     GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+    GoRoute(
+      path: '/verify-code',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        final email = extra?['email'] as String? ?? '';
+        final password = extra?['password'] as String? ?? '';
+        return VerifyCodeScreen(email: email, password: password);
+      },
+    ),
+    GoRoute(
+      path: '/forgot-password',
+      builder: (context, state) => const ForgotPasswordScreen(),
+    ),
+    GoRoute(
+      path: '/reset-password',
+      builder: (context, state) {
+        final extra = state.extra as Map<String, dynamic>?;
+        final email = extra?['email'] as String? ?? '';
+        return ResetPasswordScreen(email: email);
+      },
+    ),
     GoRoute(
       path: '/signup',
       builder: (context, state) =>

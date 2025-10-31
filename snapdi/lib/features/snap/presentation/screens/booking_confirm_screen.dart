@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../../payment/presentation/screens/ManualPaymentScreen.dart';
+import '../../../payment/presentation/screens/PaymentStatusScreen.dart'; // NEW: import PaymentStatusScreen
 import 'finding_snappers_screen.dart';
 // NEW: import payment service
 import '../../../payment/domain/services/payment_service.dart';
 // NEW: import request model
 import '../../../payment/data/models/manual_payment_request.dart';
 
-class BookingConfirmScreen extends StatelessWidget {
+class BookingConfirmScreen extends StatefulWidget { // NEW: StatefulWidget để có isLoading
   final SnapperProfile snapper;
   final String? location;
   final DateTime? date;
@@ -29,8 +30,16 @@ class BookingConfirmScreen extends StatelessWidget {
   }) : super(key: key);
 
   @override
+  State<BookingConfirmScreen> createState() => _BookingConfirmScreenState();
+}
+
+class _BookingConfirmScreenState extends State<BookingConfirmScreen> {
+  bool isLoading = false; // NEW: loading state
+  final PaymentService _paymentService = PaymentService(); // NEW: payment service
+
+  @override
   Widget build(BuildContext context) {
-    final double totalAmount = amount;
+    final double totalAmount = widget.amount;
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -76,7 +85,7 @@ class BookingConfirmScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Booking #$bookingId',
+                    'Booking #${widget.bookingId}',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -136,7 +145,7 @@ class BookingConfirmScreen extends StatelessWidget {
                   _buildInfoRow(
                     icon: Icons.person_outline,
                     label: 'Photographer',
-                    value: snapper.name,
+                    value: widget.snapper.name,
                   ),
                   const Divider(height: 24),
                   
@@ -144,7 +153,7 @@ class BookingConfirmScreen extends StatelessWidget {
                   _buildInfoRow(
                     icon: Icons.location_on_outlined,
                     label: 'Địa điểm',
-                    value: location ?? 'Chưa xác định',
+                    value: widget.location ?? 'Chưa xác định',
                   ),
                   const Divider(height: 24),
                   
@@ -152,8 +161,8 @@ class BookingConfirmScreen extends StatelessWidget {
                   _buildInfoRow(
                     icon: Icons.calendar_today_outlined,
                     label: 'Ngày xác nhận đặt',
-                    value: date != null 
-                        ? '${date!.day.toString().padLeft(2, '0')}/${date!.month.toString().padLeft(2, '0')}/${date!.year}'
+                    value: widget.date != null 
+                        ? '${widget.date!.day.toString().padLeft(2, '0')}/${widget.date!.month.toString().padLeft(2, '0')}/${widget.date!.year}'
                         : 'Chưa xác định',
                   ),
                   const Divider(height: 24),
@@ -162,7 +171,7 @@ class BookingConfirmScreen extends StatelessWidget {
                   _buildInfoRow(
                     icon: Icons.access_time_outlined,
                     label: 'Giờ xác nhận đặt',
-                    value: scheduleAt?.format(context) ?? 'Chưa xác định',
+                    value: widget.scheduleAt?.format(context) ?? 'Chưa xác định',
                   ),
                 ],
               ),
@@ -275,32 +284,80 @@ class BookingConfirmScreen extends StatelessWidget {
 
             const SizedBox(height: 32),
 
-            // Nút xác nhận
+            // NEW: 2 NÚT XÁC NHẬN VÀ HỦY
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: () async {
-                    await _handleConfirmBooking(context, totalAmount);
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF00BFA5),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+              child: Column(
+                children: [
+                  // Nút xác nhận và thanh toán
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: isLoading ? null : () async {
+                        await _handleConfirmBooking(context, totalAmount);
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF00BFA5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: isLoading
+                          ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Text(
+                              'Xác nhận và thanh toán',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
                     ),
-                    elevation: 0,
                   ),
-                  child: const Text(
-                    'Xác nhận và thanh toán',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
+                  
+                  const SizedBox(height: 12),
+                  
+                  // NEW: Nút hủy thanh toán (giống ManualPaymentScreen)
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: OutlinedButton(
+                      onPressed: isLoading ? null : _cancelPayment,
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.red),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: isLoading
+                          ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: Colors.red,
+                              ),
+                            )
+                          : const Text(
+                              'Hủy thanh toán',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.red,
+                              ),
+                            ),
                     ),
                   ),
-                ),
+                ],
               ),
             ),
 
@@ -353,6 +410,58 @@ class BookingConfirmScreen extends StatelessWidget {
     );
   }
 
+  // NEW: HÀM HỦY THANH TOÁN (copy từ ManualPaymentScreen)
+  Future<void> _cancelPayment() async {
+    setState(() => isLoading = true);
+    
+    try {
+      // Tạo payment trước để có paymentId
+      final paymentId = await _paymentService.confirmManualPayment(
+        ManualPaymentRequest(
+          bookingId: widget.bookingId,
+          feePolicyId: 1,
+        ),
+      );
+      
+      // Sau đó hủy payment đó
+      final cancelRequest = ManualPaymentRequest(
+        bookingId: widget.bookingId,
+        feePolicyId: 1,
+      );
+      
+      final success = await _paymentService.CancelManualPayment(
+        cancelRequest,
+        paymentId
+      );
+      
+      String status = '';
+      if (success == 'cancelled') {
+        status = 'cancelled';
+      }
+      
+      if (!mounted) return;
+      
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PaymentStatusScreen(status: status),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lỗi: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => isLoading = false);
+    }
+  }
+
   Future<void> _handleConfirmBooking(BuildContext context, double totalAmount) async {
     // 1) Hiện dialog thông báo như cũ
     final ok = await showDialog<bool>(
@@ -368,10 +477,10 @@ class BookingConfirmScreen extends StatelessWidget {
           ],
         ),
         content: Text(
-          'Đã đặt chụp với ${snapper.name} thành công!\n\n'
-          'Mã đặt chỗ: #$bookingId\n'
+          'Đã đặt chụp với ${widget.snapper.name} thành công!\n\n'
+          'Mã đặt chỗ: #${widget.bookingId}\n'
           'Trạng thái: Đang chờ xác nhận\n'
-          'Địa chỉ: ${location ?? 'Chưa xác định'}\n'
+          'Địa chỉ: ${widget.location ?? 'Chưa xác định'}\n'
           'Giá: ${totalAmount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')} VND',
           style: const TextStyle(height: 1.5),
         ),
@@ -389,24 +498,26 @@ class BookingConfirmScreen extends StatelessWidget {
     );
 
     if (ok == true && context.mounted) {
-      // 2) Gọi confirmManualPayment
-      final paymentService = PaymentService();
-      int paymentId = 0;
+      setState(() => isLoading = true);
       
-      // Hiện loading
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => const Center(
-          child: CircularProgressIndicator(color: Color(0xFF00BFA5)),
-        ),
-      );
-
       try {
-        paymentId = await paymentService.confirmManualPayment(
+        // 2) Gọi confirmManualPayment
+        final paymentId = await _paymentService.confirmManualPayment(
           ManualPaymentRequest(
-            bookingId: bookingId,
+            bookingId: widget.bookingId,
             feePolicyId: 1,
+          ),
+        );
+
+        // 3) Điều hướng sang trang thanh toán
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ManualPaymentScreen(
+              bookingId: widget.bookingId,
+              amount: totalAmount,
+              paymentId: paymentId,
+            ),
           ),
         );
       } catch (e) {
@@ -419,22 +530,8 @@ class BookingConfirmScreen extends StatelessWidget {
           ),
         );
       } finally {
-        if (Navigator.of(context).canPop()) {
-          Navigator.of(context).pop(); // đóng loading
-        }
+        if (mounted) setState(() => isLoading = false);
       }
-
-      // 3) Điều hướng sang trang thanh toán
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ManualPaymentScreen(
-            bookingId: bookingId,
-            amount: totalAmount,
-            paymentId: paymentId,
-          ),
-        ),
-      );
     }
   }
 }

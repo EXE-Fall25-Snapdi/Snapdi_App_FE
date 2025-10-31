@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../data/models/manual_payment_request.dart';
@@ -61,8 +62,12 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
         elevation: 0,
         backgroundColor: Colors.white,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+          icon: const Icon(Icons.home, color: Colors.black),
+          onPressed: () {
+            print("Đang gọi context.go('/home')...");
+            Navigator.of(context).popUntil((route) => route.isFirst);
+            print("Đã gọi xong.");
+          },
         ),
         title: const Text(
           'Thanh toán',

@@ -6,6 +6,7 @@ import 'package:snapdi/features/auth/presentation/screens/sign_up_screen.dart';
 import 'package:snapdi/features/auth/presentation/screens/PhotographerSignUpStage1Screen.dart';
 import 'package:snapdi/features/auth/presentation/screens/welcome_screen.dart';
 import 'package:snapdi/features/auth/presentation/screens/splash_screen.dart';
+import 'package:snapdi/features/payment/presentation/screens/PaymentStatusScreen.dart';
 import 'package:snapdi/features/profile/presentation/screens/profile_screen.dart';
 import 'package:snapdi/features/profile/presentation/screens/photographer_profile_screen.dart';
 import 'package:snapdi/features/profile/presentation/screens/manage_portfolio_screen.dart';
@@ -185,6 +186,21 @@ final GoRouter router = GoRouter(
         return ChatScreen(
           conversationId: conversationId ?? 0,
           otherUserName: otherUserName,
+        );
+      },
+    ),
+
+    // --- PayOS handler---
+    GoRoute(
+      // 1. Path này phải khớp chính xác với path trong deep link
+      path: '/result',
+      builder: (context, state) {
+        // 2. Lấy các query parameters từ deep link
+        final status = state.uri.queryParameters['status'] ?? "cancelled";
+
+        // 3. Trả về màn hình tương ứng với các tham số đã lấy
+        return PaymentStatusScreen(
+          status: status,
         );
       },
     ),

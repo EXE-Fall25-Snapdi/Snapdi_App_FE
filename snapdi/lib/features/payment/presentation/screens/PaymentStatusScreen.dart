@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'dart:math' as math;
 
+import 'package:go_router/go_router.dart';
+
 class PaymentStatusScreen extends StatefulWidget {
   final String status; // 'paid', 'cancelled'
 
@@ -152,7 +154,7 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen>
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.popUntil(context, (route) => route.isFirst);
+                    context.go('/home');
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: statusConfig.color,

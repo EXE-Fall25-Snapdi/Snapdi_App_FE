@@ -207,4 +207,66 @@ class PaymentService {
     }
   }
 
+  Future<String> createPayOSPayment({
+    required int bookingId,
+  }) async {
+    try {
+      // 1) Lấy token từ secure storage, fallback SharedPreferences
+      final secureToken = await TokenStorage.instance.getAccessToken();
+      final prefs = await SharedPreferences.getInstance();
+      final legacyToken = prefs.getString(AppConstants.authTokenKey);
+      final token = (secureToken?.isNotEmpty == true) ? secureToken : legacyToken;
+
+      if (token == null || token.isEmpty) {
+        throw Exception('Unauthorized: no auth token found');
+      }
+      print('🔐 Using auth token for PayOS: ${token.substring(0, min(12, token.length))}...');
+
+      // 2) Gắn Authorization vào Dio
+      final dio = ApiService().dio;
+      dio.options.headers['Authorization'] = 'Bearer $token';
+      dio.options.headers['Content-Type'] = 'application/json';
+
+      print('💳 Creating PayOS payment for booking: $bookingId');
+
+      // 3) Gửi request tạo PayOS payment - chỉ cần bookingId
+      final response = await dio.post(
+        '/api/Payments/payos/create-payment',
+        data: {
+          'bookingId': bookingId,
+        },
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = response.data as Map<String, dynamic>;
+        print('✅ PayOS response: $data');
+
+        // Lấy paymentUrl từ response
+        final paymentUrl = data['paymentUrl'] as String?;
+        final success = data['success'] as bool?;
+        final message = data['message'] as String?;
+
+        if (success == true && paymentUrl != null && paymentUrl.isNotEmpty) {
+          print('✅ PayOS payment URL created: $paymentUrl');
+          print('📝 Message: $message');
+          return paymentUrl;
+        } else {
+          throw Exception('Không tìm thấy paymentUrl trong response hoặc success = false');
+        }
+      } else {
+        throw Exception('PayOS payment creation failed: ${response.statusCode}');
+      }
+    } on DioException catch (e) {
+      print('❌ DioException during PayOS create-payment: status=${e.response?.statusCode}, data=${e.response?.data}, message=${e.message}');
+      if (e.response?.statusCode == 401) {
+        throw Exception('Unauthorized (401). Token missing/expired. Please login again.');
+      }
+      rethrow;
+    } catch (e) {
+      print('❌ Error creating PayOS payment: $e');
+      rethrow;
+    }
+  }
+
 }

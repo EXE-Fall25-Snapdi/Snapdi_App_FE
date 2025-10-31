@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'core/dependency_injection/injection_container.dart' as di;
 import 'core/constants/app_theme.dart';
 import 'core/routing/app_router.dart';
+import 'features/payment/domain/services/handle_deeplink.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

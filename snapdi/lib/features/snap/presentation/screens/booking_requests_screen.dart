@@ -372,7 +372,7 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
                       // Đảm bảo nội dung ít nhất chiếm 85% chiều cao modal để Spacer hoạt động tốt
                       constraints: BoxConstraints(
                         minHeight:
-                            screenHeight * 0.85 -
+                            screenHeight * 0.55 -
                             48, // trừ đi padding xung quanh
                       ),
                       child: IntrinsicHeight(
@@ -492,7 +492,7 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
                               Icons.info_outline,
                               "Trạng thái",
                               request.status,
-                              valueColor: _getStatusColor(request.status),
+                              valueColor: AppColors.primary,
                             ),
 
                             // Note (if available)
@@ -583,26 +583,6 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
         ),
       ],
     );
-  }
-
-  // Helper method to get status color
-  Color _getStatusColor(String status) {
-    switch (status.toLowerCase()) {
-      case 'Pending':
-      case 'chờ xác nhận':
-        return Colors.orange;
-      case 'Confirmed':
-      case 'đã xác nhận':
-        return Colors.green;
-      case 'Completed':
-      case 'hoàn thành':
-        return Colors.blue;
-      case 'Cancelled':
-      case 'đã hủy':
-        return Colors.red;
-      default:
-        return Colors.grey;
-    }
   }
 
   // Helper widget for info cards (2x2 grid)

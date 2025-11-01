@@ -5,6 +5,8 @@ import '../../profile/presentation/widgets/cloudinary_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart'; // Add this import
 import 'package:snapdi/features/snap/presentation/screens/booking_status_screen.dart';
+import 'package:go_router/go_router.dart';
+import '../../chat/data/services/chat_api_service.dart';
 
 class BookingTrackSnapperScreen extends StatefulWidget {
   const BookingTrackSnapperScreen({super.key});
@@ -16,6 +18,7 @@ class BookingTrackSnapperScreen extends StatefulWidget {
 
 class _BookingTrackSnapperScreenState extends State<BookingTrackSnapperScreen> {
   final BookingService _bookingService = BookingService();
+  final ChatApiServiceImpl _chatApiService = ChatApiServiceImpl();
   final ScrollController _scrollController = ScrollController();
 
   List<PendingBooking> _bookings = [];
@@ -110,6 +113,50 @@ class _BookingTrackSnapperScreenState extends State<BookingTrackSnapperScreen> {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     } else {
       _showError('Không thể mở link ảnh');
+    }
+  }
+
+  /// Open chat with the photographer
+  Future<void> _openChatWithPhotographer(PendingBooking booking) async {
+    final result = await _chatApiService.createOrGetConversationWithUser(
+      booking.photographer.userId,
+    );
+
+    result.fold(
+      (failure) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Không thể mở chat: ${failure.message}')),
+          );
+        }
+      },
+      (conversationId) {
+        if (mounted) {
+          context.push('/chat/$conversationId', extra: booking.photographer.name);
+        }
+      },
+    );
+  }
+
+  /// Call the photographer
+  Future<void> _callPhotographer(String? phone) async {
+    if (phone == null || phone.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Không có số điện thoại')),
+        );
+      }
+      return;
+    }
+
+    try {
+      await launchUrl(Uri.parse('tel:$phone'));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Không thể gọi: ${e.toString()}')),
+        );
+      }
     }
   }
 
@@ -230,6 +277,57 @@ class _BookingTrackSnapperScreenState extends State<BookingTrackSnapperScreen> {
                         ),
                       ),
                       const SizedBox(height: 24),
+
+                      // Notification for "Done" status
+                      if (booking.status.statusId == 6)
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.orange.shade50,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.orange.shade200,
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                color: Colors.orange.shade700,
+                                size: 24,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Chờ Link Ảnh',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.orange.shade700,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      'Chụp ảnh đã hoàn tất. Vui lòng chờ Photographer cập nhật link ảnh cho bạn.',
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        color: Colors.orange.shade600,
+                                        height: 1.4,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      if (booking.status.statusId == 6)
+                        const SizedBox(height: 24),
 
                       // Button: View booking status
                       SizedBox(
@@ -363,6 +461,48 @@ class _BookingTrackSnapperScreenState extends State<BookingTrackSnapperScreen> {
                               ),
                             ),
                           ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Action Buttons (Chat and Call)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildActionButton(
+                              Icons.send,
+                              () => _openChatWithPhotographer(booking),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildActionButton(
+                              Icons.call,
+                              () => _callPhotographer(booking.photographer.phone),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+
+                      // View Profile Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: () {
+                            Navigator.pop(context);
+                            context.push('/photographer-profile/${booking.photographer.userId}');
+                          },
+                          icon: const Icon(Icons.person, size: 18),
+                          label: const Text('Xem Hồ Sơ'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF1DB584),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 24),
@@ -699,6 +839,18 @@ class _BookingTrackSnapperScreenState extends State<BookingTrackSnapperScreen> {
     );
   }
 
+  Widget _buildActionButton(IconData icon, VoidCallback onPressed) {
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: const Color(0xFFB8D4CF),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: IconButton(icon: Icon(icon, size: 18), onPressed: onPressed),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -834,6 +986,7 @@ class _BookingTrackSnapperScreenState extends State<BookingTrackSnapperScreen> {
 
   Widget _buildBookingCard(PendingBooking booking) {
     final bool isCompleted = booking.status.statusId == 7;
+    final bool isDone = booking.status.statusId == 6;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -859,11 +1012,17 @@ class _BookingTrackSnapperScreenState extends State<BookingTrackSnapperScreen> {
                 decoration: BoxDecoration(
                   color: isCompleted
                       ? Colors.purple.shade600
-                      : const Color(0xFF1DB584),
+                      : isDone
+                          ? Colors.orange.shade600
+                          : const Color(0xFF1DB584),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
-                  isCompleted ? Icons.check_circle : Icons.location_on,
+                  isCompleted
+                      ? Icons.check_circle
+                      : isDone
+                          ? Icons.timer
+                          : Icons.location_on,
                   color: Colors.white,
                   size: 28,
                 ),
@@ -910,6 +1069,26 @@ class _BookingTrackSnapperScreenState extends State<BookingTrackSnapperScreen> {
                               'Hoàn thành',
                               style: TextStyle(
                                 color: Colors.purple.shade700,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ] else if (isDone) ...[
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.shade100,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              'Chờ Link Ảnh',
+                              style: TextStyle(
+                                color: Colors.orange.shade700,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                               ),

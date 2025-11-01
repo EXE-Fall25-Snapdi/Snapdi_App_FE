@@ -413,8 +413,8 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
     final currentStatusId = _booking?.status.statusId ?? 0;
     final nextStatusId = _getNextStatusId(currentStatusId);
 
-    // Don't show button if already completed or cancelled
-    if (nextStatusId == null || currentStatusId == 8) {
+    // Don't show button if status is 6 (Done), 7 (Completed), 8 (Cancelled), or no next status
+    if (nextStatusId == null || currentStatusId == 8 || currentStatusId == 6) {
       return const SizedBox.shrink();
     }
 

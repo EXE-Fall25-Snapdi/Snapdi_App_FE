@@ -64,19 +64,21 @@ class ApiService {
     );
 
     // SSL certificate handling for development
+    // Only bypass SSL for local development endpoints
     if (baseUrl.contains('localhost') ||
         baseUrl.contains('10.0.2.2') ||
-        baseUrl.contains('192.168.') ||
-        baseUrl.startsWith('https://192.168.')) {
-      // Skip SSL certificate verification for development
-      // Note: This is only for development purposes
+        baseUrl.contains('127.0.0.1') ||
+        (baseUrl.contains('192.168.') && baseUrl.startsWith('https://'))) {
+      // Skip SSL certificate verification for local development only
+      // Note: This is only for development purposes with self-signed certificates
       (_dio.httpClientAdapter as IOHttpClientAdapter).createHttpClient = () {
         final client = HttpClient();
         client.badCertificateCallback = (cert, host, port) => true;
         return client;
       };
-      // SSL certificate verification disabled for development
+      // SSL certificate verification disabled for local development
     }
+    // For production URLs (like Cloud Run), use normal SSL verification
   }
 
   // Method to update authorization token

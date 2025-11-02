@@ -80,6 +80,45 @@ class _LoginScreenState extends State<LoginScreen> {
           );
         },
         (loginResponse) async {
+          // Check if user email is verified
+          if (!loginResponse.user.isVerify) {
+            // Send verification code
+            final sendCodeResult = await _authService.sendVerificationCode(
+              email: loginResponse.user.email,
+            );
+
+            sendCodeResult.fold(
+              (failure) {
+                // Show error if failed to send code
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Không thể gửi mã xác thực: ${failure.message}',
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.white,
+                      ),
+                    ),
+                    backgroundColor: AppColors.error,
+                  ),
+                );
+              },
+              (verificationResponse) {
+                // Navigate to verify screen with both email and password
+                if (mounted) {
+                  context.push(
+                    '/verify-code',
+                    extra: {
+                      'email': loginResponse.user.email,
+                      'password': _passwordController.text,
+                    },
+                  );
+                }
+              },
+            );
+            return;
+          }
+
+          // If verified, proceed with login
           await _authService.storeAuthTokens(loginResponse);
 
           if (mounted) {
@@ -207,16 +246,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 alignment: Alignment.centerRight,
                                 child: TextButton(
                                   onPressed: () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(
-                                          'Quên mật khẩu - Sắp ra mắt!',
-                                          style: AppTextStyles.bodyMedium
-                                              .copyWith(color: AppColors.white),
-                                        ),
-                                        backgroundColor: AppColors.secondary,
-                                      ),
-                                    );
+                                    context.push('/forgot-password');
                                   },
                                   child: Text(
                                     'Quên mật khẩu?',

@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
 import '../../../../core/providers/user_info_provider.dart';
 import '../../data/services/booking_service.dart';
 import '../../data/models/pending_booking.dart';
 import '../../../profile/presentation/widgets/cloudinary_image.dart';
+import '../../../chat/data/services/chat_api_service.dart';
 import 'booking_requests_screen.dart';
+import 'completed_bookings_screen.dart';
 
 /// Photographer's Snap screen showing booking requests and upcoming sessions
 class PhotographerSnapScreen extends StatefulWidget {
@@ -20,10 +23,13 @@ class PhotographerSnapScreen extends StatefulWidget {
 class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
   final UserInfoProvider _userInfoProvider = UserInfoProvider.instance;
   late final BookingService _bookingService;
+  final ChatApiServiceImpl _chatApiService = ChatApiServiceImpl();
   final TextEditingController _photoLinkController = TextEditingController();
 
   String _userName = 'Amigo';
   int _pendingRequestsCount = 0;
+  int _doneBookingsCount = 0;
+  int _completedBookingsCount = 0;
   List<PendingBooking> _upcomingBookings = [];
   bool _isLoading = true;
   String? _photoLinkError;
@@ -56,7 +62,7 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
       // Fetch bookings with multiple statuses
       final bookingsResponse = await _bookingService
           .getBookingsByMultipleStatuses(
-            statusIds: [1, 2, 3, 4, 5, 6],
+            statusIds: [1, 2, 3, 4, 5, 6, 7], // Add status 7 for completed
             page: 1,
             pageSize: 20,
           );
@@ -70,9 +76,23 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
               .where((booking) => booking.status.statusId == 1)
               .length;
 
-          // Filter out status 1 bookings from display list
+          // Count Done bookings (status ID 6) that need photo links
+          _doneBookingsCount = bookingsResponse.data
+              .where(
+                (booking) =>
+                    booking.status.statusId == 6 &&
+                    (booking.photoLink == null || booking.photoLink!.isEmpty),
+              )
+              .length;
+
+          // Count completed bookings (status ID 7)
+          _completedBookingsCount = bookingsResponse.data
+              .where((booking) => booking.status.statusId == 7)
+              .length;
+
+          // Filter out status 1 and 7 bookings from display list
           _upcomingBookings = bookingsResponse.data
-              .where((booking) => booking.status.statusId != 1)
+              .where((booking) => booking.status.statusId != 1 && booking.status.statusId != 7)
               .toList();
 
           _isLoading = false;
@@ -81,6 +101,8 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
         setState(() {
           _upcomingBookings = [];
           _pendingRequestsCount = 0;
+          _doneBookingsCount = 0;
+          _completedBookingsCount = 0;
           _isLoading = false;
         });
       }
@@ -88,6 +110,50 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
       print('Error loading bookings: $e');
       if (mounted) {
         setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  /// Open chat with the customer
+  Future<void> _openChatWithCustomer(PendingBooking booking) async {
+    final result = await _chatApiService.createOrGetConversationWithUser(
+      booking.user.userId,
+    );
+
+    result.fold(
+      (failure) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Không thể mở chat: ${failure.message}')),
+          );
+        }
+      },
+      (conversationId) {
+        if (mounted) {
+          context.push('/chat/$conversationId', extra: booking.user.name);
+        }
+      },
+    );
+  }
+
+  /// Call the customer
+  Future<void> _callCustomer(String? phone) async {
+    if (phone == null || phone.isEmpty) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Không có số điện thoại')),
+        );
+      }
+      return;
+    }
+
+    try {
+      await launchUrl(Uri.parse('tel:$phone'));
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Không thể gọi: ${e.toString()}')),
+        );
       }
     }
   }
@@ -395,6 +461,28 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
                               ],
                             ),
                           ),
+                          const SizedBox(height: 16),
+
+                          // Action Buttons - Chat and Call (show for status 3-7)
+                          if (booking.status.statusId >= 3 && booking.status.statusId <= 7)
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildActionButton(
+                                    Icons.send,
+                                    () => _openChatWithCustomer(booking),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _buildActionButton(
+                                    Icons.call,
+                                    () => _callCustomer(booking.user.phone),
+                                  ),
+                                ),
+                              ],
+                            ),
+
                           const SizedBox(height: 24),
 
                           // Photo Type Details
@@ -740,6 +828,18 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
     );
   }
 
+  Widget _buildActionButton(IconData icon, VoidCallback onPressed) {
+    return Container(
+      width: 42,
+      height: 42,
+      decoration: BoxDecoration(
+        color: const Color(0xFFB8D4CF),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: IconButton(icon: Icon(icon, size: 18), onPressed: onPressed),
+    );
+  }
+
   String _formatTime(String scheduleAt) {
     try {
       final dateTime = DateTime.parse(scheduleAt);
@@ -915,11 +1015,16 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
                                 // Photo Requests Card
                                 _buildPhotoRequestsCard(),
 
+                                const SizedBox(height: 12),
+
+                                // Completed Bookings Card - NEW
+                                _buildCompletedBookingsCard(),
+
                                 const SizedBox(height: 24),
 
                                 // Upcoming Sessions Section
                                 Text(
-                                  'Lịch chụp sắp tới',
+                                  'Lịch chụp đang diễn ra',
                                   style: AppTextStyles.headline4.copyWith(
                                     color: Colors.white,
                                     fontWeight: FontWeight.w600,
@@ -1110,7 +1215,82 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
     );
   }
 
-  Widget _buildBookingCard(PendingBooking booking) {
+  Widget _buildCompletedBookingsCard() {
+    return GestureDetector(
+      onTap: () async {
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const CompletedBookingsScreen(),
+          ),
+        );
+
+        // Reload data when returning
+        if (result == true || result == null) {
+          _loadData();
+        }
+      },
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Đơn hoàn thành',
+                    style: AppTextStyles.headline4.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Colors.black87,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _completedBookingsCount > 0
+                        ? 'Bạn có $_completedBookingsCount đơn đã hoàn thành'
+                        : 'Không có đơn hoàn thành',
+                    style: AppTextStyles.bodySmall.copyWith(
+                      color: AppColors.textSecondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Check circle Icon
+            Container(
+              width: 60,
+              height: 60,
+              decoration: BoxDecoration(
+                color: AppColors.white,
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.purple.shade600, width: 2),
+              ),
+              child: Icon(
+                Icons.check_circle,
+                color: Colors.purple.shade600,
+                size: 32,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }  Widget _buildBookingCard(PendingBooking booking) {
     final bool isDone = booking.status.statusId == 6;
     final bool needsPhotoLink =
         isDone && (booking.photoLink == null || booking.photoLink!.isEmpty);

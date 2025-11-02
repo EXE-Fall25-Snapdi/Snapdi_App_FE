@@ -6,6 +6,7 @@ import 'finding_snappers_screen.dart';
 import '../../../payment/domain/services/payment_service.dart';
 // NEW: import request model
 import '../../../payment/data/models/manual_payment_request.dart';
+import 'waiting_confirmation_screen.dart';
 
 class BookingConfirmScreen extends StatefulWidget { // NEW: StatefulWidget để có isLoading
   final SnapperProfile snapper;
@@ -289,7 +290,7 @@ class _BookingConfirmScreenState extends State<BookingConfirmScreen> {
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Column(
                 children: [
-                  // Nút xác nhận và thanh toán
+                  // Nút xác nhận
                   SizedBox(
                     width: double.infinity,
                     height: 56,
@@ -314,7 +315,7 @@ class _BookingConfirmScreenState extends State<BookingConfirmScreen> {
                               ),
                             )
                           : const Text(
-                              'Xác nhận và thanh toán',
+                              'Xác nhận',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,
@@ -326,37 +327,37 @@ class _BookingConfirmScreenState extends State<BookingConfirmScreen> {
                   
                   const SizedBox(height: 12),
                   
-                  // NEW: Nút hủy thanh toán (giống ManualPaymentScreen)
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: OutlinedButton(
-                      onPressed: isLoading ? null : _cancelPayment,
-                      style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.red),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: isLoading
-                          ? const SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2.5,
-                                color: Colors.red,
-                              ),
-                            )
-                          : const Text(
-                              'Hủy thanh toán',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.red,
-                              ),
-                            ),
-                    ),
-                  ),
+                  // NEW: Nút hủy
+                  // SizedBox(
+                  //   width: double.infinity,
+                  //   height: 56,
+                  //   child: OutlinedButton(
+                  //     onPressed: isLoading ? null : _cancelPayment,
+                  //     style: OutlinedButton.styleFrom(
+                  //       side: const BorderSide(color: Colors.red),
+                  //       shape: RoundedRectangleBorder(
+                  //         borderRadius: BorderRadius.circular(16),
+                  //       ),
+                  //     ),
+                  //     child: isLoading
+                  //         ? const SizedBox(
+                  //             height: 24,
+                  //             width: 24,
+                  //             child: CircularProgressIndicator(
+                  //               strokeWidth: 2.5,
+                  //               color: Colors.red,
+                  //             ),
+                  //           )
+                  //         : const Text(
+                  //             'Hủy',
+                  //             style: TextStyle(
+                  //               fontSize: 16,
+                  //               fontWeight: FontWeight.w600,
+                  //               color: Colors.red,
+                  //             ),
+                  //           ),
+                  //   ),
+                  // ),
                 ],
               ),
             ),
@@ -463,7 +464,7 @@ class _BookingConfirmScreenState extends State<BookingConfirmScreen> {
   }
 
   Future<void> _handleConfirmBooking(BuildContext context, double totalAmount) async {
-    // 1) Hiện dialog thông báo như cũ
+    // Hiện dialog xác nhận
     final ok = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
@@ -473,25 +474,27 @@ class _BookingConfirmScreenState extends State<BookingConfirmScreen> {
           children: [
             Icon(Icons.check_circle_outline, color: const Color(0xFF00BFA5), size: 28),
             const SizedBox(width: 12),
-            const Text('Thành công'),
+            const Text('Xác nhận đặt chụp'),
           ],
         ),
         content: Text(
-          'Đã đặt chụp với ${widget.snapper.name} thành công!\n\n'
-          'Mã đặt chỗ: #${widget.bookingId}\n'
-          'Trạng thái: Đang chờ xác nhận\n'
-          'Địa chỉ: ${widget.location ?? 'Chưa xác định'}\n'
-          'Giá: ${totalAmount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')} VND',
+          'Bạn có chắc chắn muốn đặt chụp với ${widget.snapper.name}?\n\n'
+          'Photographer sẽ xem xét và phản hồi yêu cầu của bạn.',
           style: const TextStyle(height: 1.5),
         ),
         actions: [
           TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(false),
+            child: const Text('Hủy'),
+          ),
+          ElevatedButton(
             onPressed: () => Navigator.of(dialogCtx).pop(true),
-            style: TextButton.styleFrom(
-              foregroundColor: const Color(0xFF00BFA5),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF00BFA5),
+              foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
             ),
-            child: const Text('Tiếp tục thanh toán'),
+            child: const Text('Xác nhận'),
           ),
         ],
       ),
@@ -501,29 +504,30 @@ class _BookingConfirmScreenState extends State<BookingConfirmScreen> {
       setState(() => isLoading = true);
       
       try {
-        // 2) Gọi confirmManualPayment
-        final paymentId = await _paymentService.confirmManualPayment(
-          ManualPaymentRequest(
-            bookingId: widget.bookingId,
-            feePolicyId: 1,
-          ),
-        );
-
-        // 3) Điều hướng sang trang thanh toán
-        Navigator.push(
+        // Gọi API confirm booking (không cần payment ngay)
+        // TODO: Call API confirm booking here if needed
+        
+        // Simulate API call
+        await Future.delayed(const Duration(seconds: 1));
+        
+        if (!mounted) return;
+        
+        // ✅ Navigate đến WaitingConfirmationScreen thay vì ManualPaymentScreen
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => ManualPaymentScreen(
+            builder: (context) => WaitingConfirmationScreen(
               bookingId: widget.bookingId,
-              amount: totalAmount,
-              paymentId: paymentId,
+              photographerName: widget.snapper.name,
             ),
           ),
         );
+        
       } catch (e) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Không khởi tạo được thanh toán: $e'),
+            content: Text('Không thể xác nhận booking: $e'),
             backgroundColor: Colors.red,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),

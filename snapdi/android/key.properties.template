@@ -3,8 +3,8 @@
 # Add key.properties to your .gitignore file
 
 # Path to your keystore file (e.g., ~/upload-keystore.jks or C:\\Users\\YourName\\upload-keystore.jks)
-storePassword=snapdi_sckey02112025
-keyPassword=snapdi_sckey02112025
+storePassword=my_app_key
+keyPassword=my_app_key
 keyAlias=upload
 storeFile=../upload-keystore.jks
 

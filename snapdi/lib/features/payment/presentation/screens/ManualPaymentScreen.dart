@@ -21,7 +21,8 @@ class ManualPaymentScreen extends StatefulWidget {
 }
 
 class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
-  final TextEditingController transactionCodeController = TextEditingController();
+  final TextEditingController transactionCodeController =
+      TextEditingController();
   bool isLoading = false;
 
   // NEW: must agree fee policy
@@ -94,10 +95,7 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
                   const SizedBox(height: 12),
                   const Text(
                     'Số tiền cần thanh toán',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey,
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -133,10 +131,7 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
                 children: [
                   const Text(
                     'Quét mã QR để chuyển khoản',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 16),
                   Container(
@@ -155,19 +150,29 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
                   ),
                   const SizedBox(height: 16),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.orange[50],
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: const Row(
                       children: [
-                        Icon(Icons.info_outline, size: 18, color: Colors.orange),
+                        Icon(
+                          Icons.info_outline,
+                          size: 18,
+                          color: Colors.orange,
+                        ),
                         SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             'Sử dụng app ngân hàng để quét mã QR',
-                            style: TextStyle(fontSize: 12, color: Colors.orange),
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.orange,
+                            ),
                           ),
                         ),
                       ],
@@ -199,10 +204,7 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
                 children: [
                   const Text(
                     'Thông tin chuyển khoản',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 16),
                   _buildBankInfoRow(
@@ -215,14 +217,16 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
                     'Số tài khoản',
                     accountNumber,
                     Icons.credit_card,
-                    onCopy: () => _copyToClipboard(accountNumber, 'số tài khoản'),
+                    onCopy: () =>
+                        _copyToClipboard(accountNumber, 'số tài khoản'),
                   ),
                   const Divider(height: 24),
                   _buildBankInfoRow(
                     'Chủ tài khoản',
                     accountName,
                     Icons.person_outline,
-                    onCopy: () => _copyToClipboard(accountName, 'tên chủ tài khoản'),
+                    onCopy: () =>
+                        _copyToClipboard(accountName, 'tên chủ tài khoản'),
                   ),
                   // const Divider(height: 24),
                   // _buildBankInfoRow(
@@ -257,10 +261,7 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
                 children: [
                   const Text(
                     'Xác nhận thanh toán',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
                   ),
                   const SizedBox(height: 16),
                   // TextField(
@@ -282,12 +283,13 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
                   //     ),
                   //   ),
                   // ),
-                 // const SizedBox(height: 12),
+                  // const SizedBox(height: 12),
 
                   // NEW: Agree Fee Policy
                   CheckboxListTile(
                     value: _agreeFeePolicy,
-                    onChanged: (v) => setState(() => _agreeFeePolicy = v ?? false),
+                    onChanged: (v) =>
+                        setState(() => _agreeFeePolicy = v ?? false),
                     controlAffinity: ListTileControlAffinity.leading,
                     contentPadding: EdgeInsets.zero,
                     title: const Text('Tôi đồng ý với chính sách người dùng'),
@@ -295,7 +297,10 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
                       onTap: _showFeePolicyDialog,
                       child: const Text(
                         'Xem chi tiết chính sách',
-                        style: TextStyle(color: Colors.blue, decoration: TextDecoration.underline),
+                        style: TextStyle(
+                          color: Colors.blue,
+                          decoration: TextDecoration.underline,
+                        ),
                       ),
                     ),
                   ),
@@ -312,7 +317,9 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
                 width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: (isLoading || !_agreeFeePolicy) ? null : _submitPayment,
+                  onPressed: (isLoading || !_agreeFeePolicy)
+                      ? null
+                      : _submitPayment,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF00BFA5),
                     shape: RoundedRectangleBorder(
@@ -390,33 +397,41 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
         content: const SingleChildScrollView(
           child: Text(
             '1. Đăng ký & sử dụng tài khoản:\n'
-                '- Người dùng phải cung cấp thông tin chính xác và không mạo danh.\n'
-                '- Ứng dụng có quyền khóa tài khoản nếu phát hiện hành vi gian lận.\n\n'
-                '2. Đặt lịch & thanh toán:\n'
-                '- Khách hàng thanh toán trước 20% giá trị booking để xác nhận.\n'
-                '- Khoản phí này không hoàn lại nếu huỷ do phía khách hàng.\n'
-                '- Nhiếp ảnh gia có thể hoàn trả nếu không thể thực hiện buổi chụp.\n\n'
-                '3. Quyền riêng tư:\n'
-                '- Thông tin cá nhân được bảo mật và chỉ sử dụng cho mục đích đặt lịch.\n'
-                '- Ứng dụng không chia sẻ dữ liệu cho bên thứ ba nếu không có sự đồng ý.\n\n'
-                '4. Hành vi bị cấm:\n'
-                '- Đăng tải nội dung vi phạm pháp luật, xúc phạm hoặc lừa đảo.\n'
-                '- Sử dụng ảnh của người khác mà không được phép.\n\n'
-                '5. Giải quyết tranh chấp:\n'
-                '- Mọi tranh chấp phát sinh sẽ được giải quyết thông qua thương lượng.\n'
-                '- Nếu không đạt thỏa thuận, vụ việc sẽ được xử lý theo quy định pháp luật Việt Nam.\n\n'
-                'Bằng việc sử dụng ứng dụng, bạn đồng ý với các điều khoản nêu trên.',
+            '- Người dùng phải cung cấp thông tin chính xác và không mạo danh.\n'
+            '- Ứng dụng có quyền khóa tài khoản nếu phát hiện hành vi gian lận.\n\n'
+            '2. Đặt lịch & thanh toán:\n'
+            '- Khách hàng thanh toán trước 20% giá trị booking để xác nhận.\n'
+            '- Khoản phí này không hoàn lại nếu huỷ do phía khách hàng.\n'
+            '- Nhiếp ảnh gia có thể hoàn trả nếu không thể thực hiện buổi chụp.\n\n'
+            '3. Quyền riêng tư:\n'
+            '- Thông tin cá nhân được bảo mật và chỉ sử dụng cho mục đích đặt lịch.\n'
+            '- Ứng dụng không chia sẻ dữ liệu cho bên thứ ba nếu không có sự đồng ý.\n\n'
+            '4. Hành vi bị cấm:\n'
+            '- Đăng tải nội dung vi phạm pháp luật, xúc phạm hoặc lừa đảo.\n'
+            '- Sử dụng ảnh của người khác mà không được phép.\n\n'
+            '5. Giải quyết tranh chấp:\n'
+            '- Mọi tranh chấp phát sinh sẽ được giải quyết thông qua thương lượng.\n'
+            '- Nếu không đạt thỏa thuận, vụ việc sẽ được xử lý theo quy định pháp luật Việt Nam.\n\n'
+            'Bằng việc sử dụng ứng dụng, bạn đồng ý với các điều khoản nêu trên.',
             style: TextStyle(fontSize: 14, height: 1.4),
           ),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Đóng')),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Đóng'),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildBankInfoRow(String label, String value, IconData icon, {VoidCallback? onCopy}) {
+  Widget _buildBankInfoRow(
+    String label,
+    String value,
+    IconData icon, {
+    VoidCallback? onCopy,
+  }) {
     return Row(
       children: [
         Container(
@@ -434,10 +449,7 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
             children: [
               Text(
                 label,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
-                ),
+                style: const TextStyle(fontSize: 12, color: Colors.grey),
               ),
               const SizedBox(height: 4),
               Text(
@@ -469,12 +481,16 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
             children: [
               Icon(Icons.warning_amber_rounded, color: Colors.white),
               SizedBox(width: 12),
-              Expanded(child: Text('Bạn cần đồng ý với Fee Policy để tiếp tục.')),
+              Expanded(
+                child: Text('Bạn cần đồng ý với Fee Policy để tiếp tục.'),
+              ),
             ],
           ),
           backgroundColor: Colors.orange,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
       return;
@@ -492,18 +508,19 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
     );
 
     try {
-      final success = await _paymentService.confirmPaid(request, widget.paymentId);
-      String status ='';
-      if(success == true){
-         status = 'paid';
+      final success = await _paymentService.confirmPaid(
+        request,
+        widget.paymentId,
+      );
+      String status = '';
+      if (success == true) {
+        status = 'paid';
       }
       if (!mounted) return;
 
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => PaymentStatusScreen(status: status),
-        ),
+        MaterialPageRoute(builder: (_) => PaymentStatusScreen(status: status)),
       );
     } catch (e) {
       if (!mounted) return;
@@ -519,7 +536,9 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
           ),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
         ),
       );
     } finally {
@@ -543,9 +562,9 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
         cancelRequest,
         widget.paymentId,
       );
-      String status ='';
-      if(success == true){
-         status = 'cancelled';
+      String status = '';
+      if (success == true) {
+        status = 'cancelled';
       }
       if (!mounted) return;
       Navigator.pushReplacement(
@@ -554,7 +573,9 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Lỗi: $e')));
     } finally {
       if (mounted) setState(() => isLoading = false);
     }

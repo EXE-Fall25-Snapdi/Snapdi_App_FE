@@ -414,5 +414,3 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen> {
     );
   }
 }
-
-

@@ -20,8 +20,8 @@ class PhotoTypePricingServiceImpl implements PhotoTypePricingService {
   PhotoTypePricingServiceImpl({
     ApiService? apiService,
     TokenStorage? tokenStorage,
-  })  : _apiService = apiService ?? ApiService(),
-        _tokenStorage = tokenStorage ?? TokenStorage.instance;
+  }) : _apiService = apiService ?? ApiService(),
+       _tokenStorage = tokenStorage ?? TokenStorage.instance;
 
   @override
   Future<Either<Failure, List<PhotoTypeWithPricing>>> getMyPhotoTypes() async {
@@ -49,9 +49,7 @@ class PhotoTypePricingServiceImpl implements PhotoTypePricingService {
         return Right(photoTypes);
       } else {
         return Left(
-          ServerFailure(
-            'Failed to get photo types: ${response.statusCode}',
-          ),
+          ServerFailure('Failed to get photo types: ${response.statusCode}'),
         );
       }
     } on DioException catch (e) {
@@ -123,5 +121,3 @@ class PhotoTypePricingServiceImpl implements PhotoTypePricingService {
     }
   }
 }
-
-

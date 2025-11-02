@@ -132,7 +132,11 @@ class _UploadProofScreenState extends State<UploadProofScreen> {
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.info_outline, color: Colors.blue[700], size: 20),
+                            Icon(
+                              Icons.info_outline,
+                              color: Colors.blue[700],
+                              size: 20,
+                            ),
                             const SizedBox(width: 8),
                             const Text(
                               'Lưu ý khi chọn hóa đơn',
@@ -149,34 +153,36 @@ class _UploadProofScreenState extends State<UploadProofScreen> {
                           'Chọn ảnh rõ nét, đủ ánh sáng',
                           'Hiển thị đầy đủ thông tin giao dịch',
                           'Bao gồm: số tiền, ngày giờ, mã GD',
-                        ].map((text) => Padding(
-                              padding: const EdgeInsets.only(bottom: 6),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    margin: const EdgeInsets.only(top: 6),
-                                    width: 4,
-                                    height: 4,
-                                    decoration: const BoxDecoration(
+                        ].map(
+                          (text) => Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Container(
+                                  margin: const EdgeInsets.only(top: 6),
+                                  width: 4,
+                                  height: 4,
+                                  decoration: const BoxDecoration(
+                                    color: Colors.blue,
+                                    shape: BoxShape.circle,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    text,
+                                    style: const TextStyle(
+                                      fontSize: 13,
                                       color: Colors.blue,
-                                      shape: BoxShape.circle,
+                                      height: 1.4,
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      text,
-                                      style: const TextStyle(
-                                        fontSize: 13,
-                                        color: Colors.blue,
-                                        height: 1.4,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -192,7 +198,10 @@ class _UploadProofScreenState extends State<UploadProofScreen> {
                       icon: const Icon(Icons.photo_library),
                       label: const Text('Chọn ảnh từ thư viện'),
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Color(0xFF00BFA5), width: 2),
+                        side: const BorderSide(
+                          color: Color(0xFF00BFA5),
+                          width: 2,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(16),
                         ),

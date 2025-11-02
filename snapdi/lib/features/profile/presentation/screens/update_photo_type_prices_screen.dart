@@ -50,7 +50,9 @@ class _UpdatePhotoTypePricesScreenState
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Không thể tải loại hình chụp ảnh: ${failure.message}'),
+              content: Text(
+                'Không thể tải loại hình chụp ảnh: ${failure.message}',
+              ),
               backgroundColor: AppColors.error,
             ),
           );
@@ -68,10 +70,9 @@ class _UpdatePhotoTypePricesScreenState
               if (photoType.photoPrice != null) {
                 _priceControllers[photoType.photoTypeId] =
                     TextEditingController(
-                  text: _formatCurrency(photoType.photoPrice!),
-                );
-                _timeControllers[photoType.photoTypeId] =
-                    TextEditingController(
+                      text: _formatCurrency(photoType.photoPrice!),
+                    );
+                _timeControllers[photoType.photoTypeId] = TextEditingController(
                   text: photoType.time?.toString() ?? '',
                 );
               }
@@ -190,16 +191,19 @@ class _UpdatePhotoTypePricesScreenState
     for (var photoType in _photoTypes) {
       if (_priceControllers.containsKey(photoType.photoTypeId) &&
           _timeControllers.containsKey(photoType.photoTypeId)) {
-        final priceValue =
-            _parseCurrency(_priceControllers[photoType.photoTypeId]!.text);
-        final timeValue =
-            int.tryParse(_timeControllers[photoType.photoTypeId]!.text);
+        final priceValue = _parseCurrency(
+          _priceControllers[photoType.photoTypeId]!.text,
+        );
+        final timeValue = int.tryParse(
+          _timeControllers[photoType.photoTypeId]!.text,
+        );
 
         if (priceValue <= 0 || timeValue == null || timeValue <= 0) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                  'Vui lòng đặt giá và thời gian hợp lệ cho ${photoType.photoTypeName}'),
+                'Vui lòng đặt giá và thời gian hợp lệ cho ${photoType.photoTypeName}',
+              ),
               backgroundColor: AppColors.error,
             ),
           );
@@ -232,7 +236,8 @@ class _UpdatePhotoTypePricesScreenState
       builder: (context) => AlertDialog(
         title: const Text('Xác nhận cập nhật giá'),
         content: const Text(
-            'Bạn có chắc chắn muốn cập nhật giá? Sau khi xác nhận, level của bạn sẽ được reset để admin xem xét lại.'),
+          'Bạn có chắc chắn muốn cập nhật giá? Sau khi xác nhận, level của bạn sẽ được reset để admin xem xét lại.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -274,7 +279,8 @@ class _UpdatePhotoTypePricesScreenState
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
-                  'Cập nhật giá thành công! Level của bạn đã được reset để admin xem xét.'),
+                'Cập nhật giá thành công! Level của bạn đã được reset để admin xem xét.',
+              ),
               backgroundColor: AppColors.success,
             ),
           );
@@ -299,10 +305,7 @@ class _UpdatePhotoTypePricesScreenState
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Bảng giá chụp',
-                    style: AppTextStyles.headline4,
-                  ),
+                  const Text('Bảng giá chụp', style: AppTextStyles.headline4),
                   const SizedBox(height: 8),
                   Text(
                     'Thêm hoặc cập nhật giá chụp theo từng thể loại chụp ảnh',
@@ -320,8 +323,9 @@ class _UpdatePhotoTypePricesScreenState
                     )
                   else
                     ..._photoTypes.map((photoType) {
-                      final hasPrice = _priceControllers
-                          .containsKey(photoType.photoTypeId);
+                      final hasPrice = _priceControllers.containsKey(
+                        photoType.photoTypeId,
+                      );
                       return Card(
                         margin: const EdgeInsets.only(bottom: 12),
                         child: ListTile(
@@ -373,7 +377,8 @@ class _UpdatePhotoTypePricesScreenState
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppColors.white),
+                                  AppColors.white,
+                                ),
                               ),
                             )
                           : const Text(
@@ -419,5 +424,3 @@ class CurrencyInputFormatter extends TextInputFormatter {
     );
   }
 }
-
-

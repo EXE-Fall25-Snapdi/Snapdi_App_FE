@@ -145,7 +145,9 @@ class _BookingAcceptedScheduleScreenState
                 // Header với close button bị disable khi loading
                 Padding(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 20, vertical: 12),
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -260,7 +262,8 @@ class _BookingAcceptedScheduleScreenState
                             children: [
                               ClipOval(
                                 child: CloudinaryImage(
-                                  publicId: booking.photographer.avatarUrl ?? '',
+                                  publicId:
+                                      booking.photographer.avatarUrl ?? '',
                                   width: 60,
                                   height: 60,
                                   crop: 'fill',
@@ -299,12 +302,16 @@ class _BookingAcceptedScheduleScreenState
                                         ),
                                       ],
                                     ),
-                                    if (booking.photographer.levelPhotographer !=
+                                    if (booking
+                                            .photographer
+                                            .levelPhotographer !=
                                         null)
                                       Padding(
                                         padding: const EdgeInsets.only(top: 4),
                                         child: Text(
-                                          booking.photographer.levelPhotographer!,
+                                          booking
+                                              .photographer
+                                              .levelPhotographer!,
                                           style: TextStyle(
                                             fontSize: 12,
                                             color: Colors.grey.shade600,
@@ -341,7 +348,8 @@ class _BookingAcceptedScheduleScreenState
                           child: Column(
                             children: [
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'Tên gói:',
@@ -362,7 +370,8 @@ class _BookingAcceptedScheduleScreenState
                               ),
                               const SizedBox(height: 8),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'Giá gói:',
@@ -383,7 +392,8 @@ class _BookingAcceptedScheduleScreenState
                               ),
                               const SizedBox(height: 8),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'Phí đặt cọc (20%):',
@@ -404,7 +414,8 @@ class _BookingAcceptedScheduleScreenState
                               ),
                               const SizedBox(height: 8),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(
                                     'Thời gian:',
@@ -429,7 +440,8 @@ class _BookingAcceptedScheduleScreenState
                         const SizedBox(height: 24),
 
                         // Note
-                        if (booking.note != null && booking.note!.isNotEmpty) ...[
+                        if (booking.note != null &&
+                            booking.note!.isNotEmpty) ...[
                           Text(
                             'Ghi chú',
                             style: TextStyle(
@@ -498,13 +510,16 @@ class _BookingAcceptedScheduleScreenState
                                     child: ElevatedButton(
                                       onPressed: _isPaymentLoading
                                           ? null
-                                          : () => _confirmManualPayment(booking),
+                                          : () =>
+                                                _confirmManualPayment(booking),
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: _isPaymentLoading
                                             ? Colors.grey
                                             : const Color(0xFF1DB584),
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(12),
+                                          borderRadius: BorderRadius.circular(
+                                            12,
+                                          ),
                                         ),
                                       ),
                                       child: _isPaymentLoading
@@ -517,9 +532,9 @@ class _BookingAcceptedScheduleScreenState
                                                   width: 20,
                                                   child:
                                                       CircularProgressIndicator(
-                                                    strokeWidth: 2,
-                                                    color: Colors.white,
-                                                  ),
+                                                        strokeWidth: 2,
+                                                        color: Colors.white,
+                                                      ),
                                                 ),
                                                 SizedBox(width: 12),
                                                 Text(
@@ -577,10 +592,7 @@ class _BookingAcceptedScheduleScreenState
     try {
       // 1) Gọi confirm-manual-payment để tạo payment
       final paymentId = await _paymentService.confirmManualPayment(
-        ManualPaymentRequest(
-          bookingId: booking.bookingId,
-          feePolicyId: 1,
-        ),
+        ManualPaymentRequest(bookingId: booking.bookingId, feePolicyId: 1),
       );
 
       if (!mounted) return;
@@ -590,7 +602,6 @@ class _BookingAcceptedScheduleScreenState
 
       // 3) Hiện widget tiếp tục thanh toán (không cho quay lại)
       _showContinuePaymentSheet(booking, paymentId);
-
     } catch (e) {
       if (!mounted) return;
       // CHỈ KHI CÓ LỖI mới cho phép tương tác lại
@@ -647,7 +658,9 @@ class _BookingAcceptedScheduleScreenState
                       // Header với close button disable khi processing
                       Padding(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 20, vertical: 12),
+                          horizontal: 20,
+                          vertical: 12,
+                        ),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -664,7 +677,9 @@ class _BookingAcceptedScheduleScreenState
                             IconButton(
                               icon: Icon(
                                 Icons.close,
-                                color: isProcessing ? Colors.grey : Colors.black,
+                                color: isProcessing
+                                    ? Colors.grey
+                                    : Colors.black,
                               ),
                               onPressed: isProcessing
                                   ? null
@@ -685,7 +700,9 @@ class _BookingAcceptedScheduleScreenState
                               Container(
                                 padding: const EdgeInsets.all(24),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFF1DB584).withOpacity(0.1),
+                                  color: const Color(
+                                    0xFF1DB584,
+                                  ).withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Column(
@@ -727,10 +744,13 @@ class _BookingAcceptedScheduleScreenState
                                     decoration: BoxDecoration(
                                       color: Colors.white,
                                       borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: Colors.grey.shade300),
+                                      border: Border.all(
+                                        color: Colors.grey.shade300,
+                                      ),
                                     ),
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Text(
                                           'Chọn phương thức thanh toán',
@@ -740,68 +760,96 @@ class _BookingAcceptedScheduleScreenState
                                           ),
                                         ),
                                         const SizedBox(height: 16),
-                                        
+
                                         // PayOS option
                                         InkWell(
                                           onTap: () {
-                                            setModalState(() => isProcessing = true);
-                                            _processPayOSPayment(booking).then((_) {
-                                              setModalState(() => isProcessing = false);
+                                            setModalState(
+                                              () => isProcessing = true,
+                                            );
+                                            _processPayOSPayment(booking).then((
+                                              _,
+                                            ) {
+                                              setModalState(
+                                                () => isProcessing = false,
+                                              );
                                             });
                                           },
                                           child: Container(
                                             padding: const EdgeInsets.all(16),
                                             decoration: BoxDecoration(
                                               color: Colors.blue[50],
-                                              borderRadius: BorderRadius.circular(12),
-                                              border: Border.all(color: Colors.blue[200]!),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                              border: Border.all(
+                                                color: Colors.blue[200]!,
+                                              ),
                                             ),
                                             child: Row(
                                               children: [
-                                                Icon(Icons.credit_card, color: Colors.blue[700], size: 24),
+                                                Icon(
+                                                  Icons.credit_card,
+                                                  color: Colors.blue[700],
+                                                  size: 24,
+                                                ),
                                                 const SizedBox(width: 12),
                                                 Expanded(
                                                   child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
                                                     children: [
                                                       Text(
                                                         'PayOS (Khuyến nghị)',
                                                         style: TextStyle(
                                                           fontSize: 16,
-                                                          fontWeight: FontWeight.w600,
-                                                          color: Colors.blue[700],
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color:
+                                                              Colors.blue[700],
                                                         ),
                                                       ),
                                                       Text(
                                                         'Thanh toán trực tuyến qua PayOS',
                                                         style: TextStyle(
                                                           fontSize: 13,
-                                                          color: Colors.blue[600],
+                                                          color:
+                                                              Colors.blue[600],
                                                         ),
                                                       ),
                                                     ],
                                                   ),
                                                 ),
-                                                Icon(Icons.arrow_forward_ios, color: Colors.blue[700], size: 16),
+                                                Icon(
+                                                  Icons.arrow_forward_ios,
+                                                  color: Colors.blue[700],
+                                                  size: 16,
+                                                ),
                                               ],
                                             ),
                                           ),
                                         ),
-                                        
+
                                         const SizedBox(height: 12),
-                                        
+
                                         // Manual transfer option
                                         InkWell(
                                           onTap: () {
-                                            Navigator.pop(context); // Đóng modal này
+                                            Navigator.pop(
+                                              context,
+                                            ); // Đóng modal này
                                             Navigator.push(
                                               context,
                                               MaterialPageRoute(
-                                                builder: (_) => ManualPaymentScreen(
-                                                  bookingId: booking.bookingId,
-                                                  amount: booking.photoType.photoPrice,
-                                                  paymentId: paymentId,
-                                                ),
+                                                builder: (_) =>
+                                                    ManualPaymentScreen(
+                                                      bookingId:
+                                                          booking.bookingId,
+                                                      amount: booking
+                                                          .photoType
+                                                          .photoPrice,
+                                                      paymentId: paymentId,
+                                                    ),
                                               ),
                                             );
                                           },
@@ -809,36 +857,52 @@ class _BookingAcceptedScheduleScreenState
                                             padding: const EdgeInsets.all(16),
                                             decoration: BoxDecoration(
                                               color: Colors.grey[50],
-                                              borderRadius: BorderRadius.circular(12),
-                                              border: Border.all(color: Colors.grey[300]!),
+                                              borderRadius:
+                                                  BorderRadius.circular(12),
+                                              border: Border.all(
+                                                color: Colors.grey[300]!,
+                                              ),
                                             ),
                                             child: Row(
                                               children: [
-                                                Icon(Icons.qr_code_2, color: Colors.grey[700], size: 24),
+                                                Icon(
+                                                  Icons.qr_code_2,
+                                                  color: Colors.grey[700],
+                                                  size: 24,
+                                                ),
                                                 const SizedBox(width: 12),
                                                 Expanded(
                                                   child: Column(
-                                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
                                                     children: [
                                                       Text(
                                                         'Chuyển khoản thủ công',
                                                         style: TextStyle(
                                                           fontSize: 16,
-                                                          fontWeight: FontWeight.w600,
-                                                          color: Colors.grey[700],
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                          color:
+                                                              Colors.grey[700],
                                                         ),
                                                       ),
                                                       Text(
                                                         'Quét QR code hoặc chuyển khoản ngân hàng',
                                                         style: TextStyle(
                                                           fontSize: 13,
-                                                          color: Colors.grey[600],
+                                                          color:
+                                                              Colors.grey[600],
                                                         ),
                                                       ),
                                                     ],
                                                   ),
                                                 ),
-                                                Icon(Icons.arrow_forward_ios, color: Colors.grey[700], size: 16),
+                                                Icon(
+                                                  Icons.arrow_forward_ios,
+                                                  color: Colors.grey[700],
+                                                  size: 16,
+                                                ),
                                               ],
                                             ),
                                           ),
@@ -878,7 +942,9 @@ class _BookingAcceptedScheduleScreenState
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: const [
-                                    CircularProgressIndicator(color: Color(0xFF1DB584)),
+                                    CircularProgressIndicator(
+                                      color: Color(0xFF1DB584),
+                                    ),
                                     SizedBox(width: 16),
                                     Text(
                                       'Đang xử lý thanh toán...',
@@ -910,12 +976,12 @@ class _BookingAcceptedScheduleScreenState
   Future<void> _processPayOSPayment(PendingBooking booking) async {
     try {
       print('🚀 Starting PayOS payment for booking: ${booking.bookingId}');
-      
+
       // 1) Tạo PayOS payment URL
       final payosUrl = await _paymentService.createPayOSPayment(
         bookingId: booking.bookingId,
       );
-      
+
       print('✅ PayOS URL received: $payosUrl');
 
       // 2) Validate URL
@@ -933,33 +999,27 @@ class _BookingAcceptedScheduleScreenState
 
       // 4) Thử các launch mode khác nhau
       bool launched = false;
-      
+
       // Option 1: External Application (Browser)
       try {
         print('🚀 Trying LaunchMode.externalApplication...');
-        launched = await launchUrl(
-          uri,
-          mode: LaunchMode.externalApplication,
-        );
+        launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
         print('✅ External browser launch: $launched');
       } catch (e) {
         print('❌ External browser failed: $e');
       }
-      
+
       // Option 2: Platform Default
       if (!launched) {
         try {
           print('🚀 Trying LaunchMode.platformDefault...');
-          launched = await launchUrl(
-            uri,
-            mode: LaunchMode.platformDefault,
-          );
+          launched = await launchUrl(uri, mode: LaunchMode.platformDefault);
           print('✅ Platform default launch: $launched');
         } catch (e) {
           print('❌ Platform default failed: $e');
         }
       }
-      
+
       // Option 3: In-App WebView
       if (!launched) {
         try {
@@ -977,7 +1037,7 @@ class _BookingAcceptedScheduleScreenState
           print('❌ In-app webview failed: $e');
         }
       }
-      
+
       // Option 4: Legacy launchUrl (deprecated nhưng có thể work)
       if (!launched) {
         try {
@@ -992,13 +1052,13 @@ class _BookingAcceptedScheduleScreenState
 
       if (launched) {
         print('✅ PayOS URL launched successfully');
-        
+
         // Đóng modal sau khi launch thành công
         if (mounted) {
           Navigator.pop(context);
           print('✅ Modal closed');
         }
-        
+
         // Show success snackbar
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -1008,13 +1068,17 @@ class _BookingAcceptedScheduleScreenState
                   Icon(Icons.open_in_browser, color: Colors.white, size: 20),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text('Đã mở trang thanh toán PayOS. Vui lòng hoàn tất thanh toán.'),
+                    child: Text(
+                      'Đã mở trang thanh toán PayOS. Vui lòng hoàn tất thanh toán.',
+                    ),
                   ),
                 ],
               ),
               backgroundColor: const Color(0xFF1DB584),
               behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               duration: const Duration(seconds: 5),
             ),
           );
@@ -1023,7 +1087,6 @@ class _BookingAcceptedScheduleScreenState
         // Fallback: Copy URL to clipboard
         await _fallbackCopyToClipboard(payosUrl);
       }
-      
     } catch (e) {
       print('❌ Error in _processPayOSPayment: $e');
       if (mounted) {
@@ -1037,10 +1100,10 @@ class _BookingAcceptedScheduleScreenState
   Future<void> _fallbackCopyToClipboard(String payosUrl) async {
     try {
       await Clipboard.setData(ClipboardData(text: payosUrl));
-      
+
       if (mounted) {
         Navigator.pop(context); // Đóng modal
-        
+
         // Show dialog với option copy URL
         showDialog(
           context: context,

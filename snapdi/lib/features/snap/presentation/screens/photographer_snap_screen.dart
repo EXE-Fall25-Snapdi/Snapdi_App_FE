@@ -24,7 +24,6 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
 
   String _userName = 'Amigo';
   int _pendingRequestsCount = 0;
-  int _doneBookingsCount = 0;
   List<PendingBooking> _upcomingBookings = [];
   bool _isLoading = true;
   String? _photoLinkError;
@@ -71,15 +70,6 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
               .where((booking) => booking.status.statusId == 1)
               .length;
 
-          // Count Done bookings (status ID 6) that need photo links
-          _doneBookingsCount = bookingsResponse.data
-              .where(
-                (booking) =>
-                    booking.status.statusId == 6 &&
-                    (booking.photoLink == null || booking.photoLink!.isEmpty),
-              )
-              .length;
-
           // Filter out status 1 bookings from display list
           _upcomingBookings = bookingsResponse.data
               .where((booking) => booking.status.statusId != 1)
@@ -91,7 +81,6 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
         setState(() {
           _upcomingBookings = [];
           _pendingRequestsCount = 0;
-          _doneBookingsCount = 0;
           _isLoading = false;
         });
       }

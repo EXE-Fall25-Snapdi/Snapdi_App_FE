@@ -602,7 +602,6 @@ class _BookingAcceptedScheduleScreenState
 
   // NEW: Widget tiếp tục thanh toán (giống ManualPaymentScreen)
   void _showContinuePaymentSheet(PendingBooking booking, int paymentId) {
-    bool agreeFeePolicy = false;
     bool isProcessing = false;
 
     showModalBottomSheet(
@@ -1107,43 +1106,6 @@ class _BookingAcceptedScheduleScreenState
       print('❌ Clipboard fallback failed: $e');
       _showError('Không thể mở link thanh toán. Vui lòng thử lại sau.');
     }
-  }
-
-  void _showFeePolicyDialog() {
-    showDialog(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Chính sách người dùng'),
-        content: const SingleChildScrollView(
-          child: Text(
-            '1. Đăng ký & sử dụng tài khoản:\n'
-            '- Người dùng phải cung cấp thông tin chính xác và không mạo danh.\n'
-            '- Ứng dụng có quyền khóa tài khoản nếu phát hiện hành vi gian lận.\n\n'
-            '2. Đặt lịch & thanh toán:\n'
-            '- Khách hàng thanh toán trước 20% giá trị booking để xác nhận.\n'
-            '- Khoản phí này không hoàn lại nếu huỷ do phía khách hàng.\n'
-            '- Nhiếp ảnh gia có thể hoàn trả nếu không thể thực hiện buổi chụp.\n\n'
-            '3. Quyền riêng tư:\n'
-            '- Thông tin cá nhân được bảo mật và chỉ sử dụng cho mục đích đặt lịch.\n'
-            '- Ứng dụng không chia sẻ dữ liệu cho bên thứ ba nếu không có sự đồng ý.\n\n'
-            '4. Hành vi bị cấm:\n'
-            '- Đăng tải nội dung vi phạm pháp luật, xúc phạm hoặc lừa đảo.\n'
-            '- Sử dụng ảnh của người khác mà không được phép.\n\n'
-            '5. Giải quyết tranh chấp:\n'
-            '- Mọi tranh chấp phát sinh sẽ được giải quyết thông qua thương lượng.\n'
-            '- Nếu không đạt thỏa thuận, vụ việc sẽ được xử lý theo quy định pháp luật Việt Nam.\n\n'
-            'Bằng việc sử dụng ứng dụng, bạn đồng ý với các điều khoản nêu trên.',
-            style: TextStyle(fontSize: 14, height: 1.4),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Đóng'),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _buildDetailRow({

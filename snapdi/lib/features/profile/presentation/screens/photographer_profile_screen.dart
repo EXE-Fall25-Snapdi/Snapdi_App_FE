@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_theme.dart';
-import '../../../../core/constants/app_assets.dart';
 import '../../../../core/storage/token_storage.dart';
 import '../../../auth/data/models/user.dart';
 import '../../../chat/data/services/chat_api_service.dart';

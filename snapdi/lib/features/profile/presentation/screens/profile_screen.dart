@@ -10,6 +10,7 @@ import '../../data/models/photo_portfolio.dart';
 import '../../domain/services/profile_service.dart';
 import 'manage_portfolio_screen.dart';
 import 'account_settings_screen.dart';
+import 'update_photo_type_prices_screen.dart';
 import '../widgets/cloudinary_image.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -181,18 +182,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget _buildMainContent() {
     return Column(
       children: [
-        if (_portfolios.isNotEmpty) ...[
-          _buildStatsSection(),
-          const SizedBox(height: AppDimensions.marginLarge),
-        ] else ...[
-          const SizedBox(height: AppDimensions.marginLarge * 6),
-        ],
-
-        // 1. Stats
-        // 2. Các thẻ Menu
-        // THAY ĐỔI 5: Thêm Padding cho các thẻ menu
+        // if (_portfolios.isNotEmpty) ...[
+        //   _buildStatsSection(),
+        //   const SizedBox(height: AppDimensions.marginLarge),
+        // ] else ...[
+        //   const SizedBox(height: AppDimensions.marginLarge * 6),
+        // ],
+        //
+        // // 1. Stats
+        // // 2. Các thẻ Menu
+        // // THAY ĐỔI 5: Thêm Padding cho các thẻ menu
         Padding(
-          padding: const EdgeInsets.symmetric(),
+          padding: const EdgeInsets.only(top: 60),
           child: Column(
             children: [
               // Bỏ container thừa
@@ -214,28 +215,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         });
                   },
                 ),
-                _MenuItem(
-                  icon: Icons.payment_outlined,
-                  title: 'Phương thức thanh toán',
-                  onTap: () {},
-                ),
-                _MenuItem(
-                  icon: Icons.workspace_premium_outlined,
-                  title: 'Thành viên VIP',
-                  onTap: () {},
-                ),
-                _MenuItem(
-                  icon: Icons.discount_outlined,
-                  title: 'Mã giảm giá',
-                  onTap: () {},
-                ),
+                // _MenuItem(
+                //   icon: Icons.payment_outlined,
+                //   title: 'Phương thức thanh toán',
+                //   onTap: () {},
+                // ),
+                // _MenuItem(
+                //   icon: Icons.workspace_premium_outlined,
+                //   title: 'Thành viên VIP',
+                //   onTap: () {},
+                // ),
+                // _MenuItem(
+                //   icon: Icons.discount_outlined,
+                //   title: 'Mã giảm giá',
+                //   onTap: () {},
+                // ),
                 // if (!_isPhotographer)
                 //   _MenuItem(
                 //     icon: Icons.camera_alt_outlined,
                 //     title: 'Trở thành SNAPPER',
                 //     onTap: () {},
                 //   ),
-                if (_isPhotographer)
+                if (_isPhotographer) ...[
                   _MenuItem(
                     icon: Icons.photo_library_outlined,
                     title: 'Quản lý Portfolio',
@@ -247,6 +248,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       );
                     },
                   ),
+                  _MenuItem(
+                    icon: Icons.attach_money_outlined,
+                    title: 'Cập nhật giá chụp ảnh',
+                    onTap: () {
+                      Navigator.of(context, rootNavigator: true)
+                          .push(
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const UpdatePhotoTypePricesScreen(),
+                            ),
+                          )
+                          .then((updated) {
+                            if (updated == true) {
+                              _loadUserInfo(); // Reload user info after update
+                            }
+                          });
+                    },
+                  ),
+                ],
               ]),
 
               const SizedBox(height: AppDimensions.marginLarge),
@@ -401,7 +421,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         maxLines: 1,
                         overflow: TextOverflow.visible,
                       ),
-                    if (_currentUser?.email != null)
+                    if (_currentUser?.email != null &&
+                        !(_isPhotographer &&
+                            photographerProfile != null &&
+                            levelPhotographer == null &&
+                            _portfolios.isNotEmpty))
                       Text(
                         _currentUser!.email,
                         style: AppTextStyles.bodySmall.copyWith(
@@ -415,79 +439,97 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ],
           ),
-          // Update portfolio button for disabled photographers
-          if (_isPhotographer && _portfolios.isEmpty) ...[
+          // Show update portfolio button or waiting message
+          if (_isPhotographer) ...[
             const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Navigator.of(context, rootNavigator: true).push(
-                    MaterialPageRoute(
-                      builder: (context) => const ManagePortfolioScreen(),
-                    ),
-                  );
-                },
-                icon: const Icon(Icons.add_photo_alternate, size: 18),
-                label: const Text('Cập nhật Portfolio'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+            // Show "Đang đợi xác nhận giá" in red when levelPhotographer is null and portfolios exist
+            if (photographerProfile != null &&
+                levelPhotographer == null &&
+                _portfolios.isNotEmpty)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  'Đang đợi xác nhận giá',
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    color: AppColors.error,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              )
+            // Show "Cập nhật Portfolio" button when portfolios are empty
+            else if (_portfolios.isEmpty)
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context, rootNavigator: true).push(
+                      MaterialPageRoute(
+                        builder: (context) => const ManagePortfolioScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.add_photo_alternate, size: 18),
+                  label: const Text('Cập nhật Portfolio'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                  ),
                 ),
               ),
-            ),
           ],
         ],
       ),
     );
   }
 
-  Widget _buildStatsSection() {
-    // THAY ĐỔI: Bỏ đi background và shadow, chỉ giữ lại nội dung
-    return Container(
-      color: AppColors.white,
-      padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingLarge),
+  // // Widget _buildStatsSection() {
+  // //   // THAY ĐỔI: Bỏ đi background và shadow, chỉ giữ lại nội dung
+  // //   return Container(
+  // //     color: AppColors.white,
+  // //     padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingLarge),
+  // //
+  // //     child: Column(
+  // //       children: [
+  // //         SizedBox(height: AppDimensions.paddingLarge + 10), // Bigger top space
+  // //         Row(
+  // //           mainAxisAlignment: MainAxisAlignment.spaceAround,
+  // //           children: [
+  // //             _buildStatItem('0', 'Snapped'),
+  // //             _buildVerticalDivider(),
+  // //             _buildStatItem('0', 'Rate'),
+  // //             _buildVerticalDivider(),
+  // //             _buildStatItem('0', 'Coin'),
+  // //           ],
+  // //         ),
+  // //       ],
+  // //     ),
+  // //   );
+  // // }
+  //
+  // Widget _buildStatItem(String value, String label) {
+  //   return Column(
+  //     children: [
+  //       Text(
+  //         value,
+  //         style: AppTextStyles.headline3.copyWith(color: AppColors.primary),
+  //       ),
+  //       const SizedBox(height: 4),
+  //       Text(
+  //         label,
+  //         style: AppTextStyles.bodySmall.copyWith(
+  //           color: AppColors.textSecondary,
+  //         ),
+  //       ),
+  //     ],
+  //   );
+  // }
 
-      child: Column(
-        children: [
-          SizedBox(height: AppDimensions.paddingLarge + 10), // Bigger top space
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildStatItem('0', 'Snapped'),
-              _buildVerticalDivider(),
-              _buildStatItem('0', 'Rate'),
-              _buildVerticalDivider(),
-              _buildStatItem('0', 'Coin'),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatItem(String value, String label) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: AppTextStyles.headline3.copyWith(color: AppColors.primary),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: AppTextStyles.bodySmall.copyWith(
-            color: AppColors.textSecondary,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildVerticalDivider() {
-    return Container(height: 40, width: 1, color: AppColors.greyLight);
-  }
+  // Widget _buildVerticalDivider() {
+  //   return Container(height: 40, width: 1, color: AppColors.greyLight);
+  // }
 
   Widget _buildMenuCard(List<_MenuItem> items) {
     // THAY ĐỔI: Đây là các thẻ menu riêng lẻ, nên cần có decoration riêng

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:math' as math;
 
 import 'package:go_router/go_router.dart';
 
@@ -26,13 +25,15 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen>
       vsync: this,
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
-    );
+    _scaleAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticOut));
 
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
-    );
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeIn));
 
     _controller.forward();
   }
@@ -120,11 +121,17 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen>
                             decoration: BoxDecoration(
                               color: const Color(0xFF00BFA5).withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFF00BFA5).withOpacity(0.3)),
+                              border: Border.all(
+                                color: const Color(0xFF00BFA5).withOpacity(0.3),
+                              ),
                             ),
                             child: Row(
                               children: [
-                                Icon(Icons.info_outline, color: const Color(0xFF00BFA5), size: 20),
+                                Icon(
+                                  Icons.info_outline,
+                                  color: const Color(0xFF00BFA5),
+                                  size: 20,
+                                ),
                                 const SizedBox(width: 12),
                                 const Expanded(
                                   child: Text(
@@ -186,7 +193,8 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen>
         return _StatusConfig(
           icon: Icons.check_circle_outline,
           title: 'Thanh toán thành công!',
-          description: 'Booking của bạn đã được xác nhận.\nChúc bạn có trải nghiệm tuyệt vời!',
+          description:
+              'Booking của bạn đã được xác nhận.\nChúc bạn có trải nghiệm tuyệt vời!',
           color: const Color(0xFF00BFA5),
         );
       case 'cancelled':
@@ -194,7 +202,8 @@ class _PaymentStatusScreenState extends State<PaymentStatusScreen>
         return _StatusConfig(
           icon: Icons.cancel_outlined,
           title: 'Thanh toán đã bị hủy',
-          description: 'Giao dịch của bạn đã được hủy.\nBạn có thể thử lại hoặc chọn phương thức thanh toán khác.',
+          description:
+              'Giao dịch của bạn đã được hủy.\nBạn có thể thử lại hoặc chọn phương thức thanh toán khác.',
           color: Colors.red,
         );
     }

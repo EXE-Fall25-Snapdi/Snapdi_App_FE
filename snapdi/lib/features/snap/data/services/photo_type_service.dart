@@ -28,11 +28,9 @@ class PhotoTypeService {
         final List<dynamic> jsonList = jsonDecode(response.body);
         return jsonList.map((json) => PhotoType.fromJson(json)).toList();
       } else {
-        print('Error fetching photo types: ${response.statusCode}');
         return [];
       }
     } catch (e) {
-      print('Error fetching photo types: $e');
       return [];
     } finally {
       client.close();

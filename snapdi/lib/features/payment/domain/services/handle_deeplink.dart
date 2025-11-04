@@ -24,14 +24,12 @@ class DeepLinkService {
       // Handle app launch từ deep link
       final initialUri = await _appLinks.getInitialAppLink();
       if (initialUri != null) {
-        print('🔗 Initial deep link: ${initialUri.toString()}');
         _handleDeepLink(initialUri.toString());
       }
 
       // Listen cho deep links khi app đã mở
       _linkSubscription = _appLinks.uriLinkStream.listen(
         (Uri uri) {
-          print('🔗 Incoming deep link: ${uri.toString()}');
           _handleDeepLink(uri.toString());
         },
         onError: (err) => print('❌ Deep link error: $err'),
@@ -41,9 +39,7 @@ class DeepLinkService {
     }
   }
 
-  void _handleDeepLink(String link) {
-    print('🔗 Processing deep link: $link');
-    
+  void _handleDeepLink(String link) {    
     try {
       final uri = Uri.parse(link);
       
@@ -52,11 +48,6 @@ class DeepLinkService {
         final code = uri.queryParameters['code'];
         final orderCode = uri.queryParameters['orderCode'];
         final error = uri.queryParameters['error'];
-        
-        print('📱 Payment result received:');
-        print('   - status: $status');
-        print('   - code: $code');
-        print('   - orderCode: $orderCode');
         
         // ✅ Determine final status: CHỈ 'paid' hoặc 'cancelled'
         String finalStatus = 'cancelled'; // Default = cancelled
@@ -67,9 +58,7 @@ class DeepLinkService {
           // Tất cả các trường hợp khác đều là cancelled
           finalStatus = 'cancelled';
         }
-        
-        print('✅ Final payment status for UI: $finalStatus');
-        
+                
         _navigateToPaymentResult(finalStatus, code, orderCode, error);
       }
     } catch (e) {
@@ -82,12 +71,9 @@ class DeepLinkService {
     void attemptNavigation() {
       final navigator = _navigatorKey?.currentState;
       if (navigator == null) {
-        print('⏳ Navigator not ready, retrying...');
         Future.delayed(const Duration(milliseconds: 500), attemptNavigation);
         return;
       }
-
-      print('🚀 Navigating to PaymentStatusScreen with status: $finalStatus');
       
       // ✅ Navigate tới PaymentStatusScreen với status = 'paid' hoặc 'cancelled'
       navigator.pushAndRemoveUntil(

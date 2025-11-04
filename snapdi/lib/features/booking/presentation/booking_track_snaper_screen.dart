@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:snapdi/core/constants/app_theme.dart';
 import 'package:snapdi/features/snap/data/services/booking_service.dart';
 import 'package:snapdi/features/snap/data/models/pending_booking.dart';
 import '../../profile/presentation/widgets/cloudinary_image.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter/services.dart'; // Add this import
+import 'package:flutter/services.dart';
 import 'package:snapdi/features/snap/presentation/screens/booking_status_screen.dart';
 import 'package:go_router/go_router.dart';
 import '../../chat/data/services/chat_api_service.dart';
+import 'package:snapdi/core/constants/app_assets.dart';
 
 class BookingTrackSnapperScreen extends StatefulWidget {
   const BookingTrackSnapperScreen({super.key});
@@ -470,14 +473,14 @@ class _BookingTrackSnapperScreenState extends State<BookingTrackSnapperScreen> {
                         children: [
                           Expanded(
                             child: _buildActionButton(
-                              Icons.send,
+                              AppAssets.messageIcon,
                               () => _openChatWithPhotographer(booking),
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: _buildActionButton(
-                              Icons.call,
+                              AppAssets.phoneIcon,
                               () => _callPhotographer(booking.photographer.phone),
                             ),
                           ),
@@ -839,15 +842,19 @@ class _BookingTrackSnapperScreenState extends State<BookingTrackSnapperScreen> {
     );
   }
 
-  Widget _buildActionButton(IconData icon, VoidCallback onPressed) {
-    return Container(
-      width: 42,
-      height: 42,
-      decoration: BoxDecoration(
-        color: const Color(0xFFB8D4CF),
-        borderRadius: BorderRadius.circular(10),
+  Widget _buildActionButton(String icon, VoidCallback onPressed) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: AppColors.grayField,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: SvgPicture.asset(icon),
       ),
-      child: IconButton(icon: Icon(icon, size: 18), onPressed: onPressed),
     );
   }
 

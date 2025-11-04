@@ -170,10 +170,6 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                   photoTypeName = snapper.photoTypes.first.photoTypeName;
                 }
 
-                print(
-                  'Found snapper: ${snapper.name}, Type: $photoTypeName, Price: $photoPrice, Time: $photoTime hours',
-                );
-
                 return SnapperProfile(
                   userId: snapper.userId,
                   name: snapper.name,
@@ -439,7 +435,6 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                             if (_foundSnappers.isNotEmpty &&
                                 _searchCenterLatitude != null &&
                                 _searchCenterLongitude != null) {
-                              print('Navigating to map...');
 
                               // Navigate and wait for result
                               final selectedSnapper =

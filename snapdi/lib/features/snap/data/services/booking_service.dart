@@ -39,19 +39,16 @@ class BookingService {
 
     // If 401, try to refresh token and retry
     if (response.statusCode == 401) {
-      print('Token expired (401), attempting refresh...');
 
       final refreshResult = await _authService.refreshToken();
 
       return refreshResult.fold(
         (failure) {
           // Refresh failed, return original 401 response
-          print('Token refresh failed: ${failure.message}');
           return response;
         },
         (loginResponse) async {
           // Refresh succeeded, retry with new token
-          print('Token refreshed successfully, retrying request...');
           return await request(loginResponse.token);
         },
       );
@@ -105,7 +102,6 @@ class BookingService {
         }
       }
     } catch (e) {
-      print('Error creating booking: $e');
       return BookingResponse(
         success: false,
         message: 'Lỗi khi tạo đặt chỗ: ${e.toString()}',
@@ -251,7 +247,6 @@ class BookingService {
         return null;
       }
     } catch (e) {
-      print('Error getting bookings: $e');
       return null;
     }
   }
@@ -329,23 +324,15 @@ class BookingService {
         return PendingBookingResponse.fromJson(jsonResponse);
       } else if (response.statusCode == 401) {
         await _tokenStorage.clearAll();
-        print('Unauthorized access - token may have expired.');
         return null;
       } else {
         try {
-          final errorBody = jsonDecode(response.body);
-          print(
-            'Error fetching pending bookings: '
-            '${errorBody['message'] ?? response.statusCode}',
-          );
           return null;
         } catch (e) {
-          print('Error fetching pending bookings: ${response.statusCode}');
           return null;
         }
       }
     } catch (e) {
-      print('Exception fetching pending bookings: $e');
       return null;
     }
   }
@@ -383,23 +370,15 @@ class BookingService {
         return PendingBookingResponse.fromJson(jsonResponse);
       } else if (response.statusCode == 401) {
         await _tokenStorage.clearAll();
-        print('Unauthorized access - token may have expired.');
         return null;
       } else {
         try {
-          final errorBody = jsonDecode(response.body);
-          print(
-            'Error fetching bookings by statuses: '
-            '${errorBody['message'] ?? response.statusCode}',
-          );
           return null;
         } catch (e) {
-          print('Error fetching bookings by statuses: ${response.statusCode}');
           return null;
         }
       }
     } catch (e) {
-      print('Exception fetching bookings by statuses: $e');
       return null;
     }
   }

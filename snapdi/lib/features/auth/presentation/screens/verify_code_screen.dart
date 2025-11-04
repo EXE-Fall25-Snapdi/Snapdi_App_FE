@@ -295,12 +295,10 @@ class _VerifyCodeScreenState extends State<VerifyCodeScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                        child: SvgPicture.asset(
-                          AppAssets.snapdiLogoWithText,
-                          width: 150,
-                          height: 150,
-                        ),
+                      SvgPicture.asset(
+                        AppAssets.snapdiLogoWithText,
+                        width: 150,
+                        height: 150,
                       ),
 
                       const SizedBox(height: 32),

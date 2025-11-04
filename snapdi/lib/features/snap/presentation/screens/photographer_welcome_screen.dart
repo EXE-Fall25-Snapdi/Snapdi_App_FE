@@ -65,10 +65,8 @@ class _PhotographerWelcomeScreenState extends State<PhotographerWelcomeScreen> {
         }
       }
     } catch (e) {
-      print('Error loading availability: $e');
       // Check if it's a refresh token expiration error
       if (e.toString().contains('REFRESH_TOKEN_EXPIRED')) {
-        print('Refresh token expired, session ended. Redirecting to login');
         if (mounted) {
           // Clear stored tokens
           await TokenStorage.instance.clearTokens();
@@ -79,7 +77,6 @@ class _PhotographerWelcomeScreenState extends State<PhotographerWelcomeScreen> {
         }
       } else if (e.toString().contains('TOKEN_EXPIRED') ||
           e.toString().contains('401')) {
-        print('Access token expired, clearing and redirecting to login');
         if (mounted) {
           // Clear stored tokens
           await TokenStorage.instance.clearTokens();

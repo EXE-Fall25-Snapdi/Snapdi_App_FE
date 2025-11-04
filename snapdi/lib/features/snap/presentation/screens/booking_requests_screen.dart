@@ -63,8 +63,6 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
             pageSize: 20,
           );
 
-      print('Pending bookings response: $pendingBookingsResponse');
-
       if (pendingBookingsResponse != null &&
           pendingBookingsResponse.data.isNotEmpty) {
         // Convert pending bookings to BookingRequest for display
@@ -94,7 +92,6 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
         });
       }
     } catch (e) {
-      print('Error loading booking requests: $e');
       setState(() => _isLoading = false);
     }
   }

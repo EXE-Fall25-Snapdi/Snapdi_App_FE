@@ -243,21 +243,4 @@ class Environment {
     }
     return true; // Allow missing variables in development
   }
-
-  /// Print environment configuration (excluding sensitive data)
-  static void printConfiguration() {
-    if (debugMode) {
-      print('=== Environment Configuration ===');
-      print('Environment: $environment');
-      print('API Base URL: $apiBaseUrl');
-      print('API Version: $apiVersion');
-      print('Debug Mode: $debugMode');
-      print('Mock API Responses: $mockApiResponses');
-      print('Chat Feature: $enableChatFeature');
-      print('Video Calls: $enableVideoCalls');
-      print('AI Recommendations: $enableAiRecommendations');
-      print('Geolocation: $enableGeolocation');
-      print('===============================');
-    }
-  }
 }

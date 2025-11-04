@@ -8,7 +8,7 @@ class NetworkInfoImpl implements NetworkInfo {
 
   @override
   Future<bool> get isConnected async {
-    // TODO: Implement with connectivity_plus package
+   
     // final ConnectivityResult connectivityResult = await Connectivity().checkConnectivity();
     // return connectivityResult != ConnectivityResult.none;
     return true; // Placeholder

@@ -52,7 +52,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         });
       }
     } catch (e) {
-      print('Error loading user info: $e');
       final userId = await _tokenStorage.getUserId();
       setState(() {
         _userId = userId?.toString();

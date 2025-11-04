@@ -31,7 +31,6 @@ class SignalRService {
   // Connect to SignalR hub
   Future<void> connect() async {
     if (_connection?.state == HubConnectionState.connected) {
-      print('SignalR: Already connected');
       return;
     }
 
@@ -48,7 +47,6 @@ class SignalRService {
       }
 
       final hubUrl = '$baseUrl/hubs/chat';
-      print('SignalR: Connecting to $hubUrl');
 
       _connection = HubConnectionBuilder()
           .withUrl(
@@ -68,9 +66,7 @@ class SignalRService {
 
       // Start connection
       await _connection!.start();
-      print('SignalR: Connected successfully');
     } catch (e) {
-      print('SignalR: Error connecting: $e');
       rethrow;
     }
   }
@@ -84,7 +80,6 @@ class SignalRService {
           final data = arguments[0] as Map<String, dynamic>;
           final message = MessageDto.fromJson(data);
           _messageReceivedController.add(message);
-          print('SignalR: Message received - ${message.messageId}');
         } catch (e) {
           print('SignalR: Error parsing message: $e');
         }
@@ -97,7 +92,6 @@ class SignalRService {
         try {
           final data = arguments[0] as Map<String, dynamic>;
           _messageReadController.add(data);
-          print('SignalR: Message read notification');
         } catch (e) {
           print('SignalR: Error parsing message read: $e');
         }
@@ -126,9 +120,7 @@ class SignalRService {
 
     try {
       await _connection!.invoke('JoinConversation', args: [conversationId]);
-      print('SignalR: Joined conversation $conversationId');
     } catch (e) {
-      print('SignalR: Error joining conversation: $e');
       rethrow;
     }
   }
@@ -136,13 +128,11 @@ class SignalRService {
   // Leave a conversation group
   Future<void> leaveConversation(int conversationId) async {
     if (_connection?.state != HubConnectionState.connected) {
-      print('SignalR: Cannot leave conversation - not connected');
       return;
     }
 
     try {
       await _connection!.invoke('LeaveConversation', args: [conversationId]);
-      print('SignalR: Left conversation $conversationId');
     } catch (e) {
       print('SignalR: Error leaving conversation: $e');
     }
@@ -156,9 +146,7 @@ class SignalRService {
 
     try {
       await _connection!.invoke('SendMessage', args: [conversationId, content]);
-      print('SignalR: Message sent to conversation $conversationId');
     } catch (e) {
-      print('SignalR: Error sending message: $e');
       rethrow;
     }
   }
@@ -166,13 +154,11 @@ class SignalRService {
   // Mark message as read
   Future<void> markMessageAsRead(int conversationId, int messageId) async {
     if (_connection?.state != HubConnectionState.connected) {
-      print('SignalR: Cannot mark as read - not connected');
       return;
     }
 
     try {
       await _connection!.invoke('MarkRead', args: [conversationId, messageId]);
-      print('SignalR: Marked message $messageId as read');
     } catch (e) {
       print('SignalR: Error marking message as read: $e');
     }
@@ -183,7 +169,6 @@ class SignalRService {
     if (_connection?.state == HubConnectionState.connected) {
       try {
         await _connection!.stop();
-        print('SignalR: Disconnected');
       } catch (e) {
         print('SignalR: Error disconnecting: $e');
       }

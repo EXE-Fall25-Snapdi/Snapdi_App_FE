@@ -92,6 +92,10 @@ class AppAssets {
   static const String messageIcon = '$_iconsPath/message_icon.svg';
   static const String profileActionIcon = '$_iconsPath/profile_icon.svg';
   static const String walletIcon = '$_iconsPath/wallet_icon.svg';
+  static const String bagIcon = '$_iconsPath/bag.svg';
+  static const String carIcon = '$_iconsPath/car.svg';
+  static const String doneIcon = '$_iconsPath/done.svg';
+  static const String phoneIcon = '$_iconsPath/phone.svg';
 
   // Account Type Icons
   static const String snapperAccountIcon = '$_iconsPath/snaper_acc_icon.svg';
@@ -211,6 +215,10 @@ class AppAssets {
     messageIcon,
     profileActionIcon,
     walletIcon,
+    bagIcon,
+    carIcon,
+    doneIcon,
+    phoneIcon,
     snapperAccountIcon,
     userAccountIcon,
     // weddingIcon,

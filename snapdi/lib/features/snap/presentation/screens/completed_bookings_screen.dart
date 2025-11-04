@@ -5,6 +5,9 @@ import '../../data/services/booking_service.dart';
 import '../../data/models/pending_booking.dart';
 import '../../../profile/presentation/widgets/cloudinary_image.dart';
 import '../../../chat/data/services/chat_api_service.dart';
+import 'package:snapdi/core/constants/app_assets.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:snapdi/core/constants/app_theme.dart';
 
 class CompletedBookingsScreen extends StatefulWidget {
   const CompletedBookingsScreen({super.key});
@@ -22,6 +25,7 @@ class _CompletedBookingsScreenState extends State<CompletedBookingsScreen> {
   List<PendingBooking> _completedBookings = [];
   bool _isLoading = true;
   String? _photoLinkError;
+  bool _isPhotoLinkInitialized = false;
 
   @override
   void initState() {
@@ -56,7 +60,6 @@ class _CompletedBookingsScreenState extends State<CompletedBookingsScreen> {
         });
       }
     } catch (e) {
-      print('Error loading completed bookings: $e');
       if (mounted) {
         setState(() => _isLoading = false);
       }
@@ -190,30 +193,45 @@ class _CompletedBookingsScreenState extends State<CompletedBookingsScreen> {
   }
 
   void _showBookingDetails(PendingBooking booking) {
+    // Reset the initialization flag when opening a new modal
+    _isPhotoLinkInitialized = false;
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       useRootNavigator: true,
       builder: (context) => _buildBookingDetailSheet(booking),
-    );
+    ).then((_) {
+      // Reset flag when modal closes
+      _isPhotoLinkInitialized = false;
+    });
   }
 
   Widget _buildBookingDetailSheet(PendingBooking booking) {
-    _photoLinkController.text = booking.photoLink ?? '';
-    _photoLinkError = null;
+    // Only set the initial text once per modal open
+    if (!_isPhotoLinkInitialized) {
+      _photoLinkController.text = booking.photoLink ?? '';
+      _isPhotoLinkInitialized = true;
+      _photoLinkError = null;
+    }
 
     return StatefulBuilder(
       builder: (BuildContext context, StateSetter setModalState) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.78,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          builder: (context, scrollController) {
-            return Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
+        // Get keyboard height
+        final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+        
+        return Padding(
+          padding: EdgeInsets.only(bottom: keyboardHeight),
+          child: DraggableScrollableSheet(
+            initialChildSize: 0.78,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            builder: (context, scrollController) {
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(24),
                   topRight: Radius.circular(24),
                 ),
@@ -403,14 +421,14 @@ class _CompletedBookingsScreenState extends State<CompletedBookingsScreen> {
                             children: [
                               Expanded(
                                 child: _buildActionButton(
-                                  Icons.send,
+                                  AppAssets.messageIcon,
                                   () => _openChatWithCustomer(booking),
                                 ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
                                 child: _buildActionButton(
-                                  Icons.call,
+                                  AppAssets.phoneIcon,
                                   () => _callCustomer(booking.user.phone),
                                 ),
                               ),
@@ -676,6 +694,7 @@ class _CompletedBookingsScreenState extends State<CompletedBookingsScreen> {
               ),
             );
           },
+          ),
         );
       },
     );
@@ -722,15 +741,19 @@ class _CompletedBookingsScreenState extends State<CompletedBookingsScreen> {
     );
   }
 
-  Widget _buildActionButton(IconData icon, VoidCallback onPressed) {
-    return Container(
-      width: 42,
-      height: 42,
-      decoration: BoxDecoration(
-        color: const Color(0xFFB8D4CF),
-        borderRadius: BorderRadius.circular(10),
+  Widget _buildActionButton(String icon, VoidCallback onPressed) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: AppColors.grayField,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: SvgPicture.asset(icon),
       ),
-      child: IconButton(icon: Icon(icon, size: 18), onPressed: onPressed),
     );
   }
 

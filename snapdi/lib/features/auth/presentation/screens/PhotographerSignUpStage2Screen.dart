@@ -217,9 +217,6 @@ class _PhotographerSignUpStage2ScreenState
               final priceValue = _parseCurrency(priceController.text);
               final time = int.tryParse(timeController.text);
 
-              print('Parsed price: $priceValue'); // Debug log
-              print('Original text: ${priceController.text}'); // Debug log
-
               if (priceValue == 0 || time == null || time == 0) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(

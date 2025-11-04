@@ -24,33 +24,18 @@ Future<void> init() async {
 
 // Auth Feature
 Future<void> _initAuth() async {
-  // TODO: Register auth-specific dependencies
-  // Example:
-  // sl.registerFactory(() => LoginUseCase(sl()));
-  // sl.registerFactory(() => RegisterUseCase(sl()));
-  // sl.registerFactory(() => AuthBloc(loginUseCase: sl(), registerUseCase: sl()));
-  // sl.registerLazySingleton<AuthRepository>(() => AuthRepositoryImpl(
-  //   remoteDataSource: sl(),
-  //   localDataSource: sl(),
-  //   networkInfo: sl(),
-  // ));
-  // sl.registerLazySingleton<AuthRemoteDataSource>(() => AuthRemoteDataSourceImpl(client: sl()));
-  // sl.registerLazySingleton<AuthLocalDataSource>(() => AuthLocalDataSourceImpl(sharedPreferences: sl()));
 }
 
 // Photographer Feature
 Future<void> _initPhotographer() async {
-  // TODO: Register photographer-specific dependencies
 }
 
 // Booking Feature
 Future<void> _initBooking() async {
-  // TODO: Register booking-specific dependencies
 }
 
 // Profile Feature
 Future<void> _initProfile() async {
-  // TODO: Register profile-specific dependencies
 }
 
 // Core
@@ -101,7 +86,6 @@ Future<void> _initExternal() async {
         onError: (error, handler) async {
           // Handle token refresh on 401
           if (error.response?.statusCode == 401) {
-            // TODO: Implement token refresh logic
           }
           handler.next(error);
         },

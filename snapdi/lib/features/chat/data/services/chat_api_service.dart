@@ -59,21 +59,18 @@ class ChatApiServiceImpl implements ChatApiService {
     } on DioException catch (e) {
       // If 401, try to refresh token and retry
       if (e.response?.statusCode == 401) {
-        print('Token expired (401), attempting refresh...');
 
         final refreshResult = await _authService.refreshToken();
 
         return refreshResult.fold(
           (failure) {
             // Refresh failed, return authentication error
-            print('Token refresh failed: ${failure.message}');
             return Left(
               AuthenticationFailure('Session expired. Please login again.'),
             );
           },
           (loginResponse) async {
             // Refresh succeeded, retry with new token
-            print('Token refreshed successfully, retrying request...');
             try {
               final retryResponse = await request(loginResponse.token);
               return Right(retryResponse);

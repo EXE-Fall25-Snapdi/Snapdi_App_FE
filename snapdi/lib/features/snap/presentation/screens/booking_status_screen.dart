@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 
 import 'package:signalr_core/signalr_core.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -11,6 +13,7 @@ import '../../../../core/providers/user_info_provider.dart';
 import '../../data/services/booking_service.dart';
 import '../../data/models/booking_response.dart';
 import '../../../chat/data/services/chat_api_service.dart';
+import '../../../profile/presentation/widgets/cloudinary_image.dart';
 
 class BookingStatusScreen extends StatefulWidget {
   final int? bookingId;
@@ -309,14 +312,13 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(5, (index) {
+            children: List.generate(4, (index) {
               final completed = index <= _currentStep;
               final icons = [
-                Icons.attach_money,
-                Icons.directions_car,
-                Icons.settings,
-                Icons.book,
-                Icons.done_all,
+                AppAssets.bagIcon,
+                AppAssets.carIcon,
+                AppAssets.nowIcon,
+                AppAssets.doneIcon,
               ];
               return Column(
                 children: [
@@ -332,7 +334,11 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
                       border: Border.all(color: Colors.white, width: 2),
                     ),
                     child: Center(
-                      child: Icon(icons[index], color: Colors.black, size: 20),
+                      child: SvgPicture.asset(
+                        icons[index],
+                        width: 20,
+                        height: 20,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -343,7 +349,7 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
           const SizedBox(height: 12),
           Row(
             children: List.generate(4, (index) {
-              final leftCompleted = index <= (_currentStep - 1);
+              final leftCompleted = index <= (_currentStep);
               return Expanded(
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 400),
@@ -364,10 +370,50 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
     );
   }
 
+  String _getStatusDescription(int statusId) {
+    final isPhotographer = _userRoleId == 3;
+
+    switch (statusId) {
+      case 1: // Pending
+        return isPhotographer
+            ? 'Đơn hàng mới, vui lòng xác nhận hoặc từ chối'
+            : 'Đơn hàng đang chờ xác nhận từ photographer';
+      case 2: // Confirmed
+        return isPhotographer
+            ? 'Đã xác nhận đơn hàng, chờ khách hàng thanh toán'
+            : 'Đơn hàng đã được xác nhận, vui lòng thanh toán';
+      case 3: // Paid
+        return isPhotographer
+            ? 'Khách hàng đã thanh toán, hãy sẵn sàng đến địa điểm'
+            : 'Đã thanh toán, photographer sẽ sớm đến địa điểm';
+      case 4: // Going
+        return isPhotographer
+            ? 'Bạn đang trên đường đến địa điểm chụp'
+            : 'Photographer đang trên đường đến địa điểm chụp';
+      case 5: // Processing
+        return isPhotographer
+            ? 'Đang trong quá trình chụp ảnh cho khách hàng'
+            : 'Đang trong quá trình chụp ảnh';
+      case 6: // Done
+        return isPhotographer
+            ? 'Đã hoàn thành chụp, vui lòng upload link ảnh'
+            : 'Đã hoàn thành chụp, đang xử lý ảnh';
+      case 7: // Completed
+        return isPhotographer
+            ? 'Hoàn tất! Khách hàng có thể xem ảnh'
+            : 'Hoàn tất! Bạn có thể xem ảnh tại link đã gửi';
+      case 8: // Cancelled
+        return 'Đơn hàng đã bị hủy';
+      default:
+        return 'Vui lòng chờ cập nhật...';
+    }
+  }
+
   Widget _buildStatusMessage() {
     final statusText =
         _booking?.status.statusName ?? 'Khách hàng đang chuẩn bị...';
     final statusId = _booking?.status.statusId ?? 0;
+    final statusDescription = _getStatusDescription(statusId);
     final isCancelled = statusId == 8;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
@@ -391,12 +437,24 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              statusText,
-              style: AppTextStyles.bodyMedium.copyWith(
-                fontWeight: FontWeight.w600,
-                color: isCancelled ? Colors.red.shade700 : null,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  statusText,
+                  style: AppTextStyles.bodyMedium.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: isCancelled ? Colors.red.shade700 : null,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  statusDescription,
+                  style: AppTextStyles.bodySmall.copyWith(
+                    color: isCancelled ? Colors.red.shade600 : Colors.black54,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -477,19 +535,29 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
   Widget _buildSnapperCard() {
     // If user roleId is 3 (photographer), show customer info; otherwise show photographer info
     final isPhotographer = _userRoleId == 3;
-    print("isPhotographer (roleId=$_userRoleId): $isPhotographer");
     final String name;
-    final String phone;
 
     if (isPhotographer) {
       // Show customer info for photographer
       name = _booking?.customer.name ?? 'Khách hàng';
-      phone = _booking?.customer.phone ?? '';
     } else {
       // Show photographer info for customer
       final photographer = _booking?.photographer;
       name = photographer?.name ?? 'Snapper';
-      phone = photographer?.phone ?? '';
+    }
+
+    // Format booking date and time
+    String formattedDate = 'Chưa có lịch';
+    String formattedTime = '';
+    
+    if (_booking?.scheduleAt != null && _booking!.scheduleAt.isNotEmpty) {
+      try {
+        final DateTime bookingDateTime = DateTime.parse(_booking!.scheduleAt);
+        formattedDate = DateFormat('dd/MM/yyyy').format(bookingDateTime);
+        formattedTime = DateFormat('HH:mm').format(bookingDateTime);
+      } catch (e) {
+        formattedDate = _booking!.scheduleAt;
+      }
     }
 
     // Disable chat and call if booking status is Confirmed (statusId = 2)
@@ -513,23 +581,15 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           ClipOval(
-            child: Image.asset(
-              AppAssets.userPlaceholder,
-              width: 64,
-              height: 64,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                // If the asset is missing, fall back to a simple colored circle with icon
-                return Container(
-                  width: 64,
-                  height: 64,
-                  decoration: BoxDecoration(
-                    color: AppColors.primaryLight,
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(Icons.person, color: Colors.white),
-                );
-              },
+            child: CloudinaryImage(
+              publicId: isPhotographer
+                  ? 'snapdi/${_booking?.customer.userId}/avatar'
+                  : 'snapdi/${_booking?.photographer.userId}/avatar',
+              width: 80,
+              height: 80,
+              crop: 'fill',
+              gravity: 'face',
+              quality: 80,
             ),
           ),
           const SizedBox(width: 12),
@@ -543,20 +603,32 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 6),
-                Text(phone, style: AppTextStyles.bodySmall),
-                const SizedBox(height: 6),
                 Row(
                   children: [
-                    ...List.generate(
-                      5,
-                      (i) =>
-                          Icon(Icons.star, size: 14, color: AppColors.primary),
-                    ),
-                    const SizedBox(width: 8),
-                    Text('5.0', style: AppTextStyles.bodySmall),
+                    const Icon(Icons.calendar_today, size: 14, color: AppColors.primary),
+                    const SizedBox(width: 4),
+                    Text(formattedDate, style: AppTextStyles.bodySmall),
+                    if (formattedTime.isNotEmpty) ...[
+                      const SizedBox(width: 12),
+                      const Icon(Icons.access_time, size: 14, color: AppColors.primary),
+                      const SizedBox(width: 4),
+                      Text(formattedTime, style: AppTextStyles.bodySmall),
+                    ],
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
+                // Row(
+                //   children: [
+                //     ...List.generate(
+                //       5,
+                //       (i) =>
+                //           Icon(Icons.star, size: 14, color: AppColors.primary),
+                //     ),
+                //     const SizedBox(width: 8),
+                //     Text('5.0', style: AppTextStyles.bodySmall),
+                //   ],
+                // ),
+                // const SizedBox(height: 8),
                 // Photo type and time
                 Wrap(
                   spacing: 12,
@@ -568,7 +640,7 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
                         const Icon(
                           Icons.photo_camera,
                           size: 16,
-                          color: Colors.black54,
+                          color: AppColors.primary,
                         ),
                         const SizedBox(width: 6),
                         Text(
@@ -583,7 +655,7 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
                         const Icon(
                           Icons.schedule,
                           size: 16,
-                          color: Colors.black54,
+                          color: AppColors.primary,
                         ),
                         const SizedBox(width: 6),
                         Text(
@@ -601,20 +673,23 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
           Column(
             children: [
               _buildActionButton(
-                Icons.send,
+                AppAssets.messageIcon,
                 isConfirmedStatus
                     ? null // Disabled for Confirmed status
                     : _isOpeningChat
-                        ? null // Disabled when opening
-                        : () => _openChatWithUser(),
+                    ? null // Disabled when opening
+                    : () => _openChatWithUser(),
                 isDisabled: isConfirmedStatus || _isOpeningChat,
               ),
               const SizedBox(height: 8),
               _buildActionButton(
-                Icons.call,
+                AppAssets.phoneIcon,
                 isConfirmedStatus
                     ? null // Disabled for Confirmed status
                     : () async {
+                        final phone = isPhotographer
+                            ? _booking?.customer.phone ?? ''
+                            : _booking?.photographer.phone ?? '';
                         if (phone.isNotEmpty) {
                           await launchUrl(Uri.parse('tel:$phone'));
                         }
@@ -629,7 +704,7 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
   }
 
   Widget _buildActionButton(
-    IconData icon,
+    String iconPath,
     VoidCallback? onPressed, {
     bool isDisabled = false,
   }) {
@@ -637,16 +712,14 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
       width: 42,
       height: 42,
       decoration: BoxDecoration(
-        color: isDisabled
-            ? Colors.grey.shade300
-            : const Color(0xFFB8D4CF),
+        color: isDisabled ? Colors.grey.shade300 : const Color(0xFFB8D4CF),
         borderRadius: BorderRadius.circular(10),
       ),
       child: IconButton(
-        icon: Icon(
-          icon,
-          size: 18,
-          color: isDisabled ? Colors.grey.shade500 : Colors.black,
+        icon: SvgPicture.asset(
+          iconPath,
+          width: 18,
+          height: 18,
         ),
         onPressed: isDisabled ? null : onPressed,
       ),

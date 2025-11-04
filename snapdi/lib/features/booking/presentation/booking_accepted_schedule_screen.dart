@@ -1049,14 +1049,12 @@ class _BookingAcceptedScheduleScreenState
   // NEW: Process PayOS payment (chạy trên web)
   Future<void> _processPayOSPayment(PendingBooking booking) async {
     try {
-      print('🚀 Starting PayOS payment for booking: ${booking.bookingId}');
 
       // 1) Tạo PayOS payment URL
       final payosUrl = await _paymentService.createPayOSPayment(
         bookingId: booking.bookingId,
       );
 
-      print('✅ PayOS URL received: $payosUrl');
 
       // 2) Validate URL
       if (payosUrl.isEmpty) {
@@ -1069,16 +1067,13 @@ class _BookingAcceptedScheduleScreenState
         throw Exception('Invalid PayOS URL format: $payosUrl');
       }
 
-      print('🔗 Parsed URI: ${uri.toString()}');
 
       // 4) Thử các launch mode khác nhau
       bool launched = false;
 
       // Option 1: External Application (Browser)
       try {
-        print('🚀 Trying LaunchMode.externalApplication...');
         launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
-        print('✅ External browser launch: $launched');
       } catch (e) {
         print('❌ External browser failed: $e');
       }
@@ -1086,9 +1081,7 @@ class _BookingAcceptedScheduleScreenState
       // Option 2: Platform Default
       if (!launched) {
         try {
-          print('🚀 Trying LaunchMode.platformDefault...');
           launched = await launchUrl(uri, mode: LaunchMode.platformDefault);
-          print('✅ Platform default launch: $launched');
         } catch (e) {
           print('❌ Platform default failed: $e');
         }
@@ -1097,7 +1090,6 @@ class _BookingAcceptedScheduleScreenState
       // Option 3: In-App WebView
       if (!launched) {
         try {
-          print('🚀 Trying LaunchMode.inAppWebView...');
           launched = await launchUrl(
             uri,
             mode: LaunchMode.inAppWebView,
@@ -1106,7 +1098,6 @@ class _BookingAcceptedScheduleScreenState
               enableDomStorage: true,
             ),
           );
-          print('✅ In-app webview launch: $launched');
         } catch (e) {
           print('❌ In-app webview failed: $e');
         }
@@ -1115,22 +1106,18 @@ class _BookingAcceptedScheduleScreenState
       // Option 4: Legacy launchUrl (deprecated nhưng có thể work)
       if (!launched) {
         try {
-          print('🚀 Trying legacy launch...');
           // ignore: deprecated_member_use
           launched = await launch(payosUrl);
-          print('✅ Legacy launch: $launched');
         } catch (e) {
           print('❌ Legacy launch failed: $e');
         }
       }
 
       if (launched) {
-        print('✅ PayOS URL launched successfully');
 
         // Đóng modal sau khi launch thành công
         if (mounted) {
           Navigator.pop(context);
-          print('✅ Modal closed');
         }
 
         // Show success snackbar
@@ -1240,7 +1227,6 @@ class _BookingAcceptedScheduleScreenState
         );
       }
     } catch (e) {
-      print('❌ Clipboard fallback failed: $e');
       _showError('Không thể mở link thanh toán. Vui lòng thử lại sau.');
     }
   }

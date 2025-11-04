@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
 import 'package:dio/dio.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -10,7 +9,7 @@ import '../../../../core/constants/app_constants.dart';
 import '../../data/models/manual_payment_request.dart';
 
 class PaymentService {
-  static const String baseUrl = 'http://your-backend-ip:port/api';
+  static const String baseUrl = 'https://snapdi-api-7cmuvhzaxa-as.a.run.app';
   // TODO: Thay đổi baseUrl theo môi trường
   // Development: 'http://10.0.2.2:8080/api' (Android Emulator)
   // Production: 'https://snapdi-api.com/api'
@@ -31,19 +30,14 @@ class PaymentService {
       final uploadToken = await TokenStorage.instance.getAccessToken();
       if (uploadToken != null && uploadToken.isNotEmpty) {
         request.headers['Authorization'] = 'Bearer $uploadToken';
-        print('🔐 Added Authorization header to upload request');
       }
       // Thêm headers nếu cần authentication
       // final token = await _getAuthToken();
       // request.headers['Authorization'] = 'Bearer $token';
 
-      print('🚀 Uploading image to: $uri');
       
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
-
-      print('📊 Upload status: ${response.statusCode}');
-      print('📝 Upload response: ${response.body}');
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body) as Map<String, dynamic>;
@@ -60,7 +54,6 @@ class PaymentService {
         }
         
         if (imageUrl != null && imageUrl.isNotEmpty) {
-          print('✅ Upload success: $imageUrl');
           return imageUrl;
         } else {
           throw Exception('Không tìm thấy URL ảnh trong response');
@@ -69,7 +62,6 @@ class PaymentService {
         throw Exception('Upload failed: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
-      print('❌ Upload error: $e');
       rethrow;
     }
   }
@@ -88,7 +80,6 @@ class PaymentService {
       if (token == null || token.isEmpty) {
         throw Exception('Unauthorized: no auth token found');
       }
-      print('🔐 Using auth token: ${token.substring(0, min(12, token.length))}...');
 
       // 2) Gắn Authorization vào Dio
       final dio = ApiService().dio;
@@ -115,10 +106,8 @@ class PaymentService {
       }
       throw Exception('Payment failed: ${response.statusCode}');
     } on DioException catch (e) {
-      print('❌ DioException during manual-payment: status=${e.response?.statusCode}, data=${e.response?.data}, message=${e.message}');
       rethrow;
     } catch (e) {
-      print('❌ Error confirming manual payment: $e');
       rethrow;
     }
   }
@@ -135,8 +124,6 @@ class PaymentService {
       if (token == null || token.isEmpty) {
         throw Exception('Unauthorized: no auth token found');
       }
-      print('🔐 Using auth token: ${token.substring(0, min(12, token.length))}...');
-
       // 2) Gắn Authorization vào Dio
       final dio = ApiService().dio;
       dio.options.headers['Authorization'] = 'Bearer $token';
@@ -158,10 +145,8 @@ class PaymentService {
       }
       throw Exception('Payment failed: ${response.statusCode}');
     } on DioException catch (e) {
-      print('❌ DioException during manual-payment: status=${e.response?.statusCode}, data=${e.response?.data}, message=${e.message}');
       rethrow;
     } catch (e) {
-      print('❌ Error confirming manual payment: $e');
       rethrow;
     }
   }
@@ -177,7 +162,6 @@ class PaymentService {
       if (token == null || token.isEmpty) {
         throw Exception('Unauthorized: no auth token found');
       }
-      print('🔐 Using auth token: ${token.substring(0, min(12, token.length))}...');
 
       // 2) Gắn Authorization vào Dio
       final dio = ApiService().dio;
@@ -199,10 +183,8 @@ class PaymentService {
       }
       throw Exception('Payment failed: ${response.statusCode}');
     } on DioException catch (e) {
-      print('❌ DioException during manual-payment: status=${e.response?.statusCode}, data=${e.response?.data}, message=${e.message}');
       rethrow;
     } catch (e) {
-      print('❌ Error confirming manual payment: $e');
       rethrow;
     }
   }
@@ -220,14 +202,12 @@ class PaymentService {
       if (token == null || token.isEmpty) {
         throw Exception('Unauthorized: no auth token found');
       }
-      print('🔐 Using auth token for PayOS: ${token.substring(0, min(12, token.length))}...');
 
       // 2) Gắn Authorization vào Dio
       final dio = ApiService().dio;
       dio.options.headers['Authorization'] = 'Bearer $token';
       dio.options.headers['Content-Type'] = 'application/json';
 
-      print('💳 Creating PayOS payment for booking: $bookingId');
 
       // 3) Gửi request tạo PayOS payment - chỉ cần bookingId
       final response = await dio.post(
@@ -240,16 +220,13 @@ class PaymentService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data as Map<String, dynamic>;
-        print('✅ PayOS response: $data');
 
         // Lấy paymentUrl từ response
         final paymentUrl = data['paymentUrl'] as String?;
         final success = data['success'] as bool?;
-        final message = data['message'] as String?;
 
         if (success == true && paymentUrl != null && paymentUrl.isNotEmpty) {
-          print('✅ PayOS payment URL created: $paymentUrl');
-          print('📝 Message: $message');
+         
           return paymentUrl;
         } else {
           throw Exception('Không tìm thấy paymentUrl trong response hoặc success = false');
@@ -258,15 +235,12 @@ class PaymentService {
         throw Exception('PayOS payment creation failed: ${response.statusCode}');
       }
     } on DioException catch (e) {
-      print('❌ DioException during PayOS create-payment: status=${e.response?.statusCode}, data=${e.response?.data}, message=${e.message}');
       if (e.response?.statusCode == 401) {
         throw Exception('Unauthorized (401). Token missing/expired. Please login again.');
       }
       rethrow;
     } catch (e) {
-      print('❌ Error creating PayOS payment: $e');
       rethrow;
     }
   }
-
 }

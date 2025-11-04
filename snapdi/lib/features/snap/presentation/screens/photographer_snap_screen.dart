@@ -32,6 +32,7 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
   List<PendingBooking> _upcomingBookings = [];
   bool _isLoading = true;
   String? _photoLinkError;
+  bool _isPhotoLinkInitialized = false;
 
   @override
   void initState() {
@@ -232,28 +233,44 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
   }
 
   void _showBookingDetails(PendingBooking booking) {
+    // Reset the initialization flag when opening a new modal
+    _isPhotoLinkInitialized = false;
+    
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       useRootNavigator: true,
       builder: (context) => _buildBookingDetailSheet(booking),
-    );
+    ).then((_) {
+      // Reset flag when modal closes
+      _isPhotoLinkInitialized = false;
+    });
   }
 
   Widget _buildBookingDetailSheet(PendingBooking booking) {
     final bool isDone = booking.status.statusId == 6;
-    _photoLinkController.text = booking.photoLink ?? '';
-    _photoLinkError = null; // Reset error when opening
+    
+    // Only set the initial text once per modal open
+    if (!_isPhotoLinkInitialized) {
+      _photoLinkController.text = booking.photoLink ?? '';
+      _isPhotoLinkInitialized = true;
+      _photoLinkError = null;
+    }
 
     return StatefulBuilder(
       builder: (BuildContext context, StateSetter setModalState) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.78,
-          minChildSize: 0.5,
-          maxChildSize: 0.95,
-          builder: (context, scrollController) {
-            return Container(
+        // Get keyboard height
+        final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+        
+        return Padding(
+          padding: EdgeInsets.only(bottom: keyboardHeight),
+          child: DraggableScrollableSheet(
+            initialChildSize: 0.78,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            builder: (context, scrollController) {
+              return Container(
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.only(
@@ -302,6 +319,7 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
                   Expanded(
                     child: SingleChildScrollView(
                       controller: scrollController,
+                      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                       padding: const EdgeInsets.all(20),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -326,12 +344,13 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(
+                                SvgPicture.asset(
                                   _getStatusIcon(booking.status.statusId),
                                   color: _getStatusBadgeColor(
                                     booking.status.statusId,
                                   ),
-                                  size: 16,
+                                  width: 16,
+                                  height: 16,
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
@@ -457,14 +476,14 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
                               children: [
                                 Expanded(
                                   child: _buildActionButton(
-                                    Icons.send,
+                                    AppAssets.messageIcon,
                                     () => _openChatWithCustomer(booking),
                                   ),
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: _buildActionButton(
-                                    Icons.call,
+                                    AppAssets.phoneIcon,
                                     () => _callCustomer(booking.user.phone),
                                   ),
                                 ),
@@ -769,7 +788,8 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
                 ],
               ),
             );
-          },
+            },
+          ),
         );
       },
     );
@@ -816,15 +836,19 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
     );
   }
 
-  Widget _buildActionButton(IconData icon, VoidCallback onPressed) {
-    return Container(
-      width: 42,
-      height: 42,
-      decoration: BoxDecoration(
-        color: const Color(0xFFB8D4CF),
-        borderRadius: BorderRadius.circular(10),
+  Widget _buildActionButton(String icon, VoidCallback onPressed) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: AppColors.grayField,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: SvgPicture.asset(icon),
       ),
-      child: IconButton(icon: Icon(icon, size: 18), onPressed: onPressed),
     );
   }
 
@@ -905,22 +929,22 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
     }
   }
 
-  IconData _getStatusIcon(int statusId) {
+  String _getStatusIcon(int statusId) {
     switch (statusId) {
       case 2: // Accepted
-        return Icons.check_circle_outline;
+        return AppAssets.bagIcon;
       case 3: // Paid
-        return Icons.payment;
+        return AppAssets.paymentIcon;
       case 4: // Going
-        return Icons.directions_car;
+        return AppAssets.carIcon;
       case 5: // Processing
-        return Icons.camera_alt;
+        return AppAssets.nowIcon;
       case 6: // Done
-        return Icons.check_circle;
+        return AppAssets.doneIcon;
       case 7: // Completed
-        return Icons.check_circle_outline;
+        return AppAssets.doneIcon;
       default:
-        return Icons.info_outline;
+        return AppAssets.bookIcon;
     }
   }
 

@@ -28,11 +28,9 @@ class StyleService {
         final List<dynamic> jsonList = jsonDecode(response.body);
         return jsonList.map((json) => Style.fromJson(json)).toList();
       } else {
-        print('Error fetching styles: ${response.statusCode}');
         return [];
       }
     } catch (e) {
-      print('Error fetching styles: $e');
       return [];
     } finally {
       client.close();

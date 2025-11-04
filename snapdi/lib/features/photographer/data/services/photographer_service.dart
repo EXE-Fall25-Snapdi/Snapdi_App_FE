@@ -47,20 +47,17 @@ class PhotographerService {
         latitude: latitude,
         longitude: longitude,
       );
-    } catch (e, stackTrace) {
+    } catch (e) {
       if (e.toString().contains('TOKEN_EXPIRED')) {
-        print('PhotographerService: Token expired, attempting refresh...');
         
         // Try to refresh the token
         final refreshResult = await _authService.refreshToken();
         
         return refreshResult.fold(
           (failure) {
-            print('PhotographerService: Token refresh failed - ${failure.message}');
             return false;
           },
           (loginResponse) {
-            print('PhotographerService: Token refreshed successfully, retrying request...');
             // Retry the original request with the new token
             return _performStatusUpdate(
               photographerId: photographerId,
@@ -71,9 +68,7 @@ class PhotographerService {
           },
         );
       }
-      
-      print('PhotographerService: Status update failed - $e');
-      print('Stack trace: $stackTrace');
+
       return false;
     }
   }
@@ -104,9 +99,6 @@ class PhotographerService {
         };
       }
 
-      print('PhotographerService: Updating status for photographer #$photographerId');
-      print('PhotographerService: Request body - $requestBody');
-
       final response = await client.patch(
         Uri.parse('${Environment.apiBaseUrl}/api/Photographer/$photographerId/status'),
         headers: {
@@ -116,27 +108,21 @@ class PhotographerService {
         body: jsonEncode(requestBody),
       );
 
-      print('PhotographerService: Response status - ${response.statusCode}');
 
       // Handle success status codes
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        print('PhotographerService: Status updated successfully');
         return true;
       } else if (response.statusCode == 401) {
-        print('PhotographerService: Unauthorized - token may be expired');
         throw Exception('TOKEN_EXPIRED');
       } else {
-        print('PhotographerService: Request failed with status ${response.statusCode}');
-        print('PhotographerService: Response body - ${response.body}');
+
         throw Exception('Status update failed with code ${response.statusCode}: ${response.body}');
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       if (e.toString().contains('TOKEN_EXPIRED')) {
         rethrow; // Let the parent method handle token expiration
       }
-      
-      print('PhotographerService: Error in _performStatusUpdate - $e');
-      print('Stack trace: $stackTrace');
+
       rethrow; // Rethrow to provide meaningful error to caller
     } finally {
       client.close();
@@ -161,11 +147,8 @@ class PhotographerService {
     try {
       final token = await _tokenStorage.getAccessToken();
       if (token == null) {
-        print('PhotographerService: No access token found');
         return null;
       }
-
-      print('PhotographerService: Fetching pending bookings for photographer #$photographerId');
 
       final response = await client.get(
         Uri.parse(
@@ -177,26 +160,21 @@ class PhotographerService {
         },
       );
 
-      print('PhotographerService: Response status - ${response.statusCode}');
 
       // Handle success status codes
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        print('PhotographerService: Pending bookings fetched successfully');
-        print('PhotographerService: Response body - ${response.body}');
+
 
         final jsonData = jsonDecode(response.body);
         return PendingBookingResponse.fromJson(jsonData);
       } else if (response.statusCode == 401) {
-        print('PhotographerService: Unauthorized - token may be expired');
         return null;
       } else {
-        print('PhotographerService: Request failed with status ${response.statusCode}');
-        print('PhotographerService: Response body - ${response.body}');
+
         return null;
       }
-    } catch (e, stackTrace) {
-      print('PhotographerService: Error fetching pending bookings - $e');
-      print('Stack trace: $stackTrace');
+    } catch (e) {
+
       return null;
     } finally {
       client.close();
@@ -215,38 +193,30 @@ class PhotographerService {
 
     try {
       return await _performGetAvailability(photographerId: photographerId);
-    } catch (e, stackTrace) {
+    } catch (e) {
       if (e.toString().contains('TOKEN_EXPIRED') ||
           e.toString().contains('401') ||
           e.toString().contains('bad response')) {
-        print('PhotographerService: Token expired, attempting refresh...');
 
         // Try to refresh the token
         final refreshResult = await _authService.refreshToken();
 
         return refreshResult.fold(
           (failure) {
-            print(
-                'PhotographerService: Token refresh failed - ${failure.message}');
             // Check if it's refresh token expiration
             if (failure.message.contains('REFRESH_TOKEN_EXPIRED')) {
-              print('PhotographerService: Refresh token expired, need to re-login');
               throw Exception('REFRESH_TOKEN_EXPIRED');
             }
             // Throw TOKEN_EXPIRED for other auth failures
             throw Exception('TOKEN_EXPIRED: ${failure.message}');
           },
           (loginResponse) {
-            print(
-                'PhotographerService: Token refreshed successfully, retrying request...');
             // Retry the original request with the new token
             return _performGetAvailability(photographerId: photographerId);
           },
         );
       }
 
-      print('PhotographerService: Availability fetch failed - $e');
-      print('Stack trace: $stackTrace');
       return null;
     }
   }
@@ -258,12 +228,8 @@ class PhotographerService {
     try {
       final token = await _tokenStorage.getAccessToken();
       if (token == null) {
-        print('PhotographerService: No access token found');
         return null;
       }
-
-      print(
-          'PhotographerService: Fetching availability for photographer #$photographerId');
 
       final response = await client.get(
         Uri.parse(
@@ -275,28 +241,21 @@ class PhotographerService {
         },
       );
 
-      print('PhotographerService: Response status - ${response.statusCode}');
 
       // Handle success status codes
       if (response.statusCode >= 200 && response.statusCode < 300) {
-        print('PhotographerService: Availability fetched successfully');
         final jsonData = jsonDecode(response.body);
         return PhotographerAvailability.fromJson(jsonData);
       } else if (response.statusCode == 401) {
-        print('PhotographerService: Unauthorized - token may be expired');
         throw Exception('TOKEN_EXPIRED');
       } else {
-        print('PhotographerService: Request failed with status ${response.statusCode}');
-        print('PhotographerService: Response body - ${response.body}');
         return null;
       }
-    } catch (e, stackTrace) {
+    } catch (e) {
       if (e.toString().contains('TOKEN_EXPIRED')) {
         rethrow; // Let the parent method handle token expiration
       }
 
-      print('PhotographerService: Error in _performGetAvailability - $e');
-      print('Stack trace: $stackTrace');
       rethrow; // Rethrow to provide meaningful error to caller
     } finally {
       client.close();

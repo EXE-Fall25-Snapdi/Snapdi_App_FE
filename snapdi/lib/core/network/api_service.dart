@@ -39,15 +39,7 @@ class ApiService {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
-          // Add authorization token if available
-          // TODO: Get token from secure storage
-          // final token = await _getAuthToken();
-          // if (token != null) {
-          //   options.headers['Authorization'] = 'Bearer $token';
-          // }
-
-          // Request logging for development
-          // print('REQUEST[${options.method}] => ${options.path}');
+          
           handler.next(options);
         },
         onResponse: (response, handler) {

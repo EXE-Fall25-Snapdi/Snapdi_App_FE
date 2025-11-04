@@ -24,10 +24,6 @@ class _UploadProofScreenState extends State<UploadProofScreen> {
     );
 
     if (picked != null) {
-      print('═══════════════════════════════════');
-      print('📸 Đường dẫn ảnh đã chọn:');
-      print('   ${picked.path}');
-      print('═══════════════════════════════════');
 
       setState(() => selectedImage = File(picked.path));
     }
@@ -237,7 +233,7 @@ class _UploadProofScreenState extends State<UploadProofScreen> {
                   icon: const Icon(Icons.check),
                   label: const Text(
                     'Hoàn tất',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
                     ),

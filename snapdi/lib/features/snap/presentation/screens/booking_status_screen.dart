@@ -492,6 +492,9 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
       phone = photographer?.phone ?? '';
     }
 
+    // Disable chat and call if booking status is Confirmed (statusId = 2)
+    final isConfirmedStatus = _booking?.status.statusId == 2;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       padding: const EdgeInsets.all(12.0),
@@ -599,16 +602,25 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
             children: [
               _buildActionButton(
                 Icons.send,
-                _isOpeningChat
-                    ? () {} // Disabled when opening
-                    : () => _openChatWithUser(),
+                isConfirmedStatus
+                    ? null // Disabled for Confirmed status
+                    : _isOpeningChat
+                        ? null // Disabled when opening
+                        : () => _openChatWithUser(),
+                isDisabled: isConfirmedStatus || _isOpeningChat,
               ),
               const SizedBox(height: 8),
-              _buildActionButton(Icons.call, () async {
-                if (phone.isNotEmpty) {
-                  await launchUrl(Uri.parse('tel:$phone'));
-                }
-              }),
+              _buildActionButton(
+                Icons.call,
+                isConfirmedStatus
+                    ? null // Disabled for Confirmed status
+                    : () async {
+                        if (phone.isNotEmpty) {
+                          await launchUrl(Uri.parse('tel:$phone'));
+                        }
+                      },
+                isDisabled: isConfirmedStatus,
+              ),
             ],
           ),
         ],
@@ -616,15 +628,28 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
     );
   }
 
-  Widget _buildActionButton(IconData icon, VoidCallback onPressed) {
+  Widget _buildActionButton(
+    IconData icon,
+    VoidCallback? onPressed, {
+    bool isDisabled = false,
+  }) {
     return Container(
       width: 42,
       height: 42,
       decoration: BoxDecoration(
-        color: const Color(0xFFB8D4CF),
+        color: isDisabled
+            ? Colors.grey.shade300
+            : const Color(0xFFB8D4CF),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: IconButton(icon: Icon(icon, size: 18), onPressed: onPressed),
+      child: IconButton(
+        icon: Icon(
+          icon,
+          size: 18,
+          color: isDisabled ? Colors.grey.shade500 : Colors.black,
+        ),
+        onPressed: isDisabled ? null : onPressed,
+      ),
     );
   }
 

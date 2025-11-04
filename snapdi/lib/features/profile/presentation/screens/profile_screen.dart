@@ -31,6 +31,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
   bool _isPhotographer = false;
 
+  bool get _isOwnProfile => _currentUser?.userId == int.parse(widget.userId);
+  bool get _isCustomerViewingPhotographer =>
+      _currentUser?.roleId == 2 && !_isOwnProfile;
+
   @override
   void initState() {
     super.initState();
@@ -111,70 +115,77 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
 
     final double statusBarHeight = MediaQuery.of(context).padding.top;
+    final screenHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      backgroundColor: Colors.transparent, // Nền Scaffold trong suốt
-      body: Stack(
-        children: [
-          // LỚP NỀN 1 (Dưới cùng): 1 ảnh gradient cho TOÀN BỘ màn hình
-          // (Giả sử ảnh này là gradient XANH ở trên và XÁM NHẠT ở dưới)
-          Positioned.fill(
-            child: Image.asset(
-              AppAssets.backgroundGradient, // Dùng 1 ảnh gradient duy nhất
-              fit: BoxFit.cover,
-            ),
+      body: Container(
+        // Wrap toàn bộ body trong Container với decoration
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(AppAssets.backgroundGradient),
+            fit: BoxFit.cover,
           ),
-
-          // LỚP 2: Toàn bộ nội dung cuộn (Profile, Stats, Menu)
-          SingleChildScrollView(
-            child: Column(
-              children: [
-                // Khoảng đệm cho Status bar và nút Back
-                SizedBox(height: statusBarHeight + kToolbarHeight / 2),
-
-                // Sử dụng Stack ở đây để chồng lấn Profile Card và Stats Card
-                Stack(
-                  clipBehavior: Clip.none,
-                  alignment: Alignment.topCenter,
+        ),
+        child: Stack(
+          children: [
+            // LỚP 2: Toàn bộ nội dung cuộn (Profile, Stats, Menu)
+            SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight:
+                      screenHeight, // Đảm bảo ít nhất bằng chiều cao màn hình
+                ),
+                child: Column(
                   children: [
-                    // NỘI DUNG CHÍNH (Stats + Menu)
-                    // Bắt đầu từ dưới thẻ Profile
-                    Padding(
-                      // Đẩy nội dung xuống 1 nửa thẻ profile
-                      // (Giả sử thẻ profile cao ~100px)
-                      padding: const EdgeInsets.only(top: 60.0),
-                      child: _buildMainContent(), // Hàm này chứa Stats + Menu
+                    // Khoảng đệm cho Status bar và nút Back
+                    SizedBox(height: statusBarHeight + kToolbarHeight / 2),
+
+                    // Sử dụng Stack ở đây để chồng lấn Profile Card và Stats Card
+                    Column(
+                      children: [
+                        // NỘI DUNG CHÍNH (Stats + Menu)
+                        // Bắt đầu từ dưới thẻ Profile
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: AppDimensions.paddingLarge,
+                          ),
+                          child: _buildProfileCard(),
+                        ),
+                        Padding(
+                          // Đẩy nội dung xuống 1 nửa thẻ profile
+                          // (Giả sử thẻ profile cao ~100px)
+                          padding: const EdgeInsets.only(top: 0),
+                          child:
+                              _buildMainContent(), // Hàm này chứa Stats + Menu
+                        ),
+
+                        // THẺ PROFILE (Nằm trên)
+                        // _buildProfileCard đã có nền trắng và shadow
+                      ],
                     ),
 
-                    // THẺ PROFILE (Nằm trên)
-                    // _buildProfileCard đã có nền trắng và shadow
-                    Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimensions.paddingLarge,
-                      ),
-                      child: _buildProfileCard(),
-                    ),
+                    const SizedBox(height: 100), // Khoảng trống cuối cùng
                   ],
                 ),
-
-                const SizedBox(height: 100), // Khoảng trống cuối cùng
-              ],
-            ),
-          ),
-          // LỚP 3: Nút quay lại
-          Positioned(
-            top: statusBarHeight,
-            left: AppDimensions.paddingSmall,
-            child: IconButton(
-              icon: const Icon(
-                Icons.arrow_back_ios_new,
-                color: AppColors.white,
               ),
-              onPressed: () => context.pop(),
-              tooltip: 'Quay lại',
             ),
-          ),
-        ],
+
+            // LỚP 3: Nút quay lại
+            if (_isCustomerViewingPhotographer)
+              Positioned(
+                top: statusBarHeight,
+                left: AppDimensions.paddingSmall,
+                child: IconButton(
+                  icon: const Icon(
+                    Icons.arrow_back_ios_new,
+                    color: AppColors.white,
+                  ),
+                  onPressed: () => context.pop(),
+                  tooltip: 'Quay lại',
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -193,7 +204,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         // // 2. Các thẻ Menu
         // // THAY ĐỔI 5: Thêm Padding cho các thẻ menu
         Padding(
-          padding: const EdgeInsets.only(top: 60),
+          padding: const EdgeInsets.only(top: 20),
           child: Column(
             children: [
               // Bỏ container thừa
@@ -540,7 +551,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         boxShadow: [
           // Thêm shadow nhẹ để thẻ nổi bật hơn nền
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black,
             blurRadius: 10,
             offset: const Offset(0, 2),
           ),

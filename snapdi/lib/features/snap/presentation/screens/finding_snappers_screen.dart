@@ -6,11 +6,8 @@ import '../../../../core/constants/app_theme.dart';
 import '../../../../core/constants/app_assets.dart';
 import 'dart:async';
 import '../../../profile/presentation/widgets/cloudinary_image.dart';
-// import '../../../chat/data/services/chat_api_service.dart';
 import '../../data/services/snapper_service.dart';
-import '../../data/services/booking_service.dart';
 import '../../data/models/find_snappers_request.dart';
-import '../../data/models/booking_request.dart';
 import 'booking_confirm_screen.dart';
 import 'snappers_map_screen.dart';
 import '../../../../core/utils/utils.dart';
@@ -53,8 +50,6 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
   bool _isSearching = true;
   final List<SnapperProfile> _foundSnappers = [];
   final SnapperService _snapperService = SnapperService();
-  final BookingService _bookingService = BookingService();
-  // final ChatApiServiceImpl _chatApiService = ChatApiServiceImpl();
   bool _isCreatingBooking = false;
   // bool _isCreatingConversation = false;
 
@@ -284,7 +279,7 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
     );
   }
 
-  Future<void> _createBooking(SnapperProfile snapper) async {
+  Future<void> _navigateToBookingConfirm(SnapperProfile snapper) async {
     if (widget.customerId == null ||
         widget.date == null ||
         widget.time == null) {
@@ -297,52 +292,24 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
     });
 
     try {
-      // Combine date and time into ISO 8601 format
-      final scheduleDateTime = DateTime(
-        widget.date!.year,
-        widget.date!.month,
-        widget.date!.day,
-        widget.time!.hour,
-        widget.time!.minute,
-      );
-
-      final bookingRequest = BookingRequest(
-        customerId: widget.customerId!,
-        photographerId: snapper.userId,
-        scheduleAt: scheduleDateTime.toIso8601String(),
-        locationAddress: widget.locationAddress ?? widget.location ?? '',
-        price: snapper.photoPrice.toInt(),
-        note: widget.note!,
-        photoTypeId: snapper.photoTypeId,
-        time: snapper.photoTime,
-      );
-
-      final response = await _bookingService.createBooking(bookingRequest);
-
-      if (!mounted) return;
-
-      if (response.success && response.data != null) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => BookingConfirmScreen(
-              snapper: snapper,
-              location: widget.location,
-              date: widget.date,
-              scheduleAt: widget.time,
-              bookingId: response.data!.bookingId,
-              amount: response.data!.price.toDouble(),
-              photoTypeId: snapper.photoTypeId,
-              time: snapper.photoTime,
-            ),
+      // Navigate to BookingConfirmScreen without creating booking yet
+      // Booking will be created after user confirms
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => BookingConfirmScreen(
+            snapper: snapper,
+            location: widget.location,
+            date: widget.date,
+            scheduleAt: widget.time,
+            customerId: widget.customerId!,
+            locationAddress: widget.locationAddress ?? widget.location ?? '',
+            note: widget.note ?? '',
+            photoTypeId: snapper.photoTypeId,
+            time: snapper.photoTime,
           ),
-        );
-      } else {
-        _showErrorDialog(response.message ?? 'Không thể tạo đặt chỗ');
-      }
-    } catch (e) {
-      if (!mounted) return;
-      _showErrorDialog('Lỗi: ${e.toString()}');
+        ),
+      );
     } finally {
       if (mounted) {
         setState(() {
@@ -489,9 +456,9 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                                     ),
                                   );
 
-                              // If a snapper was selected from the map, create booking immediately
+                              // If a snapper was selected from the map, navigate to confirm
                               if (selectedSnapper != null && mounted) {
-                                _createBooking(selectedSnapper);
+                                _navigateToBookingConfirm(selectedSnapper);
                               }
                             } else if (_foundSnappers.isEmpty) {
                               _showErrorDialog(
@@ -883,7 +850,7 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                     onTap: _isCreatingBooking
                         ? null
                         : () {
-                            _createBooking(snapper);
+                            _navigateToBookingConfirm(snapper);
                           },
                     borderRadius: BorderRadius.circular(20),
                     child: Row(

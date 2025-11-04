@@ -69,7 +69,7 @@ class _BookingTrackSnapperScreenState extends State<BookingTrackSnapperScreen> {
     if (mounted) {
       setState(() {
         _isLoading = false;
-        if (response != null && response.data.isNotEmpty) {
+        if (response != null) {
           _bookings = response.data;
           _currentPage = 1;
           _hasMoreData = response.hasNextPage;

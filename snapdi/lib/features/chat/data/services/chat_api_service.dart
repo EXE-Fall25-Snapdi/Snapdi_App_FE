@@ -244,9 +244,15 @@ class ChatApiServiceImpl implements ChatApiService {
         } else if (statusCode == 404) {
           return ServerFailure('Resource not found');
         }
-        return ServerFailure(
-          'Server error: ${error.response?.data?['message'] ?? 'Unknown error'}',
-        );
+        // Handle both Map and String response data
+        String errorMessage = 'Unknown error';
+        final responseData = error.response?.data;
+        if (responseData is Map<String, dynamic>) {
+          errorMessage = responseData['message'] ?? 'Unknown error';
+        } else if (responseData is String) {
+          errorMessage = responseData;
+        }
+        return ServerFailure('Server error: $errorMessage');
       case DioExceptionType.cancel:
         return ServerFailure('Request cancelled');
       case DioExceptionType.connectionError:

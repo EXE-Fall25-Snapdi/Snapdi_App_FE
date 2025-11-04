@@ -396,7 +396,7 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
                               children: [
                                 ClipOval(
                                   child: CloudinaryImage(
-                                    publicId: request.customerAvatar!,
+                                    publicId: request.customerAvatar,
                                     width: 60,
                                     height: 60,
                                     crop: 'fill',
@@ -820,7 +820,7 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
                   ),
                   child: ClipOval(
                     child: CloudinaryImage(
-                      publicId: request.customerAvatar!,
+                      publicId: request.customerAvatar,
                       width: 60,
                       height: 60,
                       crop: 'fill',

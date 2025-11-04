@@ -182,6 +182,8 @@ class PhotographerService {
       // Handle success status codes
       if (response.statusCode >= 200 && response.statusCode < 300) {
         print('PhotographerService: Pending bookings fetched successfully');
+        print('PhotographerService: Response body - ${response.body}');
+
         final jsonData = jsonDecode(response.body);
         return PendingBookingResponse.fromJson(jsonData);
       } else if (response.statusCode == 401) {

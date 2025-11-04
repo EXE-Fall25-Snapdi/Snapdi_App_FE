@@ -1,20 +1,17 @@
 import 'package:flutter/material.dart';
-import '../../../payment/presentation/screens/ManualPaymentScreen.dart';
-import '../../../payment/presentation/screens/PaymentStatusScreen.dart'; // NEW: import PaymentStatusScreen
 import 'finding_snappers_screen.dart';
-// NEW: import payment service
-import '../../../payment/domain/services/payment_service.dart';
-// NEW: import request model
-import '../../../payment/data/models/manual_payment_request.dart';
 import 'waiting_confirmation_screen.dart';
+import '../../data/services/booking_service.dart';
+import '../../data/models/booking_request.dart';
 
 class BookingConfirmScreen extends StatefulWidget { // NEW: StatefulWidget để có isLoading
   final SnapperProfile snapper;
   final String? location;
   final DateTime? date;
   final TimeOfDay? scheduleAt;
-  final int bookingId;
-  final double amount;
+  final int customerId;
+  final String locationAddress;
+  final String note;
   final int? photoTypeId;
   final int? time;
 
@@ -24,8 +21,9 @@ class BookingConfirmScreen extends StatefulWidget { // NEW: StatefulWidget để
     this.location,
     this.date,
     this.scheduleAt,
-    required this.bookingId,
-    required this.amount,
+    required this.customerId,
+    required this.locationAddress,
+    required this.note,
     this.photoTypeId,
     this.time,
   }) : super(key: key);
@@ -35,12 +33,14 @@ class BookingConfirmScreen extends StatefulWidget { // NEW: StatefulWidget để
 }
 
 class _BookingConfirmScreenState extends State<BookingConfirmScreen> {
-  bool isLoading = false; // NEW: loading state
-  final PaymentService _paymentService = PaymentService(); // NEW: payment service
+  bool isLoading = false;
+  final BookingService _bookingService = BookingService();
+  int? _createdBookingId;
+  double? _bookingAmount;
 
   @override
   Widget build(BuildContext context) {
-    final double totalAmount = widget.amount;
+    final double totalAmount = _bookingAmount ?? widget.snapper.photoPrice;
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -86,7 +86,9 @@ class _BookingConfirmScreenState extends State<BookingConfirmScreen> {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Booking #${widget.bookingId}',
+                    _createdBookingId != null 
+                        ? 'Booking #$_createdBookingId' 
+                        : 'Xem trước đặt chụp',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -411,57 +413,57 @@ class _BookingConfirmScreenState extends State<BookingConfirmScreen> {
     );
   }
 
-  // NEW: HÀM HỦY THANH TOÁN (copy từ ManualPaymentScreen)
-  Future<void> _cancelPayment() async {
-    setState(() => isLoading = true);
+  // // NEW: HÀM HỦY THANH TOÁN (copy từ ManualPaymentScreen)
+  // Future<void> _cancelPayment() async {
+  //   setState(() => isLoading = true);
     
-    try {
-      // Tạo payment trước để có paymentId
-      final paymentId = await _paymentService.confirmManualPayment(
-        ManualPaymentRequest(
-          bookingId: widget.bookingId,
-          feePolicyId: 1,
-        ),
-      );
+  //   try {
+  //     // Tạo payment trước để có paymentId
+  //     final paymentId = await _paymentService.confirmManualPayment(
+  //       ManualPaymentRequest(
+  //         bookingId: widget.bookingId,
+  //         feePolicyId: 1,
+  //       ),
+  //     );
       
-      // Sau đó hủy payment đó
-      final cancelRequest = ManualPaymentRequest(
-        bookingId: widget.bookingId,
-        feePolicyId: 1,
-      );
+  //     // Sau đó hủy payment đó
+  //     final cancelRequest = ManualPaymentRequest(
+  //       bookingId: widget.bookingId,
+  //       feePolicyId: 1,
+  //     );
       
-      final success = await _paymentService.CancelManualPayment(
-        cancelRequest,
-        paymentId
-      );
+  //     final success = await _paymentService.CancelManualPayment(
+  //       cancelRequest,
+  //       paymentId
+  //     );
       
-      String status = '';
-      if (success == 'cancelled') {
-        status = 'cancelled';
-      }
+  //     String status = '';
+  //     if (success == 'cancelled') {
+  //       status = 'cancelled';
+  //     }
       
-      if (!mounted) return;
+  //     if (!mounted) return;
       
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => PaymentStatusScreen(status: status),
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Lỗi: $e'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-        ),
-      );
-    } finally {
-      if (mounted) setState(() => isLoading = false);
-    }
-  }
+  //     Navigator.pushReplacement(
+  //       context,
+  //       MaterialPageRoute(
+  //         builder: (_) => PaymentStatusScreen(status: status),
+  //       ),
+  //     );
+  //   } catch (e) {
+  //     if (!mounted) return;
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         content: Text('Lỗi: $e'),
+  //         backgroundColor: Colors.red,
+  //         behavior: SnackBarBehavior.floating,
+  //         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+  //       ),
+  //     );
+  //   } finally {
+  //     if (mounted) setState(() => isLoading = false);
+  //   }
+  // }
 
   Future<void> _handleConfirmBooking(BuildContext context, double totalAmount) async {
     // Hiện dialog xác nhận
@@ -504,38 +506,71 @@ class _BookingConfirmScreenState extends State<BookingConfirmScreen> {
       setState(() => isLoading = true);
       
       try {
-        // Gọi API confirm booking (không cần payment ngay)
-        // TODO: Call API confirm booking here if needed
-        
-        // Simulate API call
-        await Future.delayed(const Duration(seconds: 1));
-        
-        if (!mounted) return;
-        
-        // ✅ Navigate đến WaitingConfirmationScreen thay vì ManualPaymentScreen
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => WaitingConfirmationScreen(
-              bookingId: widget.bookingId,
-              photographerName: widget.snapper.name,
-            ),
-          ),
+        // Create booking when user confirms
+        final scheduleDateTime = DateTime(
+          widget.date!.year,
+          widget.date!.month,
+          widget.date!.day,
+          widget.scheduleAt!.hour,
+          widget.scheduleAt!.minute,
         );
-        
+
+        final bookingRequest = BookingRequest(
+          customerId: widget.customerId,
+          photographerId: widget.snapper.userId,
+          scheduleAt: scheduleDateTime.toIso8601String(),
+          locationAddress: widget.locationAddress,
+          price: widget.snapper.photoPrice.toInt(),
+          note: widget.note,
+          photoTypeId: widget.photoTypeId,
+          time: widget.time,
+        );
+
+        final response = await _bookingService.createBooking(bookingRequest);
+
+        if (!mounted) return;
+
+        if (response.success && response.data != null) {
+          setState(() {
+            _createdBookingId = response.data!.bookingId;
+            _bookingAmount = response.data!.price.toDouble();
+          });
+
+          // Navigate to WaitingConfirmationScreen with the created booking ID
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => WaitingConfirmationScreen(
+                bookingId: _createdBookingId!,
+                photographerName: widget.snapper.name,
+              ),
+            ),
+          );
+        } else {
+          _showErrorDialog(response.message ?? 'Không thể tạo đặt chỗ');
+        }
       } catch (e) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Không thể xác nhận booking: $e'),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          ),
-        );
+        _showErrorDialog('Lỗi: ${e.toString()}');
       } finally {
         if (mounted) setState(() => isLoading = false);
       }
     }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Lỗi'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 }

@@ -89,8 +89,7 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen> {
   }
 
   bool get _isOwnProfile => _currentUser?.userId == widget.userId;
-  bool get _isCustomerViewingPhotographer =>
-      _currentUser?.roleId == 2 && !_isOwnProfile;
+
   bool get _isPhotographerViewingOwnProfile =>
       _currentUser?.roleId == 3 && _isOwnProfile;
 
@@ -135,6 +134,18 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen> {
   void _handleSettingsMenu() {
     // Navigate to settings screen (current ProfileScreen)
     context.push('/profile/${_currentUser?.userId}');
+  }
+
+  void _openFullScreenImage(int initialIndex) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => FullScreenImageViewer(
+          portfolios: _portfolios,
+          initialIndex: initialIndex,
+        ),
+      ),
+    );
   }
 
   // =================================================================
@@ -190,30 +201,37 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          ElevatedButton(
-            onPressed: () => context.go('/'),
-            style: ElevatedButton.styleFrom(
-              shape: const CircleBorder(), // 1. Đặt hình dạng là hình tròn
-              padding: const EdgeInsets.all(
-                12,
-              ), // 2. Đặt kích thước đệm (thay đổi số này để nút to/nhỏ)
-              backgroundColor: const Color(0xFF00D580), // 3. Đặt màu nền
-              foregroundColor: Colors.black, // 4. Đặt màu cho icon bên trong
+          // Chỉ hiển thị nút back nếu roleId != 2
+          if (_currentUser?.roleId != 2)
+            ElevatedButton(
+              onPressed: () => context.go('/'),
+              style: ElevatedButton.styleFrom(
+                shape: const CircleBorder(), // 1. Đặt hình dạng là hình tròn
+                padding: const EdgeInsets.all(
+                  12,
+                ), // 2. Đặt kích thước đệm (thay đổi số này để nút to/nhỏ)
+                backgroundColor: const Color(0xFF00D580), // 3. Đặt màu nền
+                foregroundColor: Colors.black, // 4. Đặt màu cho icon bên trong
+              ),
+              child: const Icon(
+                Icons.arrow_back, // Icon mũi tên quay lại
+                size: 24, // Kích thước icon (tùy chọn)
+              ),
             ),
-            child: const Icon(
-              Icons.arrow_back, // Icon mũi tên quay lại
-              size: 24, // Kích thước icon (tùy chọn)
-            ),
-          ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: EdgeInsets.symmetric(
+                horizontal: 16,
+                // Điều chỉnh padding nếu không có nút back
+              ),
               child: Text(
                 photographer.name,
                 style: AppTextStyles.headline4.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
-                textAlign: TextAlign.left,
+                textAlign: _currentUser?.roleId == 2
+                    ? TextAlign.center
+                    : TextAlign.left,
               ),
             ),
           ),
@@ -251,8 +269,6 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen> {
               child: photographer.avatarUrl != null
                   ? CloudinaryImage(
                       publicId: photographer.avatarUrl!,
-                      width: 120,
-                      height: 120,
                       fit: BoxFit.cover,
                     )
                   : Container(
@@ -285,34 +301,6 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen> {
               const SizedBox(height: 4),
               Row(
                 children: [
-                  // Nút "Nhắn tin" (chỉ cho khách hàng)
-                  if (_isCustomerViewingPhotographer)
-                    ElevatedButton(
-                      onPressed: _isCreatingConversation
-                          ? null
-                          : _handleMessageButton,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 32,
-                          vertical: 6,
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        textStyle: AppTextStyles.bodySmall, // Chữ nhỏ hơn
-                      ),
-                      child: _isCreatingConversation
-                          ? const SizedBox(
-                              width: 32,
-                              height: 6,
-                              child: CircularProgressIndicator(
-                                color: Color.fromARGB(255, 20, 19, 19),
-                                strokeWidth: 2,
-                              ),
-                            )
-                          : const Text('Nhắn tin'),
-                    ),
                   if (_isPhotographerViewingOwnProfile)
                     ElevatedButton(
                       onPressed: _handleUpdatePortfolio,
@@ -398,17 +386,134 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen> {
                   itemCount: _portfolios.length,
                   itemBuilder: (context, index) {
                     final portfolio = _portfolios[index];
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(4), // Bo góc nhẹ
-                      child: CloudinaryImage(
-                        publicId: portfolio.photoUrl,
-                        width: 120,
-                        height: 120,
-                        fit: BoxFit.cover,
+                    return GestureDetector(
+                      onTap: () => _openFullScreenImage(index),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4), // Bo góc nhẹ
+                        child: CloudinaryImage(
+                          publicId: portfolio.photoUrl,
+                          width: 400,
+                          height: 400,
+                          crop: 'fill',
+                          quality: 80,
+                        ),
                       ),
                     );
                   },
                 ),
+        ],
+      ),
+    );
+  }
+}
+
+// =================================================================
+// FULL SCREEN IMAGE VIEWER WIDGET
+// =================================================================
+
+class FullScreenImageViewer extends StatefulWidget {
+  final List<PhotoPortfolio> portfolios;
+  final int initialIndex;
+
+  const FullScreenImageViewer({
+    super.key,
+    required this.portfolios,
+    required this.initialIndex,
+  });
+
+  @override
+  State<FullScreenImageViewer> createState() => _FullScreenImageViewerState();
+}
+
+class _FullScreenImageViewerState extends State<FullScreenImageViewer> {
+  late PageController _pageController;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _pageController = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          // PageView để swipe qua các ảnh
+          PageView.builder(
+            controller: _pageController,
+            itemCount: widget.portfolios.length,
+            onPageChanged: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            itemBuilder: (context, index) {
+              final portfolio = widget.portfolios[index];
+              return Center(
+                child: InteractiveViewer(
+                  minScale: 0.5,
+                  maxScale: 4.0,
+                  child: CloudinaryImage(
+                    publicId: portfolio.photoUrl,
+                    quality: 90,
+                    fit: BoxFit.contain, // Giữ nguyên tỉ lệ, vừa với màn hình
+                    // Không set width/height để giữ nguyên tỉ lệ gốc
+                  ),
+                ),
+              );
+            },
+          ),
+
+          // Nút close
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  // Counter
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withOpacity(0.5),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${_currentIndex + 1} / ${widget.portfolios.length}',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+
+                  // Close button
+                  IconButton(
+                    icon: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

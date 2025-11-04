@@ -124,6 +124,9 @@ class _CloudinaryImageState extends State<CloudinaryImage> {
           const Center(child: CircularProgressIndicator()),
       errorWidget: (context, url, error) =>
           widget.errorWidget ?? const Center(child: Icon(Icons.error)),
+      // Thêm caching options để cải thiện hiệu suất
+      fadeInDuration: const Duration(milliseconds: 200),
+      fadeOutDuration: const Duration(milliseconds: 200),
     );
   }
 }

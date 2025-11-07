@@ -763,23 +763,6 @@ class _BookingRequestsScreenState extends State<BookingRequestsScreen> {
           ),
 
           const SizedBox(width: 12),
-
-          // Menu Icon
-          Container(
-            width: 45,
-            height: 45,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.menu, color: AppColors.primary, size: 24),
-              onPressed: () {
-                // TODO: Open menu
-              },
-              padding: EdgeInsets.zero,
-            ),
-          ),
         ],
       ),
     );

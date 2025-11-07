@@ -31,9 +31,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
   bool _isPhotographer = false;
 
-  bool get _isOwnProfile => _currentUser?.userId == int.parse(widget.userId);
-  bool get _isCustomerViewingPhotographer =>
-      _currentUser?.roleId == 2 && !_isOwnProfile;
+  // bool get _isOwnProfile => _currentUser?.userId == int.parse(widget.userId);
+  // bool get _isCustomerViewingPhotographer =>
+  //     _currentUser?.roleId == 2 && !_isOwnProfile;
 
   @override
   void initState() {
@@ -171,7 +171,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
 
             // LỚP 3: Nút quay lại
-            if (_isCustomerViewingPhotographer)
+            // if (_isCustomerViewingPhotographer)
               Positioned(
                 top: statusBarHeight,
                 left: AppDimensions.paddingSmall,

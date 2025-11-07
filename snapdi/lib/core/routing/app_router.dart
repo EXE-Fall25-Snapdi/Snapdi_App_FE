@@ -18,9 +18,14 @@ import 'package:snapdi/features/chat/presentation/screens/chat_screen.dart';
 import 'package:snapdi/features/shared/presentation/screens/main_navigation_screen.dart';
 import 'package:snapdi/features/home/presentation/screens/home_screen.dart';
 import 'package:snapdi/features/booking/presentation/booking_schedule_screen.dart';
+import 'package:snapdi/features/booking/presentation/booking_history_screen.dart';
 import 'package:snapdi/features/snap/presentation/screens/snap_screen.dart';
 import 'package:snapdi/features/snap/presentation/screens/booking_status_screen.dart';
+import 'package:snapdi/features/snap/presentation/screens/completed_bookings_screen.dart';
 import 'package:snapdi/core/constants/app_theme.dart';
+import 'package:snapdi/core/storage/token_storage.dart';
+import 'package:snapdi/features/auth/data/models/user.dart';
+import 'dart:convert';
 import 'package:snapdi/features/snap/presentation/screens/photographer_welcome_screen.dart';
 import 'package:snapdi/features/snap/presentation/screens/photographer_snap_screen.dart';
 
@@ -125,10 +130,7 @@ final GoRouter router = GoRouter(
           path: '/history',
           pageBuilder: (context, state) => NoTransitionPage(
             key: state.pageKey,
-            child: const PlaceholderScreen(
-              title: 'History',
-              icon: Icons.history,
-            ),
+            child: const HistoryScreenWrapper(),
           ),
         ),
         GoRoute(
@@ -267,5 +269,70 @@ class PlaceholderScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+// Wrapper widget that shows different history screens based on role
+class HistoryScreenWrapper extends StatefulWidget {
+  const HistoryScreenWrapper({super.key});
+
+  @override
+  State<HistoryScreenWrapper> createState() => _HistoryScreenWrapperState();
+}
+
+class _HistoryScreenWrapperState extends State<HistoryScreenWrapper> {
+  final _tokenStorage = TokenStorage.instance;
+  int? _roleId;
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserRole();
+  }
+
+  Future<void> _loadUserRole() async {
+    try {
+      final userInfoJson = await _tokenStorage.getUserInfo();
+      
+      if (userInfoJson != null) {
+        final userMap = jsonDecode(userInfoJson);
+        final user = User.fromJson(userMap);
+        if (mounted) {
+          setState(() {
+            _roleId = user.roleId;
+            _isLoading = false;
+          });
+        }
+      } else {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
+    }
+
+    // If photographer (roleId == 3), show CompletedBookingsScreen
+    // Otherwise, show BookingHistoryScreen
+    if (_roleId == 3) {
+      return const CompletedBookingsScreen();
+    } else {
+      return const BookingHistoryScreen();
+    }
   }
 }

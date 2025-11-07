@@ -4,7 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_theme.dart';
 import '../../../../core/storage/token_storage.dart';
 import '../../../auth/data/models/user.dart';
-import '../../../chat/data/services/chat_api_service.dart';
+// import '../../../chat/data/services/chat_api_service.dart';
 import '../../data/models/photographer_detail_response.dart';
 import '../../data/models/photo_portfolio.dart';
 import '../../domain/services/profile_service.dart';
@@ -23,13 +23,13 @@ class PhotographerProfileScreen extends StatefulWidget {
 class _PhotographerProfileScreenState extends State<PhotographerProfileScreen> {
   final _tokenStorage = TokenStorage.instance;
   final _profileService = ProfileServiceImpl();
-  final _chatApiService = ChatApiServiceImpl();
+  // final _chatApiService = ChatApiServiceImpl();
 
   User? _currentUser;
   PhotographerDetailResponse? _photographerDetail;
   List<PhotoPortfolio> _portfolios = [];
   bool _isLoading = true;
-  bool _isCreatingConversation = false;
+  // bool _isCreatingConversation = false;
 
   @override
   void initState() {
@@ -93,39 +93,39 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen> {
   bool get _isPhotographerViewingOwnProfile =>
       _currentUser?.roleId == 3 && _isOwnProfile;
 
-  Future<void> _handleMessageButton() async {
-    if (_isCreatingConversation) return;
+  // Future<void> _handleMessageButton() async {
+  //   if (_isCreatingConversation) return;
 
-    setState(() {
-      _isCreatingConversation = true;
-    });
+  //   setState(() {
+  //     _isCreatingConversation = true;
+  //   });
 
-    final result = await _chatApiService.createOrGetConversationWithUser(
-      widget.userId,
-    );
+  //   final result = await _chatApiService.createOrGetConversationWithUser(
+  //     widget.userId,
+  //   );
 
-    setState(() {
-      _isCreatingConversation = false;
-    });
+  //   setState(() {
+  //     _isCreatingConversation = false;
+  //   });
 
-    result.fold(
-      (failure) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to start chat: ${failure.message}')),
-          );
-        }
-      },
-      (conversationId) {
-        if (mounted) {
-          context.push(
-            '/chat/$conversationId',
-            extra: _photographerDetail?.name,
-          );
-        }
-      },
-    );
-  }
+  //   result.fold(
+  //     (failure) {
+  //       if (mounted) {
+  //         ScaffoldMessenger.of(context).showSnackBar(
+  //           SnackBar(content: Text('Failed to start chat: ${failure.message}')),
+  //         );
+  //       }
+  //     },
+  //     (conversationId) {
+  //       if (mounted) {
+  //         context.push(
+  //           '/chat/$conversationId',
+  //           extra: _photographerDetail?.name,
+  //         );
+  //       }
+  //     },
+  //   );
+  // }
 
   void _handleUpdatePortfolio() {
     context.push('/manage-portfolio');

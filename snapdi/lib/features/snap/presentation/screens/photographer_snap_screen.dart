@@ -10,7 +10,7 @@ import '../../data/models/pending_booking.dart';
 import '../../../profile/presentation/widgets/cloudinary_image.dart';
 import '../../../chat/data/services/chat_api_service.dart';
 import 'booking_requests_screen.dart';
-import 'completed_bookings_screen.dart';
+import 'done_bookings_screen.dart';
 
 /// Photographer's Snap screen showing booking requests and upcoming sessions
 class PhotographerSnapScreen extends StatefulWidget {
@@ -28,7 +28,7 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
 
   String _userName = 'Amigo';
   int _pendingRequestsCount = 0;
-  int _completedBookingsCount = 0;
+  int _doneBookingsCount = 0;
   List<PendingBooking> _upcomingBookings = [];
   bool _isLoading = true;
   String? _photoLinkError;
@@ -62,7 +62,7 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
       // Fetch bookings with multiple statuses
       final bookingsResponse = await _bookingService
           .getBookingsByMultipleStatuses(
-            statusIds: [1, 2, 3, 4, 5, 6, 7], // Add status 7 for completed
+            statusIds: [1, 2, 3, 4, 5, 6],
             page: 1,
             pageSize: 20,
           );
@@ -76,14 +76,14 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
               .where((booking) => booking.status.statusId == 1)
               .length;
 
-          // Count completed bookings (status ID 7)
-          _completedBookingsCount = bookingsResponse.data
-              .where((booking) => booking.status.statusId == 7)
+          // Count done bookings (status ID 6)
+          _doneBookingsCount = bookingsResponse.data
+              .where((booking) => booking.status.statusId == 6)
               .length;
 
-          // Filter out status 1 and 7 bookings from display list
+          // Filter out status 1 and 6 bookings from display list
           _upcomingBookings = bookingsResponse.data
-              .where((booking) => booking.status.statusId != 1 && booking.status.statusId != 7)
+              .where((booking) => booking.status.statusId != 1 && booking.status.statusId != 6)
               .toList();
 
           _isLoading = false;
@@ -92,7 +92,7 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
         setState(() {
           _upcomingBookings = [];
           _pendingRequestsCount = 0;
-          _completedBookingsCount = 0;
+          _doneBookingsCount = 0;
           _isLoading = false;
         });
       }
@@ -1029,8 +1029,8 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
 
                                 const SizedBox(height: 12),
 
-                                // Completed Bookings Card - NEW
-                                _buildCompletedBookingsCard(),
+                                // Done Bookings Card
+                                _buildDoneBookingsCard(),
 
                                 const SizedBox(height: 24),
 
@@ -1106,24 +1106,24 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
           const Spacer(),
 
           // Menu Icon
-          Container(
-            width: 45,
-            height: 45,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: IconButton(
-              icon: const Icon(Icons.menu, color: AppColors.primary, size: 24),
-              onPressed: () async {
-                final id = await _userInfoProvider.getUserId();
-                if (id != null) {
-                  context.go('/profile/$id');
-                }
-              },
-              padding: EdgeInsets.zero,
-            ),
-          ),
+          // Container(
+          //   width: 45,
+          //   height: 45,
+          //   decoration: BoxDecoration(
+          //     color: Colors.white,
+          //     borderRadius: BorderRadius.circular(12),
+          //   ),
+          //   child: IconButton(
+          //     icon: const Icon(Icons.menu, color: AppColors.primary, size: 24),
+          //     onPressed: () async {
+          //       final id = await _userInfoProvider.getUserId();
+          //       if (id != null) {
+          //         context.go('/profile/$id');
+          //       }
+          //     },
+          //     padding: EdgeInsets.zero,
+          //   ),
+          // ),
         ],
       ),
     );
@@ -1227,13 +1227,13 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
     );
   }
 
-  Widget _buildCompletedBookingsCard() {
+  Widget _buildDoneBookingsCard() {
     return GestureDetector(
       onTap: () async {
         final result = await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const CompletedBookingsScreen(),
+            builder: (context) => const DoneBookingsScreen(),
           ),
         );
 
@@ -1262,7 +1262,7 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Đơn hoàn thành',
+                    'Đơn cần gửi ảnh',
                     style: AppTextStyles.headline4.copyWith(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -1271,9 +1271,9 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    _completedBookingsCount > 0
-                        ? 'Bạn có $_completedBookingsCount đơn đã hoàn thành'
-                        : 'Không có đơn hoàn thành',
+                    _doneBookingsCount > 0
+                        ? 'Bạn có $_doneBookingsCount đơn cần gửi ảnh'
+                        : 'Không có đơn cần gửi ảnh',
                     style: AppTextStyles.bodySmall.copyWith(
                       color: AppColors.textSecondary,
                       fontSize: 12,
@@ -1283,18 +1283,18 @@ class _PhotographerSnapScreenState extends State<PhotographerSnapScreen> {
               ),
             ),
 
-            // Check circle Icon
+            // Icon
             Container(
               width: 60,
               height: 60,
               decoration: BoxDecoration(
                 color: AppColors.white,
                 shape: BoxShape.circle,
-                border: Border.all(color: Colors.purple.shade600, width: 2),
+                border: Border.all(color: Colors.teal.shade600, width: 2),
               ),
               child: Icon(
-                Icons.check_circle,
-                color: Colors.purple.shade600,
+                Icons.camera_alt,
+                color: Colors.teal.shade600,
                 size: 32,
               ),
             ),

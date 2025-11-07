@@ -558,7 +558,7 @@ class _ManualPaymentScreenState extends State<ManualPaymentScreen> {
       // amount: widget.amount,
     );
     try {
-      final success = await _paymentService.CancelManualPayment(
+      final success = await _paymentService.cancelManualPayment(
         cancelRequest,
         widget.paymentId,
       );

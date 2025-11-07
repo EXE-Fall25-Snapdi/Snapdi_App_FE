@@ -62,11 +62,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void _updateCurrentIndex() {
     final location = GoRouterState.of(context).uri.path;
     setState(() {
-      if (location == '/home') {
+      if (location == '/home' || location == '/photographer-welcome') {
         _currentIndex = 0;
       } else if (location == '/explore') {
         _currentIndex = 1;
-      } else if (location == '/snap') {
+      } else if (location == '/snap' || location == '/photographer-snap') {
         _currentIndex = 2;
       } else if (location == '/history') {
         _currentIndex = 3;
@@ -194,15 +194,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: EdgeInsets.only(
-          bottom: isCameraIcon ? 5 : (isSelected ? 10 : 5),
+          bottom: isCameraIcon ? (isSelected ? 10 : 5) : (isSelected ? 10 : 5),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             SvgPicture.asset(
               iconPath,
-              width: isCameraIcon ? 56 : (isSelected ? 48 : 36),
-              height: isCameraIcon ? 56 : (isSelected ? 48 : 36),
+              width: isCameraIcon ? (isSelected ? 64 : 56) : (isSelected ? 48 : 36),
+              height: isCameraIcon ? (isSelected ? 64 : 56) : (isSelected ? 48 : 36),
             ),
             if (label.isNotEmpty) ...[
               Text(

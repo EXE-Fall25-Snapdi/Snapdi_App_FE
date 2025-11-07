@@ -62,14 +62,15 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   String? _validatePhone(String? value) {
-    if (value != null && value.isNotEmpty) {
-      String phoneDigits = value.replaceAll(RegExp(r'[^0-9]'), '');
-      if (phoneDigits.length < 10) {
-        return 'Số điện thoại phải có ít nhất 10 chữ số';
-      }
-      if (phoneDigits.length > 15) {
-        return 'Số điện thoại không được vượt quá 15 chữ số';
-      }
+    if (value == null || value.isEmpty) {
+      return 'Vui lòng nhập số điện thoại';
+    }
+    String phoneDigits = value.replaceAll(RegExp(r'[^0-9]'), '');
+    if (phoneDigits.length < 10) {
+      return 'Số điện thoại phải có ít nhất 10 chữ số';
+    }
+    if (phoneDigits.length > 15) {
+      return 'Số điện thoại không được vượt quá 15 chữ số';
     }
     return null;
   }
@@ -255,9 +256,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                     const SizedBox(height: AppDimensions.marginMedium),
 
-                    // Phone field (optional)
+                    // Phone field
                     CustomInputField(
-                      hintText: 'Số điện thoại (Tùy chọn)',
+                      hintText: 'Số điện thoại',
                       prefixIcon: Icons.phone_outlined,
                       keyboardType: TextInputType.phone,
                       controller: _phoneController,

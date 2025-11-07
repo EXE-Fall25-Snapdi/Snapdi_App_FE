@@ -785,23 +785,7 @@ class _CompletedBookingsScreenState extends State<CompletedBookingsScreen> {
               padding: const EdgeInsets.all(20),
               child: Row(
                 children: [
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(36),
-                    ),
-                    child: IconButton(
-                      padding: EdgeInsets.zero,
-                      icon: const Icon(
-                        Icons.arrow_back,
-                        color: Colors.white,
-                        size: 20,
-                      ),
-                      onPressed: () => Navigator.of(context).pop(),
-                    ),
-                  ),
+                  
                   const SizedBox(width: 12),
                   Text(
                     'Đơn hoàn thành',

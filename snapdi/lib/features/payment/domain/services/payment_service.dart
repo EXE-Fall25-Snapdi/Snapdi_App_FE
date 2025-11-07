@@ -10,9 +10,6 @@ import '../../data/models/manual_payment_request.dart';
 
 class PaymentService {
   static const String baseUrl = 'https://snapdi-api-7cmuvhzaxa-as.a.run.app';
-  // TODO: Thay đổi baseUrl theo môi trường
-  // Development: 'http://10.0.2.2:8080/api' (Android Emulator)
-  // Production: 'https://snapdi-api.com/api'
   
   /// Upload ảnh hóa đơn lên server
   /// Returns: URL của ảnh đã upload
@@ -105,7 +102,7 @@ class PaymentService {
       return paymentId;
       }
       throw Exception('Payment failed: ${response.statusCode}');
-    } on DioException catch (e) {
+    } on DioException {
       rethrow;
     } catch (e) {
       rethrow;
@@ -144,14 +141,14 @@ class PaymentService {
         return (data['success'] as bool?) ?? false;
       }
       throw Exception('Payment failed: ${response.statusCode}');
-    } on DioException catch (e) {
+    } on DioException {
       rethrow;
     } catch (e) {
       rethrow;
     }
   }
 
-  Future<bool> CancelManualPayment(ManualPaymentRequest request, int paymentId) async {
+  Future<bool> cancelManualPayment(ManualPaymentRequest request, int paymentId) async {
     try {
       // 1) Lấy token từ secure storage, fallback SharedPreferences
       final secureToken = await TokenStorage.instance.getAccessToken();
@@ -182,7 +179,7 @@ class PaymentService {
         return (data['success'] as bool?) ?? false;
       }
       throw Exception('Payment failed: ${response.statusCode}');
-    } on DioException catch (e) {
+    } on DioException {
       rethrow;
     } catch (e) {
       rethrow;

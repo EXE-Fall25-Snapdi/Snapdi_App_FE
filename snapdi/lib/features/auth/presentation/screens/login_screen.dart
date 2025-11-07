@@ -320,12 +320,6 @@ class _LoginScreenState extends State<LoginScreen> {
                                     onPressed: () =>
                                         _handleSocialLogin('Facebook'),
                                   ),
-                                  const SizedBox(width: 20),
-                                  _SocialLoginButton(
-                                    icon: Icons.code,
-                                    onPressed: () =>
-                                        _handleSocialLogin('GitHub'),
-                                  ),
                                 ],
                               ),
 

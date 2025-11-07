@@ -35,8 +35,7 @@ class _BookingTrackSnapperScreenState extends State<BookingTrackSnapperScreen> {
     4,
     5,
     6,
-    7,
-  ]; //Going, Processing, Done, Completed
+  ]; //Paid, Going, Processing, Done
 
   @override
   void initState() {

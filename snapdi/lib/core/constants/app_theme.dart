@@ -70,6 +70,7 @@ class AppTextStyles {
     fontSize: 20,
     fontWeight: FontWeight.w600,
     color: AppColors.textPrimary,
+    decoration: TextDecoration.none,
   );
 
   // Body Text
@@ -92,6 +93,7 @@ class AppTextStyles {
     fontSize: 12,
     fontWeight: FontWeight.normal,
     color: AppColors.textSecondary,
+    decoration: TextDecoration.none,
   );
 
   // Button Text

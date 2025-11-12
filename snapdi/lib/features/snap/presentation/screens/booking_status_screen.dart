@@ -445,6 +445,7 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
                   style: AppTextStyles.bodyMedium.copyWith(
                     fontWeight: FontWeight.w600,
                     color: isCancelled ? Colors.red.shade700 : null,
+                    decoration: TextDecoration.none,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -452,6 +453,7 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
                   statusDescription,
                   style: AppTextStyles.bodySmall.copyWith(
                     color: isCancelled ? Colors.red.shade600 : Colors.black54,
+                    decoration: TextDecoration.none,
                   ),
                 ),
               ],
@@ -778,6 +780,7 @@ class _BookingStatusScreenState extends State<BookingStatusScreen> {
                         style: AppTextStyles.headline3.copyWith(
                           color: Colors.black87,
                           fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.none,
                         ),
                       ),
                     ],

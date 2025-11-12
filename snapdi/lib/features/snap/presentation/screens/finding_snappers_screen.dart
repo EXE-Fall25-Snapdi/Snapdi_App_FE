@@ -520,10 +520,7 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                 // Main content area
                 _isSearching
                     ? Expanded(child: _buildSearchingView())
-                    : const Spacer(),
-
-                // Results view positioned at bottom
-                if (!_isSearching) _buildResultsView(),
+                    : Expanded(child: _buildResultsView()),
               ],
             ),
           ),
@@ -628,7 +625,6 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
         ),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 24),
           // Results count
@@ -649,17 +645,17 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
           ),
           const SizedBox(height: 24),
           // Snappers list
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
-            itemCount: _foundSnappers.length,
-            separatorBuilder: (context, index) => const SizedBox(height: 16),
-            itemBuilder: (context, index) {
-              return _buildSnapperCard(_foundSnappers[index]);
-            },
+          Expanded(
+            child: ListView.separated(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 0),
+              itemCount: _foundSnappers.length,
+              separatorBuilder: (context, index) => const SizedBox(height: 16),
+              itemBuilder: (context, index) {
+                return _buildSnapperCard(_foundSnappers[index]);
+              },
+            ),
           ),
-          const SizedBox(height: 50),
+          const SizedBox(height: 24),
         ],
       ),
     );
@@ -679,76 +675,84 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
           ),
         ],
       ),
-      child: Row(
-        children: [
-          // Avatar section (unchanged)
-          Stack(
-            children: [
-              ClipOval(
-                child: snapper.avatarUrl != null
-                    ? CloudinaryImage(
-                        publicId: snapper.avatarUrl!,
-                        width: 60,
-                        height: 60,
-                        crop: 'fill',
-                        gravity: 'face',
-                        quality: 80,
-                      )
-                    : Container(
-                        width: 60,
-                        height: 60,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          color: Colors.grey.shade300,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Avatar section (unchanged)
+            Stack(
+              children: [
+                ClipOval(
+                  child: snapper.avatarUrl != null
+                      ? CloudinaryImage(
+                          publicId: snapper.avatarUrl!,
+                          width: 60,
+                          height: 60,
+                          crop: 'fill',
+                          gravity: 'face',
+                          quality: 80,
+                        )
+                      : Container(
+                          width: 60,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.grey.shade300,
+                          ),
+                          child: Icon(
+                            Icons.person,
+                            size: 30,
+                            color: Colors.grey.shade600,
+                          ),
                         ),
-                        child: Icon(
-                          Icons.person,
-                          size: 30,
-                          color: Colors.grey.shade600,
-                        ),
+                ),
+                if (snapper.isOnline)
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      width: 16,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
                       ),
-              ),
-              if (snapper.isOnline)
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    width: 16,
-                    height: 16,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
                     ),
                   ),
-                ),
-            ],
-          ),
-          const SizedBox(width: 16),
+              ],
+            ),
+            const SizedBox(width: 16),
 
-          // Info section with photo type
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  snapper.name,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+            // Info section with photo type
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    snapper.name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
                 const SizedBox(height: 4),
                 // Level and Photo Type
                 Row(
                   children: [
-                    Text(
-                      snapper.subtitle,
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.textSecondary,
+                    Flexible(
+                      child: Text(
+                        snapper.subtitle,
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     if (snapper.photoTypeName != null) ...[
@@ -781,15 +785,18 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
                 Row(
                   children: [
                     // Price
-                    Text(
-                      StringUtils.formatVND(
-                        snapper.photoPrice,
-                        showSymbol: true,
-                      ),
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primaryDark,
+                    Flexible(
+                      child: Text(
+                        StringUtils.formatVND(
+                          snapper.photoPrice,
+                          showSymbol: true,
+                        ),
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primaryDark,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -934,6 +941,7 @@ class _FindingSnappersScreenState extends State<FindingSnappersScreen>
             ],
           ),
         ],
+      ),
       ),
     );
   }

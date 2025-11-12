@@ -202,9 +202,8 @@ class _PhotographerProfileScreenState extends State<PhotographerProfileScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Chỉ hiển thị nút back nếu roleId != 2
-          if (_currentUser?.roleId != 2)
             ElevatedButton(
-              onPressed: () => context.go('/'),
+              onPressed: () => _currentUser?.roleId == 2 ? context.pop() : context.go('/'),
               style: ElevatedButton.styleFrom(
                 shape: const CircleBorder(), // 1. Đặt hình dạng là hình tròn
                 padding: const EdgeInsets.all(
